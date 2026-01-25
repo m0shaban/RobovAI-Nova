@@ -1,4 +1,8 @@
 from fastapi import FastAPI, Request, HTTPException, File, UploadFile, Form
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -173,7 +177,9 @@ async def get_current_user(
 @app.post("/auth/register")
 async def register(user: UserCreate, response: Response):
     """Register and Auto-Login"""
-    logger.info(f"Register endpoint called for email={user.email} full_name={user.full_name}")
+    logger.info(
+        f"Register endpoint called for email={user.email} full_name={user.full_name}"
+    )
     try:
         res = await db_client.create_user(user.email, user.password, user.full_name)
         logger.info(f"create_user returned: {res}")
@@ -203,7 +209,9 @@ async def register(user: UserCreate, response: Response):
         raise
     except Exception:
         logger.exception("Registration failed")
-        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+        return JSONResponse(
+            status_code=500, content={"detail": "Internal Server Error"}
+        )
 
 
 @app.post("/auth/login")

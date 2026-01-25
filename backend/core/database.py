@@ -9,16 +9,18 @@ DB_PATH = "users.db"
 
 logger = logging.getLogger("robovai.database")
 
+
 class Database:
     def __init__(self):
         self._init_db()
-        
+
     def _init_db(self):
         """Initialize SQLite database"""
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
             # Users Table
-            c.execute('''
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     email TEXT UNIQUE NOT NULL,
@@ -27,9 +29,11 @@ class Database:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     balance INTEGER DEFAULT 100
                 )
-            ''')
+            """
+            )
             # Logs Table
-            c.execute('''
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT,
@@ -37,9 +41,11 @@ class Database:
                     tokens INTEGER,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
+            """
+            )
             # Conversations Table (Agent Memory)
-            c.execute('''
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS conversations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER,
@@ -48,9 +54,11 @@ class Database:
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY(user_id) REFERENCES users(id)
                 )
-            ''')
+            """
+            )
             # Sessions Table (Advanced Auth)
-            c.execute('''
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS sessions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER,
@@ -58,9 +66,11 @@ class Database:
                     expires_at TIMESTAMP,
                     FOREIGN KEY(user_id) REFERENCES users(id)
                 )
-            ''')
+            """
+            )
             # Subscriptions Table (Payment System)
-            c.execute('''
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS subscriptions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT UNIQUE,
@@ -68,9 +78,11 @@ class Database:
                     expires_at TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
+            """
+            )
             # OTP Codes Table (Verification)
-            c.execute('''
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS otp_codes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT,
@@ -80,9 +92,11 @@ class Database:
                     used INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
+            """
+            )
             # Usage Logs Table (Analytics)
-            c.execute('''
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS usage_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT,
@@ -90,10 +104,13 @@ class Database:
                     platform TEXT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
+            """
+            )
             conn.commit()
 
-    async def create_user(self, email: str, password: str, full_name: str) -> Optional[Dict[str, Any]]:
+    async def create_user(
+        self, email: str, password: str, full_name: str
+    ) -> Optional[Dict[str, Any]]:
         """Create a new user"""
         try:
             password_hash = get_password_hash(password)
@@ -114,15 +131,17 @@ class Database:
             logger.exception(f"Unexpected error in create_user for email={email}: {e}")
             raise
 
-    async def authenticate_user(self, email: str, password: str) -> Optional[Dict[str, Any]]:
+    async def authenticate_user(
+        self, email: str, password: str
+    ) -> Optional[Dict[str, Any]]:
         """Authenticate user and return user info"""
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute("SELECT * FROM users WHERE email = ?", (email,))
             user = c.fetchone()
-            
-            if user and verify_password(password, user['password_hash']):
+
+            if user and verify_password(password, user["password_hash"]):
                 return dict(user)
         return None
 
@@ -130,7 +149,10 @@ class Database:
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
-            c.execute("SELECT id, email, full_name, balance FROM users WHERE email = ?", (email,))
+            c.execute(
+                "SELECT id, email, full_name, balance FROM users WHERE email = ?",
+                (email,),
+            )
             user = c.fetchone()
             if user:
                 return dict(user)
@@ -141,7 +163,10 @@ class Database:
     async def get_user_balance(self, user_id: str) -> int:
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
-            c.execute("SELECT balance FROM users WHERE email = ? OR id = ?", (user_id, user_id))
+            c.execute(
+                "SELECT balance FROM users WHERE email = ? OR id = ?",
+                (user_id, user_id),
+            )
             result = c.fetchone()
         return result[0] if result else 0
 
@@ -149,13 +174,19 @@ class Database:
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
             # Check balance
-            c.execute("SELECT balance FROM users WHERE email = ? OR id = ?", (user_id, user_id))
+            c.execute(
+                "SELECT balance FROM users WHERE email = ? OR id = ?",
+                (user_id, user_id),
+            )
             result = c.fetchone()
             if not result or result[0] < amount:
                 return False
-                
+
             # Deduct
-            c.execute("UPDATE users SET balance = balance - ? WHERE email = ? OR id = ?", (amount, user_id, user_id))
+            c.execute(
+                "UPDATE users SET balance = balance - ? WHERE email = ? OR id = ?",
+                (amount, user_id, user_id),
+            )
             conn.commit()
         return True
 
@@ -164,7 +195,7 @@ class Database:
             c = conn.cursor()
             c.execute(
                 "INSERT INTO logs (user_id, tool_name, tokens) VALUES (?, ?, ?)",
-                (str(user_id), tool_name, tokens)
+                (str(user_id), tool_name, tokens),
             )
             conn.commit()
 
@@ -176,21 +207,25 @@ class Database:
             c = conn.cursor()
             c.execute(
                 "INSERT INTO conversations (user_id, role, content) VALUES (?, ?, ?)",
-                (user_id, role, content)
+                (user_id, role, content),
             )
             conn.commit()
 
-    async def get_recent_messages(self, user_id: int, limit: int = 10) -> List[Dict[str, str]]:
+    async def get_recent_messages(
+        self, user_id: int, limit: int = 10
+    ) -> List[Dict[str, str]]:
         """Retrieve recent context for LLM"""
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute(
                 "SELECT role, content FROM conversations WHERE user_id = ? ORDER BY id DESC LIMIT ?",
-                (user_id, limit)
+                (user_id, limit),
             )
             rows = c.fetchall()
-            return [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
+            return [
+                {"role": r["role"], "content": r["content"]} for r in reversed(rows)
+            ]
 
     # --- Session Management (Advanced Security) ---
 
@@ -199,7 +234,7 @@ class Database:
             c = conn.cursor()
             c.execute(
                 "INSERT INTO sessions (user_id, token, expires_at) VALUES (?, ?, ?)",
-                (user_id, token, expires_at)
+                (user_id, token, expires_at),
             )
             conn.commit()
 
@@ -219,12 +254,12 @@ class Database:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute(query, params)
-            
+
             # If SELECT query, return results
-            if query.strip().upper().startswith('SELECT'):
+            if query.strip().upper().startswith("SELECT"):
                 rows = c.fetchall()
                 return [dict(row) for row in rows]
-            
+
             # Otherwise commit and return None
             conn.commit()
             return None
@@ -234,5 +269,6 @@ class Database:
             c = conn.cursor()
             c.execute("DELETE FROM sessions WHERE token = ?", (token,))
             conn.commit()
+
 
 db_client = Database()

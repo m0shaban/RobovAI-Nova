@@ -166,6 +166,16 @@
 
         <button type="submit" class="btn">تسجيل</button>
         <div class="error-msg" id="errorMsg">حدث خطأ</div>
+        <div
+          class="success-msg"
+          id="successMsg"
+          style="
+            color: #22c55e;
+            margin-top: 1rem;
+            display: none;
+            font-size: 0.85rem;
+          "
+        ></div>
       </form>
 
       <div class="footer-text">
@@ -182,6 +192,7 @@
           const email = document.getElementById('email').value;
           const password = document.getElementById('password').value;
           const errorMsg = document.getElementById('errorMsg');
+          const successMsg = document.getElementById('successMsg');
 
           // Determine API Base URL
           const API_BASE =
@@ -190,8 +201,10 @@
               ? 'http://localhost:8000'
               : window.location.origin;
 
+          errorMsg.style.display = 'none';
+          successMsg.style.display = 'none';
+
           try {
-            errorMsg.style.display = 'none';
             const res = await fetch(`${API_BASE}/auth/register`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -216,17 +229,25 @@
               }
             }
 
-            if (res.ok) {
-              window.location.href = '/login';
+            if (res.ok && data && data.status === 'success') {
+              successMsg.textContent =
+                'تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.';
+              successMsg.style.display = 'block';
+              errorMsg.style.display = 'none';
+              setTimeout(() => {
+                window.location.href = '/login';
+              }, 2000);
             } else {
               errorMsg.textContent =
                 (data && (data.detail || data.message)) || 'فشل إنشاء الحساب';
               errorMsg.style.display = 'block';
+              successMsg.style.display = 'none';
             }
           } catch (e) {
             console.error(e);
             errorMsg.textContent = `فشل الاتصال بالسيرفر (${API_BASE})`;
             errorMsg.style.display = 'block';
+            successMsg.style.display = 'none';
           }
         });
     </script>

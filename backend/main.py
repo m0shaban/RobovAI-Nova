@@ -49,6 +49,15 @@ except Exception as e:
 @app.on_event("startup")
 async def on_startup():
     """Run startup tasks"""
+    if telegram_app:
+        try:
+            logger.info("⚙️ Initializing Telegram Bot Application...")
+            await telegram_app.initialize()
+            await telegram_app.start()
+            logger.info("✅ Telegram Bot Initialized & Started")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize Telegram Bot: {e}")
+
     # Auto-set Telegram Webhook if EXTERNAL_URL is set
     external_url = os.getenv("EXTERNAL_URL") or os.getenv("RENDER_EXTERNAL_URL")
     if external_url and telegram_app:
@@ -59,6 +68,19 @@ async def on_startup():
             logger.info("✅ Telegram webhook set successfully")
         except Exception as e:
             logger.error(f"❌ Failed to set Telegram webhook: {e}")
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    """Run shutdown tasks"""
+    if telegram_app:
+        logger.info("🛑 Stopping Telegram Bot...")
+        try:
+            await telegram_app.stop()
+            await telegram_app.shutdown()
+            logger.info("✅ Telegram Bot Stopped")
+        except Exception as e:
+            logger.error(f"❌ Failed to stop Telegram Bot: {e}")
+
 
 
 app.add_middleware(

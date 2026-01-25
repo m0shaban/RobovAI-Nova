@@ -645,6 +645,20 @@ async def telegram_webhook(request: Request):
 
     except Exception as e:
         logger.error(f"Telegram webhook error: {e}")
+        # Critical Fix: Notify user of error instead of silence
+        try:
+             # Try to parse chat_id from payload manually if possible, or use the message object if existing
+            if 'message' in vars() and message:
+                 await adapter.send_message(
+                    OutgoingMessage(
+                        text="⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك.",
+                        chat_id=message.chat_id,
+                        reply_to=message.message_id
+                    )
+                 )
+        except:
+            pass # Failsafe
+            
         return {"ok": True}
 
 

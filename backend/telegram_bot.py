@@ -9,14 +9,30 @@ Full-featured Telegram bot with:
 - Integration with 112 tools
 """
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
-from backend.tools.registry import ToolRegistry
-from backend.core.smart_router import SmartToolRouter
 import logging
 import os
 
 logger = logging.getLogger("robovai.telegram")
+
+# Safe imports for telegram - may fail if not installed
+try:
+    from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+    from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+    TELEGRAM_AVAILABLE = True
+except ImportError:
+    logger.warning("python-telegram-bot not installed. Telegram bot disabled.")
+    TELEGRAM_AVAILABLE = False
+
+# Import tool registry
+try:
+    from backend.tools.registry import ToolRegistry
+except ImportError:
+    ToolRegistry = None
+
+try:
+    from backend.core.smart_router import SmartToolRouter
+except ImportError:
+    SmartToolRouter = None
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 🎯 BOT COMMANDS
@@ -207,6 +223,11 @@ async def setup_bot_commands(application: Application):
 
 def create_telegram_app():
     """Create and configure Telegram application"""
+    # Check if telegram is available
+    if not TELEGRAM_AVAILABLE:
+        logger.warning("Telegram bot disabled (module not available)")
+        return None
+    
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     
     if not token:

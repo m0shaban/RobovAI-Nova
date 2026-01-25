@@ -11,6 +11,10 @@ import os
 from backend.tools.registry import ToolRegistry
 from backend.core.config import settings
 
+# Setup Logger FIRST
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("robovai")
+
 # Initialize FastAPI app
 app = FastAPI(
     title="RobovAI Backend",
@@ -22,14 +26,17 @@ app = FastAPI(
 from backend.tools.loader import register_all_tools
 register_all_tools()
 
-# Initialize Telegram Bot
-from backend.telegram_bot import create_telegram_app
-telegram_app = create_telegram_app()
-
-if telegram_app:
-    logger.info("✅ Telegram bot enabled")
-else:
-    logger.info("⚠️ Telegram bot disabled (no token)")
+# Initialize Telegram Bot (safe import)
+try:
+    from backend.telegram_bot import create_telegram_app
+    telegram_app = create_telegram_app()
+    if telegram_app:
+        logger.info("✅ Telegram bot enabled")
+    else:
+        logger.info("⚠️ Telegram bot disabled (no token)")
+except Exception as e:
+    logger.error(f"Telegram bot init failed: {e}")
+    telegram_app = None
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,10 +45,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Setup Logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("robovai")
 
 @app.get("/")
 async def root():

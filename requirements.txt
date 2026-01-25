@@ -8,3 +8,7 @@ python-dotenv
 aiofiles
 pydantic-settings
 python-telegram-bot
+PyPDF2
+python-docx
+SpeechRecognition
+openai-whisper

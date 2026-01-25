@@ -705,6 +705,62 @@ async def telegram_webhook(request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 💳 LEMONSQUEEZY PAYMENTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+from backend.lemonsqueezy import LemonSqueezyPayment, PRICING_TIERS
+
+@app.post("/payments/checkout")
+async def create_checkout(tier: str = "pro", current_user: dict = Depends(get_current_user)):
+    """Create LemonSqueezy checkout URL"""
+    if tier not in ["pro", "enterprise"]:
+        raise HTTPException(status_code=400, detail="Invalid tier")
+    
+    checkout_url = await LemonSqueezyPayment.create_checkout(
+        user_id=str(current_user.get("id")),
+        user_email=current_user.get("email"),
+        tier=tier
+    )
+    
+    if not checkout_url:
+        raise HTTPException(status_code=503, detail="Payment service unavailable")
+    
+    return {"checkout_url": checkout_url}
+
+@app.post("/payments/webhook")
+async def lemonsqueezy_webhook(request: Request):
+    """Handle LemonSqueezy webhook events"""
+    signature = request.headers.get("X-Signature", "")
+    payload = await request.body()
+    
+    # Verify signature
+    if not LemonSqueezyPayment.verify_webhook(payload, signature):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+    
+    data = await request.json()
+    event_name = data.get("meta", {}).get("event_name", "")
+    
+    await LemonSqueezyPayment.process_webhook(event_name, data, db_client)
+    
+    return {"status": "ok"}
+
+@app.get("/payments/pricing")
+async def get_pricing():
+    """Get pricing tiers"""
+    return PRICING_TIERS
+
+@app.get("/payments/subscription")
+async def get_subscription(current_user: dict = Depends(get_current_user)):
+    """Get user's current subscription"""
+    from backend.payments import PaymentSystem
+    subscription = await PaymentSystem.check_subscription(
+        str(current_user.get("id")), 
+        db_client
+    )
+    return subscription
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

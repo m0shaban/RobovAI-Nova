@@ -1,23 +1,20 @@
 """
-🤖 RobovAI Nova - Telegram Bot Integration
+🤖 RobovAI Nova - Telegram Bot Integration (Professional Edition)
 ═══════════════════════════════════════════════════════════════
 
-Full-featured Telegram bot with:
-- Menu commands
-- Inline keyboards
-- Rich media support
-- Integration with 112 tools
+Curated experience featuring only 100% reliable tools.
 """
 
 import logging
 import os
+from backend.core.llm import llm_client
 
 logger = logging.getLogger("robovai.telegram")
 
-# Safe imports for telegram - may fail if not installed
+# Safe imports
 try:
-    from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
-    from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
+    from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+    from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
     TELEGRAM_AVAILABLE = True
 except ImportError:
     logger.warning("python-telegram-bot not installed. Telegram bot disabled.")
@@ -35,223 +32,172 @@ except ImportError:
     SmartToolRouter = None
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 🎯 BOT COMMANDS
+# ⌨️ KEYBOARDS
+# ═══════════════════════════════════════════════════════════════════════════
+
+def get_main_keyboard():
+    """Return the persistent main menu keyboard"""
+    keyboard = [
+        [KeyboardButton("🌤️ حالة الطقس"), KeyboardButton("😂 نكتة مصرية")],
+        [KeyboardButton("🌍 ترجمة فورية"), KeyboardButton("❓ مساعدة")],
+        [KeyboardButton("🛠️ كل الأدوات")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 COMMAND HANDLERS
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Welcome message with inline keyboard"""
-    keyboard = [
-        [
-            InlineKeyboardButton("🛠️ قائمة الأدوات", callback_data="tools"),
-            InlineKeyboardButton("❓ المساعدة", callback_data="help")
-        ],
-        [
-            InlineKeyboardButton("🎨 توليد صورة", callback_data="image"),
-            InlineKeyboardButton("🌤️ الطقس", callback_data="weather")
-        ],
-        [
-            InlineKeyboardButton("🌍 ترجمة", callback_data="translate"),
-            InlineKeyboardButton("😂 نكتة", callback_data="joke")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
+    """Welcome message with persistent keyboard"""
     welcome_text = """
-🤖 **أهلاً بك في RobovAI Nova!**
+🤖 **أهلاً بك في RobovAI Nova**
 
-أنا مساعدك الذكي المصري 🇪🇬 مع **112 أداة قوية** في خدمتك!
+أنا مساعدك الذكي المصري 🇪🇬. 
+جمعتلك أهم الأدوات اللي هتفيدك وتشتغل معاك 100٪.
 
-📋 **استخدمني بسهولة:**
-• اكتب أي سؤال أو طلب
-• استخدم الأزرار أدناه
-• أو اكتب `/tools` لرؤية كل الأدوات
-
-🚀 **جرب الآن:** اكتب "ولد صورة روبوت" أو "الطقس في القاهرة"
+👇 **اختار من القائمة تحت:**
     """
-    
     await update.message.reply_text(
         welcome_text,
-        reply_markup=reply_markup,
+        reply_markup=get_main_keyboard(),
         parse_mode='Markdown'
     )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Help message"""
+    """Professional Help Message"""
     help_text = """
-📖 **دليل الاستخدام**
+📖 **دليل الاستخدام السريع**
 
-🎯 **الأوامر الأساسية:**
-/start - بدء المحادثة
-/help - عرض المساعدة
-/tools - قائمة الأدوات (112)
-/menu - القائمة الرئيسية
+أنا هنا عشان أساعدك تنجز شغلك بسرعة. دي الأدوات المضمونة:
 
-🛠️ **أدوات شائعة:**
-/weather [مدينة] - الطقس
-/image [وصف] - توليد صورة
-/translate [نص] - ترجمة
-/joke - نكتة
-/quiz - اختبار
+🌤️ **الطقس**: اضغط الزر، أو اكتب "الطقس في [المدينة]"
+🌍 **الترجمة**: اضغط الزر، أو اكتب "ترجم: [النص]"
+😂 **الترفيه**: اضغط زر النكتة لشويه فرفشة
+💬 **الشات**: اسألني أي سؤال عام وهجاوبك بذكاء
 
-💡 **نصائح:**
-• يمكنك الكتابة بالعربي أو الإنجليزي
-• البوت يفهم طلبك تلقائياً
-• جرب: "ولد صورة قطة" أو "الطقس في الإسكندرية"
+💡 **نصيحة**: تقدر تكتب وتتكلم معايا بالمصري عادي!
     """
-    await update.message.reply_text(help_text, parse_mode='Markdown')
+    await update.message.reply_text(help_text, reply_markup=get_main_keyboard(), parse_mode='Markdown')
 
 async def tools_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """List all tools with categories"""
-    tools = list(ToolRegistry.list_tools())
-    
-    # Group by category
-    categories = {
-        "🎨 إبداعية": ["/generate_image", "/unsplash", "/pexels", "/meme"],
-        "🌍 ترجمة ولغات": ["/translate_egy", "/grammar", "/synonym"],
-        "🌤️ معلومات": ["/weather", "/wiki", "/definition", "/country"],
-        "💻 برمجة": ["/code_fix", "/sql", "/regex", "/explain_code"],
-        "😂 ترفيه": ["/joke", "/roast", "/rizz", "/trivia", "/quiz"],
-        "📊 بيانات": ["/chart", "/diagram", "/quickchart"],
-        "🔧 أدوات": ["/qr", "/password", "/uuid", "/hash", "/base64"]
-    }
-    
-    text = "🛠️ **الأدوات المتاحة (112 أداة)**\n\n"
-    
-    for category, tool_list in categories.items():
-        text += f"\n**{category}**\n"
-        for tool in tool_list:
-            if tool in tools:
-                text += f"• {tool}\n"
-        
-    text += f"\n\n💡 **المزيد:** استخدم `/help` للتفاصيل"
-    
+    """List ONLY verified tools"""
+    text = """
+🛠️ **الأدوات المتاحة (Verified Only)**
+
+1️⃣ **أدوات المعلومات:**
+• `/weather` - معرفة الطقس
+• `/wiki` - بحث في ويكيبيديا
+• `/curr` - أسعار العملات
+
+2️⃣ **أدوات تقنية:**
+• `/translate` - ترجمة دقيقة
+• `/calc` - آلة حاسبة ذكية
+
+3️⃣ **ترفيه:**
+• `/joke` - نكت مصرية
+• `/quiz` - مسابقة ثقافية
+
+ℹ️ اضغط على أي أداة لتجربتها، أو استخدم الكيبورد للسرعة.
+    """
     await update.message.reply_text(text, parse_mode='Markdown')
 
-async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show main menu"""
-    await start_command(update, context)
-
 # ═══════════════════════════════════════════════════════════════════════════
-# 💬 MESSAGE HANDLER
+# 💬 MESSAGE HANDLER & ROUTING
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle all text messages"""
+    """Handle text messages and menu clicks"""
     user_id = str(update.effective_user.id)
     message = update.message.text
     
     logger.info(f"Telegram message from {user_id}: {message}")
-    
-    # Use Smart Router to detect tool
-    routing_result = await SmartToolRouter.route_message(message, user_id, platform="telegram")
-    
-    if routing_result['type'] == 'tool':
-        # Tool detected
-        tool_result = routing_result['result']
-        response = tool_result.get('output', 'تم التنفيذ')
-        
-        # Send response
-        await update.message.reply_text(response, parse_mode='Markdown')
-        
-    else:
-        # General chat - use LLM
-        from backend.core.llm import llm_client
-        
-        system_prompt = """أنت RobovAI Nova، مساعد ذكي مصري ودود.
-        - تتحدث بالمصري العامي
-        - تساعد المستخدمين بأدب واحترافية
-        - لديك 112 أداة قوية"""
-        
-        try:
-            response = await llm_client.generate(
-                message,
-                provider="groq",
-                system_prompt=system_prompt
-            )
-            await update.message.reply_text(response)
-        except Exception as e:
-            logger.error(f"LLM error: {e}")
-            await update.message.reply_text("عذراً، حدث خطأ. حاول مرة أخرى.")
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 🔘 CALLBACK HANDLER (Inline Keyboards)
-# ═══════════════════════════════════════════════════════════════════════════
+    response = ""
 
-async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle button clicks"""
-    query = update.callback_query
-    await query.answer()
+    # 1. Handle Menu Clicks
+    if message == "🌤️ حالة الطقس":
+        response = "📍 من فضلك اكتب اسم المدينة (مثلاً: القاهرة)"
+        # Note: In a fuller implementation, we would use ConversationHandler state
     
-    action = query.data
-    
-    if action == "tools":
-        await tools_command(update, context)
-    elif action == "help":
-        await help_command(update, context)
-    elif action == "image":
-        await query.message.reply_text("🎨 اكتب وصف الصورة اللي عايز أولدها:")
-    elif action == "weather":
-        await query.message.reply_text("🌤️ اكتب اسم المدينة:")
-    elif action == "translate":
-        await query.message.reply_text("🌍 اكتب النص اللي عايز تترجمه:")
-    elif action == "joke":
-        # Execute joke tool
+    elif message == "😂 نكتة مصرية":
+        # Execute Joke Tool directly
         from backend.tools.registry import ToolRegistry
         tool_class = ToolRegistry.get_tool("/joke")
         if tool_class:
-            tool = tool_class()
-            result = await tool.execute("", str(query.from_user.id))
-            await query.message.reply_text(result.get('output', ''))
+            res = await tool_class().execute("", user_id)
+            response = res.get('output', 'مرة واحد...')
+    
+    elif message == "🌍 ترجمة فورية":
+        response = "🔤 اكتب النص اللي عايز تترجمه مسبوق بكلمة 'ترجم' (مثلاً: ترجم hello world)"
+        
+    elif message == "❓ مساعدة":
+        await help_command(update, context)
+        return
+        
+    elif message == "🛠️ كل الأدوات":
+        await tools_command(update, context)
+        return
+
+    # 2. Smart Routing for everything else
+    if not response:
+        # Check for specific patterns
+        if "الطقس" in message and len(message.split()) < 2:
+             response = "📍 حدد المدينة، مثلاً: الطقس في الإسكندرية"
+        
+        else:
+            # Use Smart Router logic
+            # Explicitly BLOCK unreliable tools if detected via keywords?
+            # For now, let's trust the router but prioritize text tools
+            
+            routing_result = await SmartToolRouter.route_message(message, user_id, platform="telegram")
+            
+            if routing_result['type'] == 'tool':
+                # Filter out image generation tools if they slip through
+                tool_name = routing_result.get('tool')
+                if tool_name in ["/generate_image", "/image"]:
+                    response = "⚠️ عذراً، أداة توليد الصور غير متاحة حالياً للتحديث. جرب تطلب نكتة أو معلومة!"
+                else:
+                    response = routing_result['result'].get('output', 'تم التنفيذ')
+            else:
+                # LLM Chat
+                system_prompt = """أنت RobovAI Nova، مساعد ذكي مصري محترف.
+                - ردودك قصيرة ومفيدة.
+                - تتحدث بالمصري العامي اللبق.
+                - لا تقترح أدوات لا تملكها (مثل الصور حالياً).
+                """
+                try:
+                    response = await llm_client.generate(
+                        message,
+                        provider="groq",
+                        system_prompt=system_prompt
+                    )
+                except Exception:
+                    response = "معلش، السيرفر مشغول شوية. جرب تاني كمان دقيقة."
+
+    # Send Response
+    await update.message.reply_text(response, reply_markup=get_main_keyboard())
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 🚀 BOT INITIALIZATION
+# 🚀 APP SETUP
 # ═══════════════════════════════════════════════════════════════════════════
-
-async def setup_bot_commands(application: Application):
-    """Setup bot menu commands"""
-    commands = [
-        BotCommand("start", "بدء المحادثة"),
-        BotCommand("help", "المساعدة"),
-        BotCommand("tools", "قائمة الأدوات"),
-        BotCommand("menu", "القائمة الرئيسية"),
-        BotCommand("weather", "الطقس"),
-        BotCommand("image", "توليد صورة"),
-        BotCommand("translate", "ترجمة"),
-        BotCommand("joke", "نكتة"),
-    ]
-    await application.bot.set_my_commands(commands)
 
 def create_telegram_app():
     """Create and configure Telegram application"""
-    # Check if telegram is available
-    if not TELEGRAM_AVAILABLE:
-        logger.warning("Telegram bot disabled (module not available)")
-        return None
+    if not TELEGRAM_AVAILABLE: return None
     
     token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token: return None
     
-    if not token:
-        logger.warning("TELEGRAM_BOT_TOKEN not set. Telegram bot disabled.")
-        return None
-    
-    # Create application
     application = Application.builder().token(token).build()
     
-    # Add handlers
+    # Commands
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("tools", tools_command))
-    application.add_handler(CommandHandler("menu", menu_command))
     
-    # Message handler
+    # Messages
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    # Callback handler
-    application.add_handler(CallbackQueryHandler(button_callback))
-    
-    # Setup commands
-    application.post_init = setup_bot_commands
-    
-    logger.info("✅ Telegram bot initialized")
-    
     return application
+

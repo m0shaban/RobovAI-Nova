@@ -22,6 +22,15 @@ app = FastAPI(
 from backend.tools.loader import register_all_tools
 register_all_tools()
 
+# Initialize Telegram Bot
+from backend.telegram_bot import create_telegram_app
+telegram_app = create_telegram_app()
+
+if telegram_app:
+    logger.info("✅ Telegram bot enabled")
+else:
+    logger.info("⚠️ Telegram bot disabled (no token)")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,7 +45,8 @@ logger = logging.getLogger("robovai")
 
 @app.get("/")
 async def root():
-    return {"message": "RobovAI System Operational", "status": "online"}
+    """Serve landing page"""
+    return FileResponse("index.html")
 
 @app.get("/health")
 async def health_check():
@@ -669,6 +679,27 @@ async def get_user_stats(user_id: str):
     from backend.core.smart_router import SmartToolRouter
     stats = SmartToolRouter.get_user_stats(user_id)
     return {"status": "success", "stats": stats}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 📱 TELEGRAM WEBHOOK
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.post("/telegram-webhook")
+async def telegram_webhook(request: Request):
+    """Handle Telegram webhook updates"""
+    if not telegram_app:
+        raise HTTPException(status_code=503, detail="Telegram bot not configured")
+    
+    try:
+        data = await request.json()
+        from telegram import Update
+        update = Update.de_json(data, telegram_app.bot)
+        await telegram_app.process_update(update)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Telegram webhook error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/health")

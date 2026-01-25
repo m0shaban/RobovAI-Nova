@@ -7,3 +7,4 @@ pyjwt
 python-dotenv
 aiofiles
 pydantic-settings
+python-telegram-bot

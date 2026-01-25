@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException, File, UploadFile, Form
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 from pydantic import BaseModel
@@ -45,6 +45,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request, exc):
+    logger.exception(f"Unhandled exception: {exc}")
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 @app.get("/")
 async def root():
@@ -139,27 +145,34 @@ async def get_current_user(
 @app.post("/auth/register")
 async def register(user: UserCreate, response: Response):
     """Register and Auto-Login"""
-    res = await db_client.create_user(user.email, user.password, user.full_name)
-    if not res:
-        raise HTTPException(status_code=400, detail="البريد الإلكتروني مسجل بالفعل")
-    
-    # Auto-login: Create Token
-    access_token = create_access_token(data={"sub": user.email})
-    
-    # Store Session
-    expires_at = (datetime.now() + timedelta(days=1)).isoformat()
-    await db_client.create_session(res['id'], access_token, expires_at)
-    
-    # Set Cookie
-    response.set_cookie(
-        key="access_token",
-        value=f"Bearer {access_token}",
-        httponly=True,
-        max_age=86400,  # 1 day
-        samesite="lax"
-    )
-    
-    return {"status": "success", "user": res, "access_token": access_token}
+    try:
+        res = await db_client.create_user(user.email, user.password, user.full_name)
+        if not res:
+            raise HTTPException(status_code=400, detail="البريد الإلكتروني مسجل بالفعل")
+
+        # Auto-login: Create Token
+        access_token = create_access_token(data={"sub": user.email})
+
+        # Store Session
+        expires_at = (datetime.now() + timedelta(days=1)).isoformat()
+        await db_client.create_session(res['id'], access_token, expires_at)
+
+        # Set Cookie
+        response.set_cookie(
+            key="access_token",
+            value=f"Bearer {access_token}",
+            httponly=True,
+            max_age=86400,  # 1 day
+            samesite="lax"
+        )
+
+        return {"status": "success", "user": res, "access_token": access_token}
+    except HTTPException:
+        # Re-raise known HTTP errors so FastAPI handles them as usual
+        raise
+    except Exception as e:
+        logger.exception(f"Registration failed: {e}")
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 @app.post("/auth/login")
 async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):

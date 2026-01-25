@@ -177,14 +177,25 @@
                     full_name: fullname
                 })
             });
-            
-            const data = await res.json();
-            
+
+            // Safely parse response: prefer JSON, fallback to text
+            let data = null;
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                data = await res.json();
+            } else {
+                const text = await res.text();
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    data = { detail: text };
+                }
+            }
+
             if (res.ok) {
-                // Auto login after signup? Or redirect to login
                 window.location.href = '/login';
             } else {
-                errorMsg.textContent = data.detail || 'فشل إنشاء الحساب';
+                errorMsg.textContent = (data && (data.detail || data.message)) || 'فشل إنشاء الحساب';
                 errorMsg.style.display = 'block';
             }
         } catch (e) {

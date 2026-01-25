@@ -588,7 +588,7 @@ async def get_tools():
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-@app.post("/telegram_webhook")
+@app.post("/telegram-webhook")
 async def telegram_webhook(request: Request):
     """
     Telegram Bot Webhook

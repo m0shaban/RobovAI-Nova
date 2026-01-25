@@ -40,6 +40,8 @@ git push -u origin main
 GROQ_API_KEY=gsk_your_key_here
 NVIDIA_API_KEY=nvapi-your_key_here
 IMGBB_API_KEY=your_imgbb_key_here
+EXTERNAL_URL=https://robovai-nova.onrender.com (رابط مشروعك بعد الإنشاء)
+TELEGRAM_BOT_TOKEN=your_bot_token
 ```
 
 ### 5️⃣ Deploy

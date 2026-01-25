@@ -32,6 +32,8 @@ from backend.tools.loader import register_all_tools
 register_all_tools()
 
 # Initialize Telegram Bot (safe import)
+
+# Initialize Telegram Bot (safe import)
 try:
     from backend.telegram_bot import create_telegram_app
 
@@ -43,6 +45,21 @@ try:
 except Exception as e:
     logger.error(f"Telegram bot init failed: {e}")
     telegram_app = None
+
+@app.on_event("startup")
+async def on_startup():
+    """Run startup tasks"""
+    # Auto-set Telegram Webhook if EXTERNAL_URL is set
+    external_url = os.getenv("EXTERNAL_URL") or os.getenv("RENDER_EXTERNAL_URL")
+    if external_url and telegram_app:
+        webhook_url = f"{external_url}/telegram-webhook"
+        logger.info(f"🚀 Setting Telegram webhook to: {webhook_url}")
+        try:
+            await telegram_app.bot.set_webhook(webhook_url)
+            logger.info("✅ Telegram webhook set successfully")
+        except Exception as e:
+            logger.error(f"❌ Failed to set Telegram webhook: {e}")
+
 
 app.add_middleware(
     CORSMiddleware,

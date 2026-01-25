@@ -1,10 +1,13 @@
 import sqlite3
 import json
 import os
+import logging
 from typing import Optional, Dict, Any, List
 from .security import get_password_hash, verify_password
 
 DB_PATH = "users.db"
+
+logger = logging.getLogger("robovai.database")
 
 class Database:
     def __init__(self):
@@ -98,12 +101,18 @@ class Database:
                 c = conn.cursor()
                 c.execute(
                     "INSERT INTO users (email, password_hash, full_name) VALUES (?, ?, ?)",
-                    (email, password_hash, full_name)
+                    (email, password_hash, full_name),
                 )
                 conn.commit()
-                return {"id": c.lastrowid, "email": email, "full_name": full_name}
+                created = {"id": c.lastrowid, "email": email, "full_name": full_name}
+                logger.info(f"User created: {created}")
+                return created
         except sqlite3.IntegrityError:
-            return None # Email already exists
+            logger.info(f"create_user failed - email exists: {email}")
+            return None  # Email already exists
+        except Exception as e:
+            logger.exception(f"Unexpected error in create_user for email={email}: {e}")
+            raise
 
     async def authenticate_user(self, email: str, password: str) -> Optional[Dict[str, Any]]:
         """Authenticate user and return user info"""

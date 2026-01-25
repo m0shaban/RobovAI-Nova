@@ -118,10 +118,16 @@ except ImportError:
     PDFReaderTool = None
     DocxReaderTool = None
 
+try:
+    from backend.tools.office import ExcelAnalyzerTool, CalendarEventTool
+except ImportError:
+    ExcelAnalyzerTool = None
+    CalendarEventTool = None
+
 async def handle_document_upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Professional Document Analysis Handler.
-    Automatically detects PDF/Docx, extracts text, and generates an executive summary.
+    Automatically detects PDF/Docx/Excel/CSV.
     """
     doc = update.message.document
     file_name = doc.file_name.lower()
@@ -148,12 +154,19 @@ async def handle_document_upload(update: Update, context: ContextTypes.DEFAULT_T
         result = await tool.execute("", "", file_content=file_bytes)
         text_content = result.get('output', '')
         extract_status = result.get('status')
+
+    elif (file_name.endswith('.xlsx') or file_name.endswith('.csv')) and ExcelAnalyzerTool:
+        tool = ExcelAnalyzerTool()
+        result = await tool.execute("", "", file_content=file_bytes, filename=file_name)
+        # For Excel, the output IS the report, no need to summarize further usually
+        await update.message.reply_text(result.get('output', 'Error parsing Excel'), parse_mode="Markdown")
+        return
     
     else:
-        await update.message.reply_text("⚠️ عذراً، هذا النوع من الملفات غير مدعوم حالياً (فقط PDF و Word).")
+        await update.message.reply_text("⚠️ عذراً، هذا النوع من الملفات غير مدعوم حالياً (فقط PDF, Word, Excel, CSV).")
         return
 
-    # 3. Process Result
+    # 3. Process Result (Summary for Text Docs)
     if extract_status == "success" and text_content:
         # Limit token count roughly
         preview_text = text_content[:4000] 
@@ -191,19 +204,10 @@ async def handle_voice_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text("🎙️ **جاري المعالجة...** (يتم الآن تحويل الصوت لنص)", parse_mode="Markdown")
-
-    # Placeholder for actual Whisper integration
-    # Since we can't easily run Whisper on Render free tier without heavy lag,
-    # and we don't have the API key configured for OpenAI Whisper in this snippet context yet.
-    # We will simulate the behavior or try a lightweight transcription if possible.
-    
-    # For now, we acknowledge strictly professional receipt.
-    # In a full production env, we would download -> whisper_model.transcribe -> reply.
     
     response_text = """
     ✅ **تم استلام الملاحظة.**
-    
-    (ملاحظة: خدمة تحويل الصوت لنص تتطلب ربط API مدفوع مثل OpenAI Whisper. سيتم تفعيلها فور توفر المفتاح).
+    (جاري التطوير لربط خدمة Whisper بشكل كامل)
     """
     await update.message.reply_text(response_text, parse_mode="Markdown")
 
@@ -221,10 +225,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # 1. Main Menu Navigation
     if message == "📋 ملخص اليوم":
-        response = "📊 **لوحة المعلومات اليومية**\n\nلا توجد اجتماعات مسجلة اليوم.\nحالة السيرفر: ✅ ممتاز.\nالطقس: (جاري التحديث...)"
+        response = "📊 **لوحة المعلومات اليومية**\n\nلا توجد اجتماعات مسجلة اليوم.\nحالة السيرفر: ✅ ممتاز."
     
     elif message == "📄 تحليل وثيقة":
-        response = "📎 من فضلك قم **برفع الملف** (PDF أو Word) الآن وسأقوم بتحليله فوراً."
+        response = "📎 من فضلك قم **برفع الملف** (PDF, Word, Excel) الآن وسأقوم بتحليله فوراً."
     
     elif message == "🎙️ تفريغ صوتي":
         response = "🎙️ اضغط على زر التسجيل في تيليجرام وأرسل ملاحظتك الصوتية مباشرة."
@@ -240,31 +244,52 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await help_command(update, context)
         return
 
-    # 2. AI Intelligence Layer
+    # 2. Command Parsing for New Features
+    # Calendar Creation: "جدول اجتماع | 2025-01-01 10:00"
+    if message.startswith("جدول") or message.startswith("/schedule"):
+        if CalendarEventTool:
+             # Strip command keywords "جدول" or "/schedule" approx
+             # This is a basic heuristic
+             clean_input = message.replace("جدول", "").replace("/schedule", "").strip()
+             tool = CalendarEventTool()
+             result = await tool.execute(clean_input, user_id)
+             
+             if result.get("status") == "success":
+                 # Send ICS file
+                 from telegram import InputFile
+                 file_content = result.get("file_content")
+                 # We need to write to a temp file or bytesio
+                 import io
+                 f = io.BytesIO(file_content.encode('utf-8'))
+                 f.name = "meeting.ics"
+                 await update.message.reply_document(document=f, caption="📅 تم إنشاء ملف الاجتماع.")
+                 return # skip sending text response
+             else:
+                 response = result.get('output')
+
+    # 3. AI Intelligence Layer
     if not response:
         # Strict Professional System Prompt
         system_prompt = """
         أنت (RobovAI Nova)، مساعد تنفيذي محترف (AI Chief of Staff).
-        - هويتك: ذكاء اصطناعي متطور، دقيق، وموثوق.
-        - لغتك: عربية "بيضاء" (راقية، واضحة، مهنية) دون تكلف أو عامية سوقية.
-        - مهمتك: تقديم إجابات مباشرة، مختصرة، وغنية بالمعلومات.
-        - الممنوعات: لا تمزح، لا تستخدم "إيموجي" بكثرة، لا تقدم معلومات غير مؤكدة.
-        - إذا سُئلت عن شيء خارج اختصاصك المهني، اعتذر بأسلوب لبق وعد للموضوع الأساسي.
+        - هويتك: ذكاء اصطناعي متطور، دقيق، وموثوق "سكين سويسري رقمي".
+        - الصلاحيات: يمكنك تحليل البيانات (Excel)، إدارة المستندات (PDF)، وإنشاء الجداول.
+        - لغتك: عربية "بيضاء" (راقية، واضحة، مهنية).
+        - لو طلب المستخدم رسم بياني، اقترح استخدام `/chart`.
+        - لو طلب تحويل عملة، اقترح `/convert`.
         """
         
         try:
-            # Use Smart Router logic if available to detect tools
             if SmartToolRouter:
                 routing_result = await SmartToolRouter.route_message(message, user_id, platform="telegram")
                 if routing_result['type'] == 'tool':
-                    # Block non-professional tools
+                    # Allow Chart/Convert logic to flow here if routed
                     tool_name = routing_result.get('tool')
-                    if tool_name in ["/joke", "/meme", "/fun", "/generate_image"]:
-                        response = "عذراً، هذه الخاصية غير متوافقة مع إعدادات 'المساعد التنفيذي'. أنا هنا للعمل والإنتاجية."
+                    if tool_name in ["/joke", "/meme"]:
+                         response = "عذراً، أنا أركز على العمل حالياً."
                     else:
-                        response = routing_result['result'].get('output', 'تم تنفيذ الأمر.')
+                         response = routing_result['result'].get('output', 'تم تنفيذ الأمر.')
                 else:
-                    # Fallback to LLM Chat
                     response = await llm_client.generate(
                         message,
                         provider="groq",
@@ -278,7 +303,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )
         except Exception as e:
             logger.error(f"Router Error: {e}")
-            response = "عذراً، أواجه ضغطاً في خوادم المعالجة حالياً. يرجى المحاولة بعد دقيقة."
+            response = "عذراً، حدث خطأ تقني. يرجى المحاولة لاحقاً."
 
     # Send Response
     await update.message.reply_text(response, reply_markup=get_main_keyboard())

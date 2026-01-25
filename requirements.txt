@@ -12,3 +12,6 @@ PyPDF2
 python-docx
 SpeechRecognition
 openai-whisper
+pandas
+openpyxl
+ics

@@ -11,7 +11,14 @@ python-telegram-bot
 PyPDF2
 python-docx
 SpeechRecognition
-openai-whisper
+# openai-whisper (Removed for size - using Groq Cloud)
 pandas
 openpyxl
 ics
+vosk
+SpeechRecognition
+pillow
+qrcode[pil]
+yfinance
+duckduckgo-search
+yt-dlp

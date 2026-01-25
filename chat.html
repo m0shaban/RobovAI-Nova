@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RobovAI Nova Agent - مساعدك الذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           🌌 RobovAI Nova Agent - Ultimate Cosmic Interface
+           Design Philosophy: Cyber-Cosmic Egyptian Premium
+        ═══════════════════════════════════════════════════════════════ */
+        
+        :root {
+            --bg-void: #000000;
+            --bg-space: #050510;
+            --glass: rgba(10, 10, 20, 0.7);
+            --glass-light: rgba(255, 255, 255, 0.03);
+            --primary: #00f0ff; /* Neon Cyan */
+            --secondary: #8b5cf6; /* Purple */
+            --accent: #ff00aa; /* Magenta */
+            --gold: #ffd700;
+            --text: #ffffff;
+            --text-muted: #6b7280;
+            --border: rgba(255, 255, 255, 0.08);
+            --glow-cyan: rgba(0, 240, 255, 0.4);
+            --glow-purple: rgba(139, 92, 246, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html, body {
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            background: var(--bg-void);
+            color: var(--text);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           🎬 STARTUP ANIMATION - Cinematic Intro
+        ═══════════════════════════════════════════════════════════════ */
+        
+        #startupOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-void);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease, visibility 1s;
+        }
+
+        #startupOverlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .startup-logo {
+            width: 120px; height: 120px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 50px;
+            animation: pulse-glow 2s ease-in-out infinite, float 3s ease-in-out infinite;
+            box-shadow: 0 0 60px var(--glow-cyan), 0 0 100px var(--glow-purple);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 30px var(--glow-cyan), 0 0 60px var(--glow-purple); }
+            50% { box-shadow: 0 0 60px var(--glow-cyan), 0 0 100px var(--glow-purple); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .startup-title {
+            margin-top: 30px;
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+            background-size: 200% auto;
+        }
+
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        .startup-subtitle {
+            margin-top: 10px;
+            font-size: 16px;
+            color: var(--text-muted);
+            letter-spacing: 3px;
+        }
+
+        .startup-loader {
+            margin-top: 40px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .loader-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .loader-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loader-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loader-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        .startup-status {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--primary);
+            opacity: 0.8;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           🌌 COSMIC BACKGROUND - Dynamic Effects
+        ═══════════════════════════════════════════════════════════════ */
+        
+        #cosmicBg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: drift 20s ease-in-out infinite alternate;
+        }
+
+        .nebula-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--secondary), transparent);
+            top: -200px; right: -200px;
+        }
+
+        .nebula-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, var(--primary), transparent);
+            bottom: -150px; left: -150px;
+            animation-delay: -10s;
+        }
+
+        .nebula-3 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, var(--accent), transparent);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.2;
+            animation-delay: -5s;
+        }
+
+        @keyframes drift {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, -30px) scale(1.1); }
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        .shooting-star {
+            position: absolute;
+            width: 100px; height: 2px;
+            background: linear-gradient(to left, transparent, var(--primary));
+            animation: shoot 3s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes shoot {
+            0% { transform: translateX(0) translateY(0); opacity: 0; }
+            5% { opacity: 1; }
+            100% { transform: translateX(-500px) translateY(500px); opacity: 0; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           📱 MAIN LAYOUT
+        ═══════════════════════════════════════════════════════════════ */
+        
+        .app-shell {
+            display: flex;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .app-shell.visible { opacity: 1; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           🗂️ SIDEBAR
+        ═══════════════════════════════════════════════════════════════ */
+        
+        .sidebar {
+            width: 300px;
+            height: 100%;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 50;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            left: -18px;
+            top: 30px;
+            width: 36px; height: 36px;
+            background: var(--bg-space);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--primary);
+            color: black;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+
+        .sidebar-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand-icon {
+            width: 45px; height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+
+        .brand-info {
+            overflow: hidden;
+            transition: opacity 0.3s, width 0.3s;
+        }
+
+        .sidebar.collapsed .brand-info { opacity: 0; width: 0; }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-tag {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Tabs */
+        .sidebar-tabs {
+            display: flex;
+            padding: 15px;
+            gap: 10px;
+        }
+
+        .sidebar.collapsed .sidebar-tabs { flex-direction: column; padding: 10px; }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .sidebar.collapsed .tab-btn span { display: none; }
+
+        /* Scrollable Content */
+        .sidebar-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 15px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .cat-header {
+            font-size: 11px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cat-header::before {
+            content: '';
+            width: 8px; height: 8px;
+            background: var(--secondary);
+            border-radius: 50%;
+        }
+
+        .sidebar.collapsed .cat-header { display: none; }
+
+        .tool-card, .history-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 6px;
+            border: 1px solid transparent;
+        }
+
+        .tool-card:hover, .history-card:hover {
+            background: var(--glass-light);
+            border-color: var(--border);
+            transform: translateX(-5px);
+        }
+
+        .tool-emoji {
+            font-size: 20px;
+            transition: transform 0.3s;
+        }
+
+        .tool-card:hover .tool-emoji { transform: scale(1.2); }
+
+        .tool-info { overflow: hidden; }
+        .sidebar.collapsed .tool-info { display: none; }
+
+        .tool-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tool-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar.collapsed .tool-card {
+            justify-content: center;
+            padding: 15px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           💬 MAIN CHAT AREA
+        ═══════════════════════════════════════════════════════════════ */
+        
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Hero State */
+        .hero-section {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            width: 100%;
+            max-width: 700px;
+            padding: 20px;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
+        }
+
+        .main-area.chatting .hero-section {
+            opacity: 0;
+            transform: translate(-50%, -100%);
+            pointer-events: none;
+        }
+
+        .hero-icon {
+            width: 100px; height: 100px;
+            margin: 0 auto 30px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 45px;
+            animation: hero-pulse 3s ease-in-out infinite;
+            box-shadow: 0 0 50px var(--glow-cyan);
+        }
+
+        @keyframes hero-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .hero-subtitle {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .hero-suggestions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .suggestion-pill {
+            padding: 12px 24px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suggestion-pill:hover {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Chat Area */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 100px 20px 150px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .main-area.chatting .chat-container { opacity: 1; }
+
+        .message-wrapper {
+            max-width: 800px;
+            margin: 0 auto 30px;
+            display: flex;
+            gap: 15px;
+            animation: msg-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+        }
+
+        .message-wrapper.user { flex-direction: row-reverse; }
+
+        @keyframes msg-in {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-avatar {
+            width: 45px; height: 45px;
+            border-radius: 15px;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+        }
+
+        .message-wrapper.bot .msg-avatar {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+
+        .msg-content {
+            max-width: 70%;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .message-wrapper.user .msg-content {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(0, 240, 255, 0.1));
+            padding: 18px 24px;
+            border-radius: 20px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .msg-content pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            margin: 15px 0;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .msg-content code {
+            color: var(--primary);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .msg-content img {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 15px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Input Dock */
+        .input-dock {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 750px;
+            padding: 0 20px;
+            z-index: 20;
+        }
+
+        .input-container {
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            padding: 8px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-container:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 40px var(--glow-cyan), 0 10px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+
+        .action-btn:hover {
+            background: var(--glass-light);
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .action-btn.recording {
+            color: #ff4444;
+            animation: pulse-red 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+        }
+
+        #messageInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: inherit;
+            font-size: 16px;
+            padding: 12px;
+            resize: none;
+            max-height: 150px;
+            min-height: 24px;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        .send-btn {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: black;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 0 30px var(--glow-cyan);
+        }
+
+        .input-footer {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            opacity: 0.6;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 15px;
+        }
+
+        .typing-dot {
+            width: 8px; height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: typing-bounce 1.4s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing-bounce {
+            0%, 100% { transform: translateY(0); opacity: 0.5; }
+            50% { transform: translateY(-8px); opacity: 1; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           📱 RESPONSIVE
+        ═══════════════════════════════════════════════════════════════ */
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                right: 0;
+                transform: translateX(100%);
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-toggle { display: none; }
+            .hero-title { font-size: 22px; }
+            .suggestion-pill { font-size: 12px; padding: 10px 18px; }
+        }
+
+    </style>
+</head>
+<body>
+    <script>
+        // 🔒 Auth Check
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+    </script>
+
+    <!-- 🎬 STARTUP ANIMATION -->
+    <div id="startupOverlay">
+        <div class="startup-logo">🤖</div>
+        <div class="startup-title">RobovAI Nova Agent</div>
+        <div class="startup-subtitle">INTELLIGENT ASSISTANT</div>
+        <div class="startup-loader">
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+        </div>
+        <div class="startup-status" id="startupStatus">جاري تهيئة النظام...</div>
+    </div>
+
+    <!-- 🌌 COSMIC BACKGROUND -->
+    <div id="cosmicBg">
+        <div class="nebula nebula-1"></div>
+        <div class="nebula nebula-2"></div>
+        <div class="nebula nebula-3"></div>
+        <!-- Stars injected by JS -->
+    </div>
+
+    <!-- 📱 MAIN APP -->
+    <div class="app-shell" id="appShell">
+        
+        <!-- 🗂️ SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">⇄</button>
+            
+            <div class="sidebar-header">
+                <div class="brand-icon">🤖</div>
+                <div class="brand-info">
+                    <div class="brand-name">RobovAI Nova</div>
+                    <div class="brand-tag">Agent • 99 أداة</div>
+                </div>
+            </div>
+
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" onclick="switchTab('tools', this)">
+                    🛠️ <span>الأدوات</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('history', this)">
+                    📜 <span>السجل</span>
+                </button>
+            </div>
+            
+            <div style="padding: 0 1.5rem; margin-top: 1rem;">
+                 <button class="btn" style="width: 100%; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444;" onclick="logout()">
+                    🚪 تسجيل الخروج
+                </button>
+            </div>
+            
+            <script>
+            async function logout() {
+                try {
+                    await fetch(`${API}/auth/logout`, { method: 'POST' });
+                } catch(e) { console.error(e); }
+                
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
+            </script>
+
+            <div class="sidebar-scroll" id="sidebarContent">
+                <!-- Populated by JS -->
+            </div>
+        </aside>
+
+        <!-- 💬 MAIN AREA -->
+        <main class="main-area" id="mainArea">
+            
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <div class="hero-icon">🤖</div>
+                <div class="hero-title">مرحباً بك في RobovAI Nova Agent</div>
+                <div class="hero-subtitle">
+                    أنا مساعدك الذكي المصري 🇪🇬 معايا 99 أداة قوية!<br>
+                    اسألني أي حاجة أو جرب الاقتراحات دي...
+                </div>
+                <div class="hero-suggestions">
+                    <div class="suggestion-pill" onclick="quickSend('/weather Cairo')">
+                        🌦️ الطقس في القاهرة
+                    </div>
+                    <div class="suggestion-pill" onclick="quickSend('/generate_image مدينة مستقبلية')">
+                        🎨 توليد صورة
+                    </div>
+                    <div class="suggestion-pill" onclick="quickSend('/joke')">
+                        😂 نكتة
+                    </div>
+                    <div class="suggestion-pill" onclick="quickSend('/translate_egy Hello World')">
+                        🗣️ ترجمة مصري
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-container" id="chatContainer">
+                <!-- Messages injected by JS -->
+            </div>
+
+            <!-- Input Dock -->
+            <div class="input-dock">
+                <div class="input-container">
+                    <div class="input-actions">
+                        <button class="action-btn" onclick="triggerUpload()" title="رفع ملف">📂</button>
+                        <button class="action-btn" id="voiceBtn" onclick="toggleVoice()" title="تسجيل صوتي">🎙️</button>
+                    </div>
+                    <textarea id="messageInput" rows="1" placeholder="اكتب رسالتك هنا..."
+                        oninput="autoResize(this)"
+                        onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"></textarea>
+                    <button class="send-btn" onclick="sendMessage()">➜</button>
+                </div>
+                <div class="input-footer">
+                    RobovAI Solutions © 2026 • Nova Engine v2.4 • 99 Tool Active
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Hidden File Input -->
+    <input type="file" id="fileInput" hidden onchange="handleFileUpload(this)">
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // 🛠️ CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════
+        
+        const isLocal = location.protocol === 'file:';
+        const API = isLocal ? 'http://localhost:8000' : location.origin;
+        
+        let toolsData = {};
+        let chatActive = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🌌 COSMIC EFFECTS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function initCosmos() {
+            const bg = document.getElementById('cosmicBg');
+            
+            // Stars
+            for(let i = 0; i < 80; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 5 + 's';
+                star.style.animationDuration = (2 + Math.random() * 3) + 's';
+                bg.appendChild(star);
+            }
+            
+            // Shooting stars
+            for(let i = 0; i < 3; i++) {
+                const shooting = document.createElement('div');
+                shooting.className = 'shooting-star';
+                shooting.style.top = (Math.random() * 50) + '%';
+                shooting.style.right = (Math.random() * 30) + '%';
+                shooting.style.animationDelay = (i * 5 + Math.random() * 5) + 's';
+                bg.appendChild(shooting);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🎬 STARTUP SEQUENCE
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function startupSequence() {
+            const status = document.getElementById('startupStatus');
+            const overlay = document.getElementById('startupOverlay');
+            const appShell = document.getElementById('appShell');
+            
+            const steps = [
+                { text: 'جاري الاتصال بالخوادم...', delay: 800 },
+                { text: 'تحميل الأدوات الذكية...', delay: 1000 },
+                { text: 'تهيئة محرك Nova AI...', delay: 800 },
+                { text: 'جاري التشغيل...', delay: 600 }
+            ];
+            
+            for(const step of steps) {
+                status.textContent = step.text;
+                await new Promise(r => setTimeout(r, step.delay));
+            }
+            
+            // Load tools
+            await loadTools();
+            
+            // Fade out overlay
+            overlay.classList.add('hidden');
+            appShell.classList.add('visible');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 📡 API FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function loadTools() {
+            try {
+                const res = await fetch(`${API}/tools`);
+                const data = await res.json();
+                if(data.status === 'success') {
+                    toolsData = data.grouped;
+                    renderSidebar('tools');
+                }
+            } catch(e) {
+                console.error('Failed to load tools:', e);
+                document.getElementById('sidebarContent').innerHTML = 
+                    '<div style="text-align:center;padding:30px;color:#ff4444">❌ فشل الاتصال بالخادم</div>';
+            }
+        }
+
+        function renderSidebar(tab) {
+            const container = document.getElementById('sidebarContent');
+            container.innerHTML = '';
+            
+            if(tab === 'tools') {
+                const emojis = ['🔧','⚡','🎨','📊','🎵','🌐','📝','🎮','🔬','💡'];
+                let emojiIndex = 0;
+                
+                for(const [category, tools] of Object.entries(toolsData)) {
+                    const header = document.createElement('div');
+                    header.className = 'cat-header';
+                    header.textContent = category;
+                    container.appendChild(header);
+                    
+                    tools.forEach(tool => {
+                        const card = document.createElement('div');
+                        card.className = 'tool-card';
+                        card.onclick = () => setInput(tool.name + ' ');
+                        card.innerHTML = `
+                            <span class="tool-emoji">${emojis[emojiIndex % emojis.length]}</span>
+                            <div class="tool-info">
+                                <div class="tool-name">${tool.name}</div>
+                                <div class="tool-desc">${tool.description || ''}</div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                        emojiIndex++;
+                    });
+                }
+            } else {
+                // History Mock
+                const historyItems = [
+                    { time: 'اليوم', items: ['توليد صورة فضائية', 'ترجمة نص للمصري', 'حالة الطقس'] },
+                    { time: 'أمس', items: ['نكتة مصرية', 'تحليل كود Python', 'بحث ويكيبيديا'] }
+                ];
+                
+                historyItems.forEach(group => {
+                    const header = document.createElement('div');
+                    header.className = 'cat-header';
+                    header.textContent = group.time;
+                    container.appendChild(header);
+                    
+                    group.items.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = 'history-card';
+                        card.innerHTML = `<span class="tool-emoji">💬</span><div class="tool-info"><div class="tool-name">${item}</div></div>`;
+                        container.appendChild(card);
+                    });
+                });
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 💬 CHAT FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function activateChat() {
+            if(!chatActive) {
+                chatActive = true;
+                document.getElementById('mainArea').classList.add('chatting');
+            }
+        }
+
+        function setInput(text) {
+            const input = document.getElementById('messageInput');
+            input.value = text;
+            input.focus();
+            autoResize(input);
+        }
+
+        function quickSend(text) {
+            setInput(text);
+            sendMessage();
+        }
+
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if(!text) return;
+            
+            activateChat();
+            addMessage(text, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+            
+            const loadingId = showTyping();
+            
+            try {
+                const res = await fetch(`${API}/webhook`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        user_id: 'web_user', // Backend can now extract real ID from token
+                        message: text,
+                        platform: 'web'
+                    })
+                });
+                const data = await res.json();
+                hideTyping(loadingId);
+                
+                const reply = data.response || data.output || 'لا توجد استجابة';
+                addMessage(formatMarkdown(reply), 'bot');
+            } catch(e) {
+                hideTyping(loadingId);
+                addMessage('❌ خطأ في الاتصال: ' + e.message, 'bot');
+            }
+        }
+
+        function addMessage(content, role) {
+            const container = document.getElementById('chatContainer');
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${role}`;
+            
+            const avatar = role === 'bot' ? '🤖' : '👤';
+            
+            wrapper.innerHTML = `
+                <div class="msg-avatar">${avatar}</div>
+                <div class="msg-content">${content}</div>
+            `;
+            
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTyping() {
+            const id = 'typing-' + Date.now();
+            const container = document.getElementById('chatContainer');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'message-wrapper bot';
+            wrapper.id = id;
+            wrapper.innerHTML = `
+                <div class="msg-avatar">🤖</div>
+                <div class="msg-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function hideTyping(id) {
+            const el = document.getElementById(id);
+            if(el) el.remove();
+        }
+
+        function formatMarkdown(text) {
+            return text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1">');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🎤 VOICE & FILES
+        // ═══════════════════════════════════════════════════════════════
+        
+        function triggerUpload() {
+            document.getElementById('fileInput').click();
+        }
+
+        async function handleFileUpload(input) {
+            if(!input.files.length) return;
+            
+            activateChat();
+            const file = input.files[0];
+            const isImage = file.type.startsWith('image/');
+            
+            addMessage(`📤 جاري رفع: ${file.name}...`, 'user');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('user_id', 'web_user');
+            
+            const headers = {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            };
+            
+            try {
+                // استخدام endpoint مختلف للصور
+                const endpoint = isImage ? '/upload_image' : '/upload';
+                const res = await fetch(`${API}${endpoint}`, { 
+                    method: 'POST', 
+                    headers: headers,
+                    body: formData 
+                });
+                const data = await res.json();
+                
+                if(data.status === 'success') {
+                    if(isImage && data.response) {
+                        // الصورة تم رفعها على ImgBB - عرض النتيجة مباشرة
+                        addMessage(formatMarkdown(data.response), 'bot');
+                    } else {
+                        // ملف عادي - اسأل المستخدم ماذا يريد
+                        const loadingId = showTyping();
+                        const res2 = await fetch(`${API}/webhook`, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({
+                                user_id: 'web_user',
+                                message: `تم رفع ملف: ${file.name}`,
+                                platform: 'web'
+                            })
+                        });
+                        const data2 = await res2.json();
+                        hideTyping(loadingId);
+                        addMessage(formatMarkdown(data2.response || data2.output || 'تم رفع الملف بنجاح ✅'), 'bot');
+                    }
+                } else {
+                    addMessage(`❌ ${data.message || 'فشل رفع الملف'}`, 'bot');
+                }
+            } catch(e) {
+                addMessage('❌ فشل رفع الملف: ' + e.message, 'bot');
+            }
+        }
+
+        async function toggleVoice() {
+            const btn = document.getElementById('voiceBtn');
+            
+            if(!mediaRecorder || mediaRecorder.state === 'inactive') {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        sendAudio(blob);
+                    };
+                    
+                    mediaRecorder.start();
+                    btn.classList.add('recording');
+                    btn.textContent = '⏹️';
+                } catch(e) {
+                    alert('فشل الوصول للميكروفون');
+                }
+            } else {
+                mediaRecorder.stop();
+                btn.classList.remove('recording');
+                btn.textContent = '🎙️';
+            }
+        }
+
+        async function sendAudio(blob) {
+            activateChat();
+            
+            // Show typing indicator while processing
+            const loadingId = showTyping();
+            
+            const formData = new FormData();
+            formData.append('audio', blob, 'recording.webm');
+            formData.append('user_id', 'web_user');
+            formData.append('platform', 'web');
+            
+            try {
+                const res = await fetch(`${API}/webhook_audio`, { method: 'POST', body: formData });
+                const data = await res.json();
+                hideTyping(loadingId);
+                
+                const output = data.response || data.output || 'تم معالجة الصوت';
+                
+                // Parse the response to extract transcribed text
+                // Format from backend: "🎤 **تحويل ناجح!**\n\n📝 **النص:** {text}\n\n💬 **الرد:** {reply}"
+                const textMatch = output.match(/📝\s*\*?\*?النص\*?\*?:\s*([^\n]+)/);
+                const replyMatch = output.match(/💬\s*\*?\*?الرد\*?\*?:\s*([\s\S]*?)$/);
+                
+                if (textMatch && textMatch[1]) {
+                    // Show user's spoken text as their message
+                    addMessage(`🎤 ${textMatch[1].trim()}`, 'user');
+                    
+                    // Show bot's reply
+                    if (replyMatch && replyMatch[1]) {
+                        addMessage(formatMarkdown(replyMatch[1].trim()), 'bot');
+                    } else {
+                        addMessage(formatMarkdown(output), 'bot');
+                    }
+                } else {
+                    // Fallback: show full response
+                    addMessage(formatMarkdown(output), 'bot');
+                }
+            } catch(e) {
+                hideTyping(loadingId);
+                addMessage('❌ فشل معالجة الصوت: ' + e.message, 'bot');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🎛️ UI CONTROLS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderSidebar(tab);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 🚀 INIT
+        // ═══════════════════════════════════════════════════════════════
+        
+        initCosmos();
+        startupSequence();
+
+    </script>
+</body>
+</html>

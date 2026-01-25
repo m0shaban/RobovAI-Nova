@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RobovAI - 66 Tools Console 🚀</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #e0e0e0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            padding: 10px 20px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .category-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+        }
+        
+        .category-icon {
+            font-size: 2em;
+        }
+        
+        .category-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .tool-count {
+            margin-right: auto;
+            background: rgba(102, 126, 234, 0.3);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+        
+        .tools-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tool-btn {
+            padding: 8px 15px;
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.4);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #e0e0e0;
+            font-size: 0.9em;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(102, 126, 234, 0.4);
+            transform: scale(1.05);
+        }
+        
+        .tool-btn.premium {
+            border-color: rgba(255, 215, 0, 0.5);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .tool-btn.new {
+            border-color: rgba(0, 255, 127, 0.5);
+            background: rgba(0, 255, 127, 0.1);
+            position: relative;
+        }
+        
+        .tool-btn.new::after {
+            content: "جديد";
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: #00ff7f;
+            color: #000;
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .chat-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .chat-box {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 10px;
+            max-width: 80%;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-msg {
+            background: rgba(102, 126, 234, 0.3);
+            margin-right: auto;
+            border: 1px solid rgba(102, 126, 234, 0.5);
+        }
+        
+        .bot-msg {
+            background: rgba(118, 75, 162, 0.3);
+            margin-left: auto;
+            border: 1px solid rgba(118, 75, 162, 0.5);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #userInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            color: #e0e0e0;
+            font-size: 1em;
+        }
+        
+        #userInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        #sendBtn {
+            padding: 15px 35px;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        #sendBtn:hover {
+            transform: scale(1.05);
+        }
+        
+        #sendBtn:active {
+            transform: scale(0.95);
+        }
+        
+        .shortcuts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .shortcut-btn {
+            padding: 10px 18px;
+            background: rgba(102, 126, 234, 0.15);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #b8c5ff;
+            font-size: 0.85em;
+        }
+        
+        .shortcut-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: #667eea;
+        }
+        
+        .spinner {
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 RobovAI - AI Operating System</h1>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">66</div>
+                    <div>إجمالي الأدوات</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">8</div>
+                    <div>فئات</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">16</div>
+                    <div>أدوات جديدة</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="tools-grid">
+            <!-- Fun Tools -->
+            <div class="category-card">
+                <div class="category-header">
+                    <span class="category-icon">🎉</span>
+                    <span class="category-title">Fun & Viral</span>
+                    <span class="tool-count">10 أدوات</span>
+                </div>
+                <div class="tools-list">
+                    <button class="tool-btn" onclick="useCommand('/roast')">roast/</button>
+                    <button class="tool-btn" onclick="useCommand('/rizz')">rizz/</button>
+                    <button class="tool-btn" onclick="useCommand('/dream')">dream/</button>
+                    <button class="tool-btn" onclick="useCommand('/horoscope')">horoscope/</button>
+                    <button class="tool-btn" onclick="useCommand('/fight')">fight/</button>
+                    <button class="tool-btn" onclick="useCommand('/joke')">joke/</button>
+                    <button class="tool-btn" onclick="useCommand('/cat')">cat/</button>
+                    <button class="tool-btn" onclick="useCommand('/dog')">dog/</button>
+                    <button class="tool-btn" onclick="useCommand('/bored')">bored/</button>
+                    <button class="tool-btn" onclick="useCommand('/trivia')">trivia/</button>
+                </div>
+            </div>
+
+            <!-- Utility Tools -->
+            <div class="category-card">
+                <div class="category-header">
+                    <span class="category-icon">🛠️</span>
+                    <span class="category-title">Utility Belt</span>
+                    <span class="tool-count">10 أدوات</span>
+                </div>
+                <div class="tools-list">
+                    <button class="tool-btn" onclick="useCommand('/ip')">ip/</button>
+                    <button class="tool-btn" onclick="useCommand('/crypto')">crypto/</button>
+                    <button class="tool-btn" onclick="useCommand('/shorten')">shorten/</button>
+                    <button class="tool-btn" onclick="useCommand('/password')">password/</button>
+                    <button class="tool-btn" onclick="useCommand('/uuid')">uuid/</button>
+                    <button class="tool-btn" onclick="useCommand('/qr')">qr/</button>
+                    <button class="tool-btn" onclick="useCommand('/website_status')">website_status/</button>
+                    <button class="tool-btn" onclick="useCommand('/currency')">currency/</button>
+                    <button class="tool-btn" onclick="useCommand('/color')">color/</button>
+                    <button class="tool-btn" onclick="useCommand('/unit')">unit/</button>
+                </div>
+            </div>
+
+            <!-- Developer Tools -->
+            <div class="category-card">
+                <div class="category-header">
+                    <span class="category-icon">💻</span>
+                    <span class="category-title">Developer & Tech</span>
+                    <span class="tool-count">10 أدوات</span>
+                </div>
+                <div class="tools-list">
+                    <button class="tool-btn premium" onclick="useCommand('/code_fix')">code_fix/</button>
+                    <button class="tool-btn" onclick="useCommand('/sql')">sql/</button>
+                    <button class="tool-btn" onclick="useCommand('/regex')">regex/</button>
+                    <button class="tool-btn" onclick="useCommand('/explain_code')">explain_code/</button>
+                    <button class="tool-btn" onclick="useCommand('/arduino')">arduino/</button>
+                    <button class="tool-btn" onclick="useCommand('/timestamp')">timestamp/</button>
+                    <button class="tool-btn" onclick="useCommand('/hash')">hash/</button>
+                    <button class="tool-btn" onclick="useCommand('/lorem')">lorem/</button>
+                    <button class="tool-btn" onclick="useCommand('/json_format')">json_format/</button>
+                    <button class="tool-btn" onclick="useCommand('/base64')">base64/</button>
+                </div>
+            </div>
+
+            <!-- Life & Info Tools -->
+            <div class="category-card">
+                <div class="category-header">
+                    <span class="category-icon">🌍</span>
+                    <span class="category-title">Life & Info</span>
+                    <span class="tool-count">10 أدوات</span>
+                </div>
+                <div class="tools-list">
+                    <button class="tool-btn" onclick="useCommand('/weather')">weather/</button>
+                    <button class="tool-btn" onclick="useCommand('/wiki')">wiki/</button>
+                    <button class="tool-btn" onclick="useCommand('/definition')">definition/</button>
+                    <button class="tool-btn" onclick="useCommand('/number_fact')">number_fact/</button>
+                    <button class="tool-btn" onclick="useCommand('/holiday')">holiday/</button>
+                    <button class="tool-btn" onclick="useCommand('/travel_plan')">travel_plan/</button>
+                    <button class="tool-btn" onclick="useCommand('/meal_plan')">meal_plan/</button>
+                    <button class="tool-btn" onclick="useCommand('/workout')">workout/</button>
+                    <button class="tool-btn" onclick="useCommand('/gift')">gift/</button>
+                    <button class="tool-btn" onclick="useCommand('/movie_rec')">movie_rec/</button>
+                </div>
+            </div>
+
+            <!-- Content & Education Tools -->
+            <div class="category-card">
+                <div class="category-header">
+                    <span class="category-icon">📚</span>
+                    <span class="category-title">Content & Education</span>
+                    <span class="tool-count">10 أدوات</span>
+                </div>
+                <div class="tools-list">
+                    <button class="tool-btn" onclick="useCommand('/social')">social/</button>
+                    <button class="tool-btn" onclick="useCommand('/script')">script/</button>
+                    <button class="tool-btn" onclick="useCommand('/email_formal')">email_formal/</button>
+                    <button class="tool-btn" onclick="useCommand('/email_angry')">email_angry/</button>
+                    <button class="tool-btn" onclick="useCommand('/eli5')">eli5/</button>
+                    <button class="tool-btn" onclick="useCommand('/quiz')">quiz/</button>
+                    <button class="tool-btn" onclick="useCommand('/book_rec')">book_rec/</button>
+                    <button class="tool-btn" onclick="useCommand('/translate_egy')">translate_egy/</button>
+                    <button class="tool-btn" onclick="useCommand('/grammar')">grammar/</button>
+                    <button class="tool-btn" onclick="useCommand('/synonym')">synonym/</button>
+                </div>
+            </div>
+
+            <!-- Vision & Document Tools (NEW) -->
+            <div class="category-card">
+                <div class="category-header">
+                    <span class="category-icon">👁️</span>
+                    <span class="category-title">Vision & Documents</span>
+                    <span class="tool-count">6 أدوات جديدة</span>
+                </div>
+                <div class="tools-list">
+                    <button class="tool-btn new premium" onclick="useCommand('/scan_receipt')">scan_receipt/</button>
+                    <button class="tool-btn new premium" onclick="useCommand('/analyze_id')">analyze_id/</button>
+                    <button class="tool-btn new" onclick="useCommand('/chart_insights')">chart_insights/</button>
+                    <button class="tool-btn new premium" onclick="useCommand('/ask_pdf')">ask_pdf/</button>
+                    <button class="tool-btn new premium" onclick="useCommand('/video_summary')">video_summary/</button>
+                    <button class="tool-btn new" onclick="useCommand('/meme_explain')">meme_explain/</button>
+                </div>
+            </div>
+
+            <!-- Voice & Audio Tools (NEW) -->
+            <div class="category-card">
+                <div class="category-header">
+                    <span class="category-icon">🎤</span>
+                    <span class="category-title">Voice & Audio</span>
+                    <span class="tool-count">4 أدوات جديدة</span>
+                </div>
+                <div class="tools-list">
+                    <button class="tool-btn new premium" onclick="useCommand('/voice_note')">voice_note/</button>
+                    <button class="tool-btn new premium" onclick="useCommand('/tts_custom')">tts_custom/</button>
+                    <button class="tool-btn new" onclick="useCommand('/clean_audio')">clean_audio/</button>
+                    <button class="tool-btn new premium" onclick="useCommand('/meeting_notes')">meeting_notes/</button>
+                </div>
+            </div>
+
+            <!-- Safety & Business Tools (NEW) -->
+            <div class="category-card">
+                <div class="category-header">
+                    <span class="category-icon">🛡️</span>
+                    <span class="category-title">Safety & Business</span>
+                    <span class="tool-count">6 أدوات جديدة</span>
+                </div>
+                <div class="tools-list">
+                    <button class="tool-btn new" onclick="useCommand('/check_content')">check_content/</button>
+                    <button class="tool-btn new premium" onclick="useCommand('/legal_summary')">legal_summary/</button>
+                    <button class="tool-btn new" onclick="useCommand('/outfit_rate')">outfit_rate/</button>
+                    <button class="tool-btn new" onclick="useCommand('/dish_recipe')">dish_recipe/</button>
+                    <button class="tool-btn new premium" onclick="useCommand('/compare_offers')">compare_offers/</button>
+                    <button class="tool-btn new premium" onclick="useCommand('/translate_voice')">translate_voice/</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div class="chat-section">
+            <h2 style="margin-bottom: 15px; color: #667eea;">💬 اختبار الأدوات</h2>
+            
+            <div class="shortcuts">
+                <button class="shortcut-btn" onclick="testCommand('/weather Cairo')">🌦️ الطقس في القاهرة</button>
+                <button class="shortcut-btn" onclick="testCommand('/joke')">😂 نكتة</button>
+                <button class="shortcut-btn" onclick="testCommand('/roast Elon Musk')">🔥 Roast</button>
+                <button class="shortcut-btn" onclick="testCommand('/code_fix def foo(: print(hello)')">💻 إصلاح كود</button>
+                <button class="shortcut-btn" onclick="testCommand('/password 16')">🔐 كلمة سر</button>
+                <button class="shortcut-btn" onclick="testCommand('/eli5 Quantum Physics')">📚 ELI5</button>
+                <button class="shortcut-btn" onclick="testCommand('/meme_explain cat-meme.jpg')">😂 شرح ميم</button>
+                <button class="shortcut-btn" onclick="testCommand('/check_content This is a test post')">🛡️ فحص محتوى</button>
+            </div>
+            
+            <div class="chat-box" id="chatBox"></div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>جاري المعالجة...</p>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="اكتب الأمر هنا مثل: /weather Cairo أو /joke" onkeypress="handleEnter(event)">
+                <button id="sendBtn" onclick="sendMessage()">إرسال</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/webhook';
+        
+        function addMessage(text, isUser) {
+            const chatBox = document.getElementById('chatBox');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = isUser ? 'message user-msg' : 'message bot-msg';
+            msgDiv.textContent = text;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        function useCommand(cmd) {
+            document.getElementById('userInput').value = cmd + ' ';
+            document.getElementById('userInput').focus();
+        }
+        
+        function testCommand(fullCmd) {
+            document.getElementById('userInput').value = fullCmd;
+            sendMessage();
+        }
+        
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, true);
+            input.value = '';
+            
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        user_id: 'web_test_user',
+                        platform: 'web'
+                    })
+                });
+                
+                const data = await response.json();
+                loading.style.display = 'none';
+                
+                if (data.response) {
+                    addMessage(data.response, false);
+                } else {
+                    addMessage('❌ خطأ: لم يتم استقبال رد', false);
+                }
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                addMessage('❌ خطأ في الاتصال بالخادم: ' + error.message, false);
+                console.error('Error:', error);
+            }
+        }
+        
+        // Welcome message
+        window.onload = function() {
+            addMessage('مرحباً بك في RobovAI! 🚀\n\nلديك 66 أداة تحت تصرفك:\n• 10 أدوات Fun\n• 10 أدوات Utility\n• 10 أدوات Developer\n• 10 أدوات Life\n• 10 أدوات Education\n• 6 أدوات Vision (جديد)\n• 4 أدوات Audio (جديد)\n• 6 أدوات Safety (جديد)\n\nاستخدم الأزرار أعلاه أو اكتب أمرك مباشرة!', false);
+        }
+    </script>
+</body>
+</html>

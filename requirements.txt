@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+python-multipart
+httpx
+passlib[bcrypt]
+pyjwt
+python-dotenv
+aiofiles

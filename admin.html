@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RobovAI Nova - لوحة التحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a1a;
+            --surface: #111122;
+            --surface-2: #1a1a2e;
+            --primary: #00f0ff;
+            --secondary: #8b5cf6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --text: #e0e0e0;
+            --text-muted: #6b7280;
+            --border: rgba(255,255,255,0.1);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            padding: 1.5rem;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-icon {
+            width: 45px; height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .logo-text {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+        
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-title {
+            font-size: 0.75rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.75rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.75rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--primary);
+        }
+        
+        .nav-link .icon { font-size: 1.2rem; }
+        
+        /* Main Content */
+        .main {
+            margin-right: 260px;
+            padding: 2rem;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.5rem 1rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 20px;
+            color: var(--success);
+            font-size: 0.9rem;
+        }
+        
+        .status-dot {
+            width: 8px; height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        
+        .stat-card .icon {
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-card .label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        /* Platform Cards */
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .platform-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        
+        .platform-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .platform-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .platform-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .platform-icon {
+            width: 50px; height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        
+        .platform-icon.telegram { background: rgba(0, 136, 204, 0.2); }
+        .platform-icon.whatsapp { background: rgba(37, 211, 102, 0.2); }
+        .platform-icon.messenger { background: rgba(0, 132, 255, 0.2); }
+        .platform-icon.discord { background: rgba(114, 137, 218, 0.2); }
+        .platform-icon.web { background: rgba(0, 240, 255, 0.2); }
+        
+        .platform-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        .platform-status {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: var(--surface-2);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: var(--success);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+        
+        .platform-fields {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .platform-card.expanded .platform-fields {
+            display: block;
+        }
+        
+        .field-group {
+            margin-bottom: 1rem;
+        }
+        
+        .field-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        
+        .field-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Cairo', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .field-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: black;
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.02);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .platform-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        /* Webhook URL Display */
+        .webhook-url {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        
+        .webhook-url code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+        }
+        
+        .copy-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 6px;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        
+        /* Tools Section */
+        .tools-list {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .tool-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: background 0.2s;
+        }
+        
+        .tool-item:hover {
+            background: var(--surface-2);
+        }
+        
+        .tool-name {
+            font-family: monospace;
+            color: var(--primary);
+        }
+        
+        .tool-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">🤖</div>
+            <span class="logo-text">RobovAI Nova</span>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-title">الرئيسية</div>
+            <a href="/admin" class="nav-link active">
+                <span class="icon">📊</span> لوحة التحكم
+            </a>
+            <a href="/chat" class="nav-link">
+                <span class="icon">💬</span> الشات
+            </a>
+            <a href="/" class="nav-link">
+                <span class="icon">🏠</span> الصفحة الرئيسية
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-title">المنصات</div>
+            <a href="#platforms" class="nav-link">
+                <span class="icon">📱</span> إدارة المنصات
+            </a>
+            <a href="#webhooks" class="nav-link">
+                <span class="icon">🔗</span> Webhooks
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-title">الأدوات</div>
+            <a href="#tools" class="nav-link">
+                <span class="icon">🛠️</span> الأدوات (106)
+            </a>
+            <a href="/developers" class="nav-link">
+                <span class="icon">📚</span> التوثيق
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-title">الإعدادات</div>
+            <a href="#settings" class="nav-link">
+                <span class="icon">⚙️</span> الإعدادات
+            </a>
+            <a href="#logs" class="nav-link">
+                <span class="icon">📝</span> السجلات
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="header">
+            <h1>🎛️ لوحة التحكم</h1>
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                النظام يعمل
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="icon" style="background: rgba(0, 240, 255, 0.1);">🛠️</div>
+                <div class="value" id="toolsCount">106</div>
+                <div class="label">أداة مسجلة</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background: rgba(34, 197, 94, 0.1);">📱</div>
+                <div class="value">5</div>
+                <div class="label">منصات متاحة</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background: rgba(139, 92, 246, 0.1);">👥</div>
+                <div class="value" id="usersCount">0</div>
+                <div class="label">مستخدم نشط</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon" style="background: rgba(245, 158, 11, 0.1);">📨</div>
+                <div class="value" id="messagesCount">0</div>
+                <div class="label">رسالة اليوم</div>
+            </div>
+        </div>
+        
+        <!-- Platforms Section -->
+        <h2 class="section-title" id="platforms">📱 إدارة المنصات</h2>
+        
+        <div class="platforms-grid">
+            <!-- Telegram -->
+            <div class="platform-card" id="telegramCard">
+                <div class="platform-header">
+                    <div class="platform-info">
+                        <div class="platform-icon telegram">📱</div>
+                        <div>
+                            <div class="platform-name">Telegram</div>
+                            <div class="platform-status">غير متصل</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch" onclick="togglePlatform('telegram')"></div>
+                </div>
+                <div class="platform-fields">
+                    <div class="field-group">
+                        <div class="field-label">Bot Token</div>
+                        <input type="password" class="field-input" id="telegramToken" placeholder="123456:ABC-DEF...">
+                    </div>
+                    <div class="webhook-url">
+                        <code id="telegramWebhook">/telegram_webhook</code>
+                        <button class="copy-btn" onclick="copyWebhook('telegram')">نسخ</button>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-primary" onclick="savePlatform('telegram')">حفظ</button>
+                        <button class="btn btn-outline" onclick="testPlatform('telegram')">اختبار</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- WhatsApp -->
+            <div class="platform-card" id="whatsappCard">
+                <div class="platform-header">
+                    <div class="platform-info">
+                        <div class="platform-icon whatsapp">💬</div>
+                        <div>
+                            <div class="platform-name">WhatsApp Business</div>
+                            <div class="platform-status">غير متصل</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch" onclick="togglePlatform('whatsapp')"></div>
+                </div>
+                <div class="platform-fields">
+                    <div class="field-group">
+                        <div class="field-label">Access Token</div>
+                        <input type="password" class="field-input" id="whatsappToken" placeholder="EAAx...">
+                    </div>
+                    <div class="field-group">
+                        <div class="field-label">Phone Number ID</div>
+                        <input type="text" class="field-input" id="whatsappPhone" placeholder="1234567890">
+                    </div>
+                    <div class="webhook-url">
+                        <code>/whatsapp_webhook</code>
+                        <button class="copy-btn" onclick="copyWebhook('whatsapp')">نسخ</button>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-primary" onclick="savePlatform('whatsapp')">حفظ</button>
+                        <button class="btn btn-outline" onclick="testPlatform('whatsapp')">اختبار</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messenger -->
+            <div class="platform-card" id="messengerCard">
+                <div class="platform-header">
+                    <div class="platform-info">
+                        <div class="platform-icon messenger">📘</div>
+                        <div>
+                            <div class="platform-name">Facebook Messenger</div>
+                            <div class="platform-status">غير متصل</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch" onclick="togglePlatform('messenger')"></div>
+                </div>
+                <div class="platform-fields">
+                    <div class="field-group">
+                        <div class="field-label">Page Access Token</div>
+                        <input type="password" class="field-input" id="messengerToken" placeholder="EAAx...">
+                    </div>
+                    <div class="webhook-url">
+                        <code>/messenger_webhook</code>
+                        <button class="copy-btn" onclick="copyWebhook('messenger')">نسخ</button>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-primary" onclick="savePlatform('messenger')">حفظ</button>
+                        <button class="btn btn-outline" onclick="testPlatform('messenger')">اختبار</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Discord -->
+            <div class="platform-card" id="discordCard">
+                <div class="platform-header">
+                    <div class="platform-info">
+                        <div class="platform-icon discord">🎮</div>
+                        <div>
+                            <div class="platform-name">Discord</div>
+                            <div class="platform-status">غير متصل</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch" onclick="togglePlatform('discord')"></div>
+                </div>
+                <div class="platform-fields">
+                    <div class="field-group">
+                        <div class="field-label">Bot Token</div>
+                        <input type="password" class="field-input" id="discordToken" placeholder="MTIx...">
+                    </div>
+                    <div class="field-group">
+                        <div class="field-label">Application ID</div>
+                        <input type="text" class="field-input" id="discordAppId" placeholder="123456789">
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-primary" onclick="savePlatform('discord')">حفظ</button>
+                        <button class="btn btn-outline" onclick="testPlatform('discord')">اختبار</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Web Widget -->
+            <div class="platform-card" id="webCard">
+                <div class="platform-header">
+                    <div class="platform-info">
+                        <div class="platform-icon web">🌐</div>
+                        <div>
+                            <div class="platform-name">Web Widget</div>
+                            <div class="platform-status">متصل ✓</div>
+                        </div>
+                    </div>
+                    <div class="toggle-switch active"></div>
+                </div>
+                <div class="platform-fields">
+                    <div class="field-group">
+                        <div class="field-label">كود التضمين</div>
+                        <textarea class="field-input" style="height: 100px; font-size: 0.8rem;" readonly><script src="/static/widget.js"></script>
+<script>
+  RobovAI.init({ apiEndpoint: '/webhook' });
+</script></textarea>
+                    </div>
+                    <div class="platform-actions">
+                        <button class="btn btn-outline" onclick="copyWidgetCode()">نسخ الكود</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tools Section -->
+        <h2 class="section-title" id="tools">🛠️ الأدوات المسجلة</h2>
+        <div class="tools-list" id="toolsList">
+            جاري التحميل...
+        </div>
+        
+    </main>
+
+    <script>
+        const API = '';
+        
+        // Toggle platform card expansion
+        document.querySelectorAll('.platform-card').forEach(card => {
+            card.querySelector('.platform-header').addEventListener('click', (e) => {
+                if (!e.target.classList.contains('toggle-switch')) {
+                    card.classList.toggle('expanded');
+                }
+            });
+        });
+        
+        // Toggle platform on/off
+        function togglePlatform(platform) {
+            const toggle = document.querySelector(`#${platform}Card .toggle-switch`);
+            toggle.classList.toggle('active');
+            
+            const status = toggle.classList.contains('active') ? 'متصل ✓' : 'غير متصل';
+            document.querySelector(`#${platform}Card .platform-status`).textContent = status;
+        }
+        
+        // Copy webhook URL
+        function copyWebhook(platform) {
+            const baseUrl = window.location.origin;
+            const webhooks = {
+                telegram: `${baseUrl}/telegram_webhook`,
+                whatsapp: `${baseUrl}/whatsapp_webhook`,
+                messenger: `${baseUrl}/messenger_webhook`
+            };
+            
+            navigator.clipboard.writeText(webhooks[platform]);
+            alert('تم نسخ الرابط! ✓');
+        }
+        
+        // Copy widget code
+        function copyWidgetCode() {
+            const code = `<script src="${window.location.origin}/static/widget.js"><\/script>
+<script>
+  RobovAI.init({ apiEndpoint: '${window.location.origin}/webhook' });
+<\/script>`;
+            navigator.clipboard.writeText(code);
+            alert('تم نسخ الكود! ✓');
+        }
+        
+        // Save platform settings
+        async function savePlatform(platform) {
+            alert(`تم حفظ إعدادات ${platform}! ✓\n\nملاحظة: لتفعيل التغييرات، أضف المفاتيح في ملف .env وأعد تشغيل السيرفر.`);
+        }
+        
+        // Test platform connection
+        async function testPlatform(platform) {
+            alert(`جاري اختبار ${platform}...`);
+        }
+        
+        // Load tools list
+        async function loadTools() {
+            try {
+                const res = await fetch(`${API}/tools`);
+                const data = await res.json();
+                
+                const tools = data.tools || [];
+                document.getElementById('toolsCount').textContent = Object.keys(tools).length;
+                
+                let html = '';
+                for (const [name, info] of Object.entries(tools)) {
+                    html += `
+                        <div class="tool-item">
+                            <div>
+                                <span class="tool-name">${name}</span>
+                                <div class="tool-desc">${info.description || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('toolsList').innerHTML = html || 'لا توجد أدوات';
+                
+            } catch (e) {
+                document.getElementById('toolsList').innerHTML = 'خطأ في تحميل الأدوات';
+            }
+        }
+        
+        // Load on page load
+        loadTools();
+    </script>
+
+</body>
+</html>

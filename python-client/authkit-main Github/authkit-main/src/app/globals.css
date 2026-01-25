@@ -1,0 +1,181 @@
+::selection {
+  background-color: #003eff3e;
+}
+
+body {
+  margin: 0;
+  font-size: 20px;
+}
+
+a {
+  color: black;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: #888;
+}
+
+/* back link */
+body > a {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding-top: 48px;
+}
+
+h1 {
+  text-align: center;
+  margin: 0;
+  margin-top: auto;
+  margin-bottom: 24px;
+}
+h1:has(+ h2) {
+  margin-bottom: 8px;
+}
+
+h2 {
+  text-align: center;
+  margin: 0;
+  margin-bottom: 32px;
+}
+
+h2:has(+ ul) {
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+
+main > form {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  gap: 24px;
+  margin-bottom: auto;
+}
+
+/* field (label + input) */
+form > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid black;
+  border-radius: 4px;
+  font-size: 20px;
+  font-family: inherit;
+  height: 48px;
+  padding: 0 12px;
+}
+
+button,
+:where(main, form) > a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: black;
+  color: white;
+  border-radius: 4px;
+  font-size: 20px;
+  height: 48px;
+  font-family: inherit;
+  border: 0;
+  padding: 0 12px;
+  margin: 8px 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+button:active,
+:where(main, form) > a:active {
+  background-color: #333;
+}
+main > a {
+  width: 400px;
+  margin-bottom: auto;
+}
+
+pre {
+  font-size: 16px;
+  box-sizing: border-box;
+  min-height: 250px;
+  height: auto;
+  overflow: auto;
+  width: 100vw;
+  margin: 0;
+  margin-top: 40px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background-color: #fafafa;
+  border-top: 1px solid #eee;
+}
+
+/* lists for index pages */
+ul {
+  text-align: center;
+  list-style-type: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+h2 + ul:not(:last-child) {
+  margin-bottom: 36px;
+}
+
+h1 + ul:last-child,
+h2 + ul:last-child {
+  margin-bottom: auto;
+  padding-bottom: 48px;
+}
+
+li {
+  margin: 8px 0;
+}
+
+/* table for users table page */
+main:has(table) h1 {
+  margin-top: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  text-align: left;
+  padding: 12px 24px;
+  border-bottom: 1px solid black;
+}
+table + nav {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  width: 100%;
+  gap: 24px;
+  margin-bottom: auto;
+  color: #888;
+}
+table button {
+  margin: 0;
+}

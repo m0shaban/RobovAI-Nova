@@ -56,6 +56,38 @@ class Database:
                     FOREIGN KEY(user_id) REFERENCES users(id)
                 )
             ''')
+            # Subscriptions Table (Payment System)
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT UNIQUE,
+                    tier TEXT DEFAULT 'free',
+                    expires_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            # OTP Codes Table (Verification)
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS otp_codes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT,
+                    code TEXT,
+                    purpose TEXT,
+                    expires_at TIMESTAMP,
+                    used INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            # Usage Logs Table (Analytics)
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS usage_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT,
+                    tool_name TEXT,
+                    platform TEXT,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
             conn.commit()
 
     async def create_user(self, email: str, password: str, full_name: str) -> Optional[Dict[str, Any]]:
@@ -171,6 +203,22 @@ class Database:
             if row:
                 return dict(row)
         return None
+
+    async def execute(self, query: str, params: tuple = ()) -> Optional[List[Dict]]:
+        """Generic execute method for payment system queries"""
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(query, params)
+            
+            # If SELECT query, return results
+            if query.strip().upper().startswith('SELECT'):
+                rows = c.fetchall()
+                return [dict(row) for row in rows]
+            
+            # Otherwise commit and return None
+            conn.commit()
+            return None
 
     async def delete_session(self, token: str):
         with sqlite3.connect(DB_PATH) as conn:

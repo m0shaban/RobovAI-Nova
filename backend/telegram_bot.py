@@ -190,6 +190,27 @@ def get_main_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
 
+async def safe_reply(update: Update, text: str, reply_markup=None):
+    """
+    Robust Reply Wrapper:
+    1. Tries to send with Markdown.
+    2. If it fails (400 Bad Request), sends as Plain Text.
+    This prevents the bot from crashing on LLM formatting errors.
+    """
+    try:
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+    except Exception as e:
+        logger.warning(f"Markdown Reply Failed: {e}. Falling back to plain text.")
+        try:
+            # Fallback: Plain text
+            await update.message.reply_text(text, reply_markup=reply_markup)
+        except Exception as e2:
+            logger.error(f"Reply Failed Completely: {e2}")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 COMMAND HANDLERS
+# ═══════════════════════════════════════════════════════════════════════════
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Modern Start Screen"""
     welcome_msg = """✨ **أهلاً بك في RobovAI Nova**
@@ -205,7 +226,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 👇 **اختر من القائمة بالأسفل للبدء:**
 """
-    await update.message.reply_text(welcome_msg, reply_markup=get_main_keyboard(), parse_mode="Markdown")
+    await safe_reply(update, welcome_msg, reply_markup=get_main_keyboard())
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Detailed Command List"""
@@ -226,11 +247,149 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 💡 *نصيحة: يمكنك دائماً التحدث معي باللغة الطبيعية!*
 """
-    await update.message.reply_text(help_text, parse_mode="Markdown")
+    await safe_reply(update, help_text)
 
 async def tools_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Deprecated in favor of 'Quick Actions' menu, but kept for legacy compat
-    await update.message.reply_text("🛠️ انتقلت الأدوات إلى قائمة **إجراءات سريعة** في القائمة الرئيسية.", reply_markup=get_main_keyboard())
+    await safe_reply(update, "🛠️ انتقلت الأدوات إلى قائمة **إجراءات سريعة** في القائمة الرئيسية.", reply_markup=get_main_keyboard())
+
+# ... (Feature Handlers)
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # ... (Same message parsing logic)
+    user_id = str(update.effective_user.id)
+    message = update.message.text
+    logger.info(f"Nova Req [{user_id}]: {message}")
+    response = ""
+    
+    # ════════════════════════════════════════════════════════════════════════
+    # 1. SMART GRID MENU NAVIGATION
+    # ════════════════════════════════════════════════════════════════════════
+    if message == "⚡ إجراءات سريعة":
+        response = """🚀 **الإجراءات السريعة (Quick Actions)**
+        
+اختر ما تريد القيام به:
+1️⃣ **بحث ويب**: `/search سعر الذهب`
+2️⃣ **تحليل سهم**: `/stock NVDA`
+3️⃣ **تحويل عملة**: `/convert 100 USD to EGP`
+4️⃣ **تحميل فيديو**: `/download [الرابط]`
+"""
+
+    elif message == "📂 ملفاتي وتحليلاتي":
+        response = """📂 **مركز المستندات والبيانات**
+        
+يمكنك إرسال الملفات التالية وسأقوم بتحليلها فوراً:
+📄 **PDF/Word**: تلخيص واستخراج النقاط الهامة.
+📊 **Excel/CSV**: تحليل مالي وإحصائي شامل.
+🖼️ **صور**: استخراج نص (OCR) أو تعديل (`/edit`).
+"""
+
+    elif message == "🎙️ المساعد الصوتي":
+        response = """🎙️ **المساعد الصوتي (Voice Hub)**
+        
+أرسل **ملاحظة صوتية** (Voice Note) في أي وقت.
+- ✅ تفريغ نصي دقيق (Whisper).
+- ✅ تلخيص النقاط الهامة.
+- ✅ دعم اللهجة المصرية والعربية.
+"""
+
+    elif message == "🔍 بحث ذكي":
+        response = "🔍 **ماذا تريد أن تعرف؟**\nاكتب `/search` متبوعاً بسؤالك، وسأبحث لك في الإنترنت فوراً."
+
+    elif message == "🌐 بوابة الويب":
+        # THE WEB BRIDGE
+        web_url = os.getenv("EXTERNAL_URL") or "https://robovai.com"
+        await safe_reply(update, 
+            f"🌐 **منصة RobovAI Nova المتكاملة**\n\n"
+            "للوصول إلى لوحات المعلومات المتقدمة (Dashboards)، إدارة المشاريع، والتقارير التفصيلية، يرجى زيارة بوابتك الشخصية:\n\n"
+            f"🔗 {web_url}\n\n"
+            "💡 *هنا في تليجرام نركز على السرعة، وهناك نركز على العمق.*"
+        )
+        return
+
+    elif message == "🆘 مساعدة / أوامر":
+        await help_command(update, context)
+        return
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 2. SWISS ARMY TOOLS (COMMANDS)
+    # ════════════════════════════════════════════════════════════════════════
+    
+    # [WEB TOOLS]
+    elif message.startswith("/search") or message.startswith("بحث"):
+        if SearchTool:
+             clean = message.replace("/search", "").replace("بحث", "").strip()
+             await update.message.reply_text("⏳ **جاري البحث في المصادر الحية...**")
+             tool = SearchTool()
+             result = await tool.execute(clean, user_id)
+             response = result.get("output")
+
+    elif message.startswith("/stock") or message.startswith("سهم"):
+        if FinanceTool:
+             clean = message.replace("/stock", "").replace("سهم", "").strip()
+             await update.message.reply_text("📈 **جاري الاتصال ببيانات البورصة...**")
+             tool = FinanceTool()
+             result = await tool.execute(clean, user_id)
+             response = result.get("output")
+
+    elif message.startswith("/download") or message.startswith("تحميل"):
+        if MediaTool:
+             clean = message.replace("/download", "").replace("تحميل", "").strip()
+             await update.message.reply_text("📥 **جاري معالجة الرابط...**")
+             tool = MediaTool()
+             result = await tool.execute(clean, user_id)
+             response = result.get("output")
+
+    # [VISION TOOLS]
+    elif message.startswith("/qr"):
+        if QRCodeTool:
+            clean = message.replace("/qr", "").strip()
+            tool = QRCodeTool()
+            res = await tool.execute(clean, user_id)
+            if res.get("status") == "success":
+                await update.message.reply_photo(res.get("file_content"), caption="📱 **QR Code جاهز.**")
+                return
+            response = res.get("output")
+
+    elif message.startswith("/edit"):
+        USER_EDIT_STATE[user_id] = message.split()[1] if len(message.split()) > 1 else "gray"
+        response = "📸 **وضع التعديل:** أرسل الصورة الآن لتطبيق التأثير."
+        
+    # [OFFICE TOOLS]
+    elif message.startswith("/schedule") or message.startswith("جدول"):
+        if CalendarEventTool:
+            clean = message.replace("/schedule", "").replace("جدول", "").strip()
+            tool = CalendarEventTool()
+            res = await tool.execute(clean, user_id)
+            if res.get("status") == "success":
+                import io
+                f = io.BytesIO(res.get("file_content").encode('utf-8'))
+                f.name = "meeting.ics"
+                await update.message.reply_document(f, caption="📅 **تم جدولة الموعد.**\nإضغط لفتحه في التقويم.")
+                return
+            response = res.get("output")
+
+    # ════════════════════════════════════════════════════════════════════════
+    # 3. AI EXECUTIVE CHAT (MODERN PERSONA)
+    # ════════════════════════════════════════════════════════════════════════
+    if not response and not message.startswith("/"):
+        # Modern Executive Persona Prompt
+        system_prompt = """
+        أنت (RobovAI Nova)، مدير المكتب الرقمي التنفيذي (AI Chief of Staff).
+        - **الشخصية**: ذكي جداً، محترف، حديث، وموجز.
+        - **الأسلوب**: استخدم النقاط دائماً. تحاشى الرموز الغريبة التي تكسر التنسيق. استخدم (**) للعناوين.
+        - **المهمة**: مساعدة المستخدم على الإنجاز بأسرع وقت.
+        """
+        
+        try:
+             await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+             response = await llm_client.generate(message, provider="groq", system_prompt=system_prompt)
+        except Exception as e:
+             logger.error(f"LLM Error: {e}")
+             response = "⚠️ **عذراً،** حدث انقطاع لحظي في الاتصال العصبي. يرجى المحاولة."
+
+    if response:
+        await safe_reply(update, response, reply_markup=get_main_keyboard())
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 🚀 APP SETUP

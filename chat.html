@@ -1123,14 +1123,40 @@
                         platform: 'web'
                     })
                 });
+                
+                // Check if response is OK
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
                 const data = await res.json();
                 hideTyping(loadingId);
                 
-                const reply = data.response || data.output || 'لا توجد استجابة';
+                console.log('Backend response:', data); // Debug log
+                
+                // Handle multiple response formats
+                let reply = data.response || data.output || data.message || data.reply;
+                
+                // If still no reply, try to extract from nested structures
+                if (!reply && data.result) {
+                    reply = data.result.response || data.result.output || data.result;
+                }
+                
+                // Fallback: if reply is an object, stringify it
+                if (typeof reply === 'object') {
+                    reply = JSON.stringify(reply, null, 2);
+                }
+                
+                // Final fallback
+                if (!reply || reply.trim() === '') {
+                    reply = '⚠️ تم استلام رد فارغ من الخادم. البيانات: ' + JSON.stringify(data).substring(0, 200);
+                }
+                
                 addMessage(formatMarkdown(reply), 'bot');
             } catch(e) {
                 hideTyping(loadingId);
-                addMessage('❌ خطأ في الاتصال: ' + e.message, 'bot');
+                console.error('Chat error:', e); // Debug log
+                addMessage(`❌ خطأ في الاتصال: ${e.message}\n\nتأكد من:\n• تشغيل الخادم (python run.py)\n• URL: ${API}/webhook`, 'bot');
             }
         }
 

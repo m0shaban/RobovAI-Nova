@@ -165,21 +165,27 @@
             <div class="nav-title">Overview</div>
             <a href="#intro" class="nav-link active">Introduction</a>
             <a href="#auth" class="nav-link">Authentication</a>
-            <a href="#errors" class="nav-link">Errors</a>
+            <a href="#errors" class="nav-link">Error Handling</a>
+            <a href="#rate-limits" class="nav-link">Rate Limits</a>
         </div>
         
         <div class="nav-group">
             <div class="nav-title">Endpoints</div>
             <a href="#webhook" class="nav-link">Webhook (Chat)</a>
-            <a href="#upload" class="nav-link">Upload Media</a>
             <a href="#tools" class="nav-link">List Tools</a>
+        </div>
+        
+        <div class="nav-group">
+            <div class="nav-title">SDKs & Examples</div>
+            <a href="#python" class="nav-link">Python SDK</a>
+            <a href="#nodejs" class="nav-link">Node.js SDK</a>
+            <a href="#curl" class="nav-link">cURL Examples</a>
         </div>
         
         <div class="nav-group">
             <div class="nav-title">Integration Guides</div>
             <a href="#telegram" class="nav-link">Telegram Bot</a>
             <a href="#whatsapp" class="nav-link">WhatsApp API</a>
-            <a href="#python" class="nav-link">Python SDK</a>
         </div>
     </nav>
 
@@ -266,6 +272,269 @@ print(response.json())</code>
 client = NovaClient(<span class="string">"https://robovai-nova.onrender.com"</span>)
 reply = client.chat(<span class="string">"user1"</span>, <span class="string">"Generate a QR code for my website"</span>)
 print(reply)</code>
+            </div>
+        </section>
+
+        <section id="errors">
+            <h2>Error Handling</h2>
+            <p>All API errors follow a consistent JSON format with HTTP status codes.</p>
+            
+            <h3>Response Format</h3>
+            <div class="code-block">
+<code>{
+    <span class="string">"error"</span>: <span class="string">"error_type"</span>,
+    <span class="string">"message"</span>: <span class="string">"Human-readable error description"</span>,
+    <span class="string">"status"</span>: <span class="string">400</span>
+}</code>
+            </div>
+
+            <h3>Common Error Codes</h3>
+            <table>
+                <tr>
+                    <th>Status</th>
+                    <th>Error Type</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>400</code></td>
+                    <td>Bad Request</td>
+                    <td>Missing required parameters or invalid input</td>
+                </tr>
+                <tr>
+                    <td><code>401</code></td>
+                    <td>Unauthorized</td>
+                    <td>Invalid or missing API key</td>
+                </tr>
+                <tr>
+                    <td><code>429</code></td>
+                    <td>Rate Limit</td>
+                    <td>Too many requests (see rate limits below)</td>
+                </tr>
+                <tr>
+                    <td><code>500</code></td>
+                    <td>Server Error</td>
+                    <td>Internal processing error</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="tools">
+            <h2>List Available Tools</h2>
+            <p>Get a complete list of all 100+ tools available in the Nova platform.</p>
+            
+            <h3><span class="badge get">GET</span> /tools/list</h3>
+            
+            <div class="code-block">
+<code><span class="keyword">import</span> requests
+
+url = <span class="string">"https://robovai-nova.onrender.com/tools/list"</span>
+response = requests.get(url)
+
+tools = response.json()
+<span class="keyword">for</span> tool <span class="keyword">in</span> tools:
+    <span class="keyword">print</span>(f<span class="string">"{tool['name']}: {tool['description']}"</span>)</code>
+            </div>
+
+            <h3>Response Schema</h3>
+            <div class="code-block">
+<code>[
+    {
+        <span class="string">"command"</span>: <span class="string">"/weather"</span>,
+        <span class="string">"name"</span>: <span class="string">"Weather Check"</span>,
+        <span class="string">"description"</span>: <span class="string">"Get current weather for any city"</span>,
+        <span class="string">"category"</span>: <span class="string">"web"</span>
+    },
+    ...
+]</code>
+            </div>
+        </section>
+
+        <section id="rate-limits">
+            <h2>Rate Limits & Pricing</h2>
+            
+            <div class="note">
+                <strong>Beta Access:</strong> During the beta phase, all endpoints are free with the following limits:
+            </div>
+
+            <table>
+                <tr>
+                    <th>Tier</th>
+                    <th>Requests/Minute</th>
+                    <th>Daily Limit</th>
+                    <th>Price</th>
+                </tr>
+                <tr>
+                    <td><strong>Free (Beta)</strong></td>
+                    <td>20 requests/min</td>
+                    <td>1,000 requests/day</td>
+                    <td>$0</td>
+                </tr>
+                <tr>
+                    <td><strong>Pro</strong></td>
+                    <td>100 requests/min</td>
+                    <td>10,000 requests/day</td>
+                    <td>$29/month</td>
+                </tr>
+                <tr>
+                    <td><strong>Enterprise</strong></td>
+                    <td>Custom</td>
+                    <td>Unlimited</td>
+                    <td>Contact sales</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="nodejs">
+            <h2>Node.js SDK</h2>
+            <p>Quick integration for Node.js applications.</p>
+
+            <h3>Installation</h3>
+            <div class="code-block">
+<code>npm install axios</code>
+            </div>
+
+            <h3>Usage</h3>
+            <div class="code-block">
+<code><span class="keyword">const</span> axios = <span class="function">require</span>(<span class="string">'axios'</span>);
+
+<span class="keyword">class</span> <span class="function">NovaClient</span> {
+    <span class="function">constructor</span>(baseURL = <span class="string">'https://robovai-nova.onrender.com'</span>) {
+        <span class="keyword">this</span>.client = axios.create({ baseURL });
+    }
+
+    <span class="keyword">async</span> <span class="function">chat</span>(userId, message, platform = <span class="string">'api'</span>) {
+        <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="keyword">this</span>.client.post(<span class="string">'/webhook'</span>, {
+            user_id: userId,
+            message: message,
+            platform: platform
+        });
+        <span class="keyword">return</span> response.data;
+    }
+
+    <span class="keyword">async</span> <span class="function">listTools</span>() {
+        <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="keyword">this</span>.client.get(<span class="string">'/tools/list'</span>);
+        <span class="keyword">return</span> response.data;
+    }
+}
+
+<span class="comment">// Example usage</span>
+<span class="keyword">const</span> nova = <span class="keyword">new</span> NovaClient();
+nova.chat(<span class="string">'user123'</span>, <span class="string">'/weather Cairo'</span>)
+    .then(data => console.log(data.response))
+    .catch(err => console.error(err));</code>
+            </div>
+        </section>
+
+        <section id="curl">
+            <h2>cURL Examples</h2>
+            <p>Quick testing with command-line tools.</p>
+
+            <h3>Chat Request</h3>
+            <div class="code-block">
+<code>curl -X POST https://robovai-nova.onrender.com/webhook \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -d <span class="string">'{
+    "user_id": "user_456",
+    "message": "/search latest AI news",
+    "platform": "api"
+  }'</span></code>
+            </div>
+
+            <h3>List Tools</h3>
+            <div class="code-block">
+<code>curl -X GET https://robovai-nova.onrender.com/tools/list</code>
+            </div>
+
+            <h3>With Authentication (Production)</h3>
+            <div class="code-block">
+<code>curl -X POST https://robovai-nova.onrender.com/webhook \
+  -H <span class="string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -d <span class="string">'{"user_id":"user1","message":"Hello"}'</span></code>
+            </div>
+        </section>
+
+        <section id="telegram">
+            <h2>Telegram Bot Integration</h2>
+            <p>Connect Nova to your Telegram bot in minutes.</p>
+
+            <h3>Setup Steps</h3>
+            <ol style="color: var(--text-muted); line-height: 2;">
+                <li>Create a bot via <a href="https://t.me/BotFather" style="color: var(--primary);">@BotFather</a> and get your token</li>
+                <li>Set up a webhook pointing to Nova's endpoint</li>
+                <li>Configure environment variables</li>
+                <li>Deploy and test</li>
+            </ol>
+
+            <h3>Webhook Configuration</h3>
+            <div class="code-block">
+<code><span class="keyword">import</span> requests
+<span class="keyword">from</span> telegram <span class="keyword">import</span> Update, Bot
+<span class="keyword">from</span> telegram.ext <span class="keyword">import</span> Application, MessageHandler, filters
+
+BOT_TOKEN = <span class="string">"YOUR_TELEGRAM_BOT_TOKEN"</span>
+NOVA_URL = <span class="string">"https://robovai-nova.onrender.com/webhook"</span>
+
+<span class="keyword">async def</span> <span class="function">handle_message</span>(update: Update, context):
+    user_id = str(update.effective_user.id)
+    message = update.message.text
+    
+    <span class="comment"># Forward to Nova</span>
+    response = requests.post(NOVA_URL, json={
+        <span class="string">"user_id"</span>: user_id,
+        <span class="string">"message"</span>: message,
+        <span class="string">"platform"</span>: <span class="string">"telegram"</span>
+    })
+    
+    reply = response.json().get(<span class="string">"response"</span>, <span class="string">"Error"</span>)
+    <span class="keyword">await</span> update.message.reply_text(reply)
+
+<span class="comment"># Setup</span>
+app = Application.builder().token(BOT_TOKEN).build()
+app.add_handler(MessageHandler(filters.TEXT, handle_message))
+app.run_polling()</code>
+            </div>
+        </section>
+
+        <section id="whatsapp">
+            <h2>WhatsApp API Integration</h2>
+            <p>Integrate Nova with WhatsApp Business API or Twilio.</p>
+
+            <h3>Using Twilio</h3>
+            <div class="code-block">
+<code><span class="keyword">from</span> flask <span class="keyword">import</span> Flask, request
+<span class="keyword">from</span> twilio.twiml.messaging_response <span class="keyword">import</span> MessagingResponse
+<span class="keyword">import</span> requests
+
+app = Flask(__name__)
+NOVA_URL = <span class="string">"https://robovai-nova.onrender.com/webhook"</span>
+
+<span class="keyword">@app.route</span>(<span class="string">"/whatsapp"</span>, methods=[<span class="string">'POST'</span>])
+<span class="keyword">def</span> <span class="function">whatsapp_webhook</span>():
+    incoming_msg = request.values.get(<span class="string">'Body'</span>, <span class="string">''</span>)
+    sender = request.values.get(<span class="string">'From'</span>, <span class="string">''</span>)
+    
+    <span class="comment"># Call Nova</span>
+    nova_response = requests.post(NOVA_URL, json={
+        <span class="string">"user_id"</span>: sender,
+        <span class="string">"message"</span>: incoming_msg,
+        <span class="string">"platform"</span>: <span class="string">"whatsapp"</span>
+    })
+    
+    reply_text = nova_response.json().get(<span class="string">"response"</span>, <span class="string">"Error"</span>)
+    
+    <span class="comment"># Send back via Twilio</span>
+    resp = MessagingResponse()
+    resp.message(reply_text)
+    <span class="keyword">return</span> str(resp)
+
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    app.run(debug=<span class="keyword">True</span>)</code>
+            </div>
+
+            <div class="note">
+                <strong>Note:</strong> You'll need a Twilio account and WhatsApp Business API approval. 
+                For testing, use the Twilio Sandbox for WhatsApp.
             </div>
         </section>
         

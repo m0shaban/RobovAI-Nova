@@ -39,7 +39,7 @@ def get_main_keyboard():
     """Main Menu - Professional 2x3 Grid"""
     keyboard = [
         [KeyboardButton("🤖 محادثة ذكية"), KeyboardButton("🛠️ الأدوات")],
-        [KeyboardButton("📊 تحليل ملفات"), KeyboardButton("🔍 بحث وبيانات")],
+        [KeyboardButton("📁 ملفاتي"), KeyboardButton("🔍 بحث وبيانات")],
         [KeyboardButton("⚙️ الإعدادات"), KeyboardButton("ℹ️ عن Nova")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
@@ -124,26 +124,22 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     user_name = update.effective_user.first_name or "مستخدم"
     
-    welcome_msg = f"""✨ <b>مرحباً {user_name}!</b>
+    welcome_msg = f"""✨ <b>مرحباً بك في RobovAI Nova</b>
 
-أنا <b>Nova</b>، مساعدك التنفيذي الذكي من RobovAI.
+مساعدك التنفيذي الذكي المصمم للأعمال والإنتاجية.
 
 ━━━━━━━━━━━━━━━━━━━━
 
-📊 <b>ما يمكنني مساعدتك فيه:</b>
+📊 <b>ما يمكنني فعله:</b>
 
 • تحليل المستندات والبيانات
 • إنشاء تقارير ورسوم بيانية
 • البحث وجمع المعلومات
 • معالجة الصوت والصور
-• أتمتة المهام المتكررة
 
 ━━━━━━━━━━━━━━━━━━━━
 
-💡 <b>ابدأ الآن:</b>
-اختر من القائمة بالأسفل أو اكتب طلبك مباشرة.
-
-🆕 <i>جديد: أرسل ملف صوتي للتفريغ أو PDF للتحليل!</i>
+اختر من القائمة للبدء 👇
 """
     await safe_reply(update, welcome_msg, reply_markup=get_main_keyboard())
 
@@ -233,8 +229,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await tools_command(update, context)
             return
         
-        elif message == "📊 تحليل ملفات":
-            response = """📊 <b>مركز تحليل الملفات</b>
+        elif message == "📁 ملفاتي":
+            response = """📁 <b>مركز إدارة الملفات</b>
 
 ━━━━━━━━━━━━━━━━━━━━
 

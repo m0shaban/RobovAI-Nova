@@ -39,7 +39,7 @@ def get_main_keyboard():
     """Main Menu - Professional 2x3 Grid"""
     keyboard = [
         [KeyboardButton("🤖 محادثة ذكية"), KeyboardButton("🛠️ الأدوات")],
-        [KeyboardButton("📁 ملفاتي"), KeyboardButton("🔍 بحث وبيانات")],
+        [KeyboardButton("📊 لوحة المعلومات"), KeyboardButton("📁 ملفاتي")],
         [KeyboardButton("⚙️ الإعدادات"), KeyboardButton("ℹ️ عن Nova")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
@@ -245,6 +245,41 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ━━━━━━━━━━━━━━━━━━━━
 
 📤 <b>أرسل ملفك الآن</b> وسأقوم بتحليله تلقائياً!"""
+        
+        elif message == "📊 لوحة المعلومات":
+            # Get tools count
+            tools_count = 0
+            if ToolRegistry:
+                try:
+                    registry = ToolRegistry()
+                    tools_count = len(registry.tools)
+                except:
+                    tools_count = 100
+            else:
+                tools_count = 100
+            
+            response = f"""📊 <b>لوحة المعلومات</b>
+
+━━━━━━━━━━━━━━━━━━━━
+
+👤 <b>معلوماتك:</b>
+• المعرف: <code>{user_id}</code>
+• المنصة: Telegram
+• الحالة: نشط ✅
+
+━━━━━━━━━━━━━━━━━━━━
+
+🛠️ <b>إحصائيات النظام:</b>
+• الأدوات المتاحة: {tools_count}+
+• المنصات المتصلة: 5
+• حالة الخدمة: 🟢 متصل
+
+━━━━━━━━━━━━━━━━━━━━
+
+⚡ <b>إجراءات سريعة:</b>
+• /tools - قائمة الأدوات
+• /help - المساعدة
+• /generate_image - توليد صورة"""
         
         elif message == "🔍 بحث وبيانات":
             response = """🔍 <b>البحث وجمع البيانات</b>

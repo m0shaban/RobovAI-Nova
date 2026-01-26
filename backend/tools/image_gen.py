@@ -2,10 +2,13 @@ from typing import Dict, Any
 from .base import BaseTool
 from backend.core.llm import llm_client
 import urllib.parse
+import httpx
+import os
+import base64
 
 class ImageGenTool(BaseTool):
     """
-    توليد صور باستخدام AI - Pollinations.ai مجاني تماماً
+    توليد صور باستخدام Pollinations.ai - جودة احترافية
     """
     @property
     def name(self): return "/generate_image"
@@ -36,7 +39,7 @@ class ImageGenTool(BaseTool):
 ✅ الإنجليزي يعطي نتائج أفضل عادة
 ✅ أضف كلمات مثل "realistic", "4k", "detailed"
 
-🎁 **مجاني تماماً!** Powered by Pollinations.ai""",
+🎁 **مجاني تماماً!** Powered by Pollinations.ai - FLUX Model""",
                 "tokens_deducted": 0
             }
         
@@ -61,37 +64,105 @@ class ImageGenTool(BaseTool):
             else:
                 english_prompt = user_input.strip()
             
-            # إنشاء URL للصورة من Pollinations (v2 API)
-            # الـ API الجديد بيستخدم pollinations.ai مش image.pollinations.ai
-            encoded_prompt = urllib.parse.quote(english_prompt)
+            # Get API key
+            api_key = os.getenv("POLLINATIONS_API_KEY")
+            if not api_key:
+                return {
+                    "status": "error",
+                    "output": "❌ POLLINATIONS_API_KEY not set in .env file",
+                    "tokens_deducted": 0
+                }
             
-            # إضافة seed عشوائي لتجنب الصورة الأولية
+            # إنشاء seed للتفرد
             import random
             import time
-            seed = int(time.time() * 1000) % 1000000  # استخدام timestamp للتفرد
+            seed = int(time.time() * 1000) % 1000000
             
-            # New API format
-            image_url = f"https://pollinations.ai/p/{encoded_prompt}?width=1024&height=1024&seed={seed}&nologo=true"
+            # New Pollinations.ai API with authentication
+            encoded_prompt = urllib.parse.quote(english_prompt)
+            url = f"https://gen.pollinations.ai/image/{encoded_prompt}"
             
-            # إرجاع الصورة بصيغة Markdown
-            output = f"""🎨 **تم توليد الصورة!**
+            params = {
+                "model": "flux",        # High quality model
+                "width": 1024,
+                "height": 1024,
+                "seed": seed,
+                "enhance": "true",      # AI prompt enhancement
+                "safe": "false"         # Allow creative content
+            }
+            
+            headers = {
+                "Authorization": f"Bearer {api_key}"
+            }
+            
+            # Download image from Pollinations.ai
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.get(url, headers=headers, params=params)
+                response.raise_for_status()
+                image_bytes = response.content
+            
+            # Upload to ImgBB for permanent storage
+            imgbb_key = os.getenv("IMGBB_API_KEY")
+            if not imgbb_key:
+                return {
+                    "status": "error",
+                    "output": "❌ IMGBB_API_KEY not set in .env file",
+                    "tokens_deducted": 0
+                }
+            
+            # Encode image to base64
+            image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+            
+            # Upload to ImgBB
+            upload_url = "https://api.imgbb.com/1/upload"
+            upload_data = {
+                "key": imgbb_key,
+                "image": image_b64,
+                "name": f"robovai_{seed}"
+            }
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                upload_response = await client.post(upload_url, data=upload_data)
+                upload_response.raise_for_status()
+                upload_result = upload_response.json()
+            
+            if upload_result.get("success"):
+                image_url = upload_result["data"]["url"]
+                display_url = upload_result["data"]["display_url"]
+                
+                # إرجاع الصورة بصيغة Markdown
+                output = f"""🎨 **تم توليد الصورة بنجاح!**
 
 📝 **الوصف الأصلي:** {user_input}
 🌐 **Prompt:** {english_prompt}
+🤖 **Model:** FLUX (High Quality)
 
-![Generated Image]({image_url})
+![Generated Image]({display_url})
 
 ---
-💡 **تلميح:** الصورة قد تستغرق ثوانٍ قليلة للتحميل في المرة الأولى
-
-✨ Powered by Pollinations.ai (Free & Unlimited)"""
+✨ **Powered by Pollinations.ai** | 📦 **Hosted by ImgBB**
+🔗 Direct Link: {image_url}"""
+                
+                return {
+                    "status": "success",
+                    "output": output,
+                    "image_url": image_url,
+                    "display_url": display_url,
+                    "tokens_deducted": self.cost
+                }
+            else:
+                return {
+                    "status": "error",
+                    "output": f"❌ فشل رفع الصورة لـ ImgBB: {upload_result}",
+                    "tokens_deducted": 0
+                }
             
+        except httpx.HTTPStatusError as e:
             return {
-                "status": "success",
-                "output": output,
-                "tokens_deducted": self.cost
+                "status": "error",
+                "output": f"❌ خطأ من API: {e.response.status_code}\n{e.response.text[:200]}",
+                "tokens_deducted": 0
             }
-            
         except Exception as e:
             return {
                 "status": "error",

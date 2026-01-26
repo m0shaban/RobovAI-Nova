@@ -1,711 +1,278 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RobovAI Nova - توثيق API للمطورين</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <title>RobovAI Nova - API Documentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0a0a1a;
-            --surface: #111122;
+            --bg-void: #050505;
+            --bg-dark: #0a0a0c;
+            --bg-code: #161b22;
+            --border: #30363d;
             --primary: #00f0ff;
             --secondary: #8b5cf6;
-            --text: #e0e0e0;
-            --text-muted: #6b7280;
-            --border: rgba(255,255,255,0.1);
-            --code-bg: #1a1a2e;
+            --text-main: #f0f6fc;
+            --text-muted: #8b949e;
+            --success: #238636;
+            --accent: #1f6feb;
         }
-        
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.8;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-        
-        /* Header */
-        header {
-            padding: 1.5rem 0;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            background: rgba(10, 10, 26, 0.95);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            z-index: 100;
-        }
-        
-        .header-content {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-void);
+            color: var(--text-main);
+            line-height: 1.6;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            min-height: 100vh;
         }
-        
-        .logo {
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-dark);
+            border-right: 1px solid var(--border);
+            padding: 2rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .brand {
             display: flex;
             align-items: center;
             gap: 12px;
+            margin-bottom: 3rem;
             text-decoration: none;
-            color: var(--text);
+            color: var(--text-main);
         }
-        
-        .logo-icon {
-            width: 45px; height: 45px;
-            border-radius: 12px;
+
+        .brand-icon {
+            width: 32px; height: 32px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-        
-        .logo-text {
-            font-size: 1.4rem;
-            font-weight: 800;
-        }
-        
-        .header-links {
-            display: flex;
-            gap: 2rem;
-        }
-        
-        .header-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.3s;
-            padding: 0.5rem 1rem;
             border-radius: 8px;
+            display: grid; place-items: center;
         }
-        
-        .header-links a:hover { 
-            color: var(--primary);
-            background: rgba(0, 240, 255, 0.1);
-        }
-        
-        /* Main Layout */
-        .docs-layout {
-            display: grid;
-            grid-template-columns: 260px 1fr;
-            gap: 3rem;
-            padding: 3rem 0;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            position: sticky;
-            top: 100px;
-            height: fit-content;
-        }
-        
-        .sidebar-section {
-            margin-bottom: 2rem;
-        }
-        
-        .sidebar-title {
-            font-size: 0.8rem;
-            color: var(--primary);
+
+        .nav-group { margin-bottom: 2rem; }
+        .nav-title {
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
             margin-bottom: 1rem;
+            font-weight: 600;
         }
-        
-        .sidebar-links {
-            list-style: none;
-        }
-        
-        .sidebar-links a {
+
+        .nav-link {
             display: block;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0;
             color: var(--text-muted);
             text-decoration: none;
-            border-right: 2px solid transparent;
-            transition: all 0.3s;
+            transition: color 0.2s;
+            font-size: 0.95rem;
         }
-        
-        .sidebar-links a:hover,
-        .sidebar-links a.active {
-            color: var(--primary);
-            border-right-color: var(--primary);
-            background: rgba(0, 240, 255, 0.05);
-        }
-        
-        /* Content */
-        .content {
-            min-width: 0;
-        }
-        
-        .content h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .content h2 {
-            font-size: 1.8rem;
-            margin: 3rem 0 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
-        }
-        
-        .content h3 {
-            font-size: 1.3rem;
-            margin: 2rem 0 1rem;
+
+        .nav-link:hover, .nav-link.active {
             color: var(--primary);
         }
-        
-        .content p {
-            margin-bottom: 1rem;
-            color: var(--text-muted);
+
+        /* Main Content */
+        .main {
+            margin-left: 280px;
+            padding: 4rem 6rem;
+            max-width: 1000px;
+            width: 100%;
         }
-        
+
+        h1 { font-size: 2.5rem; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
+        h2 { font-size: 1.8rem; margin: 3rem 0 1rem; letter-spacing: -0.01em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.25rem; margin: 2rem 0 1rem; color: var(--text-main); }
+        p { color: var(--text-muted); margin-bottom: 1.5rem; }
+
         /* Code Blocks */
         .code-block {
-            background: var(--code-bg);
-            border-radius: 12px;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
             padding: 1.5rem;
             margin: 1.5rem 0;
             overflow-x: auto;
-            border: 1px solid var(--border);
             position: relative;
         }
-        
-        .code-block::before {
-            content: attr(data-lang);
-            position: absolute;
-            top: 0;
-            right: 0;
-            padding: 0.3rem 1rem;
-            background: var(--surface);
-            border-radius: 0 12px 0 8px;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-        
+
         .code-block code {
             font-family: 'Fira Code', monospace;
             font-size: 0.9rem;
-            color: #e0e0e0;
-            direction: ltr;
-            text-align: left;
-            display: block;
+            color: #e6edf3;
         }
         
-        .inline-code {
-            background: var(--code-bg);
-            padding: 0.2rem 0.5rem;
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .function { color: #d2a8ff; }
+
+        /* API Badge */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
             border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
             font-family: 'Fira Code', monospace;
-            font-size: 0.85em;
-            color: var(--primary);
+            margin-right: 8px;
         }
-        
-        /* Endpoint Card */
-        .endpoint-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-        }
-        
-        .endpoint-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        
-        .method {
-            padding: 0.3rem 0.8rem;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-        
-        .method.post { background: #22c55e; color: black; }
-        .method.get { background: #3b82f6; color: white; }
-        
-        .endpoint-path {
-            font-family: 'Fira Code', monospace;
-            color: var(--text);
-        }
-        
-        /* Tables */
+        .badge.post { background: rgba(46, 160, 67, 0.2); color: #3fb950; border: 1px solid rgba(46, 160, 67, 0.4); }
+        .badge.get { background: rgba(56, 139, 253, 0.2); color: #58a6ff; border: 1px solid rgba(56, 139, 253, 0.4); }
+
+        /* Table */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1.5rem 0;
+            margin: 2rem 0;
+            font-size: 0.9rem;
         }
-        
-        th, td {
-            padding: 1rem;
-            text-align: right;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        th {
-            background: var(--surface);
-            color: var(--primary);
-            font-weight: 600;
-        }
-        
-        /* Alert */
-        .alert {
+        th { text-align: left; padding: 1rem; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        td code { background: rgba(110, 118, 129, 0.4); padding: 2px 6px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.85em; }
+
+        .note {
+            background: rgba(56, 139, 253, 0.1);
+            border-left: 4px solid #1f6feb;
             padding: 1rem 1.5rem;
-            border-radius: 12px;
-            margin: 1.5rem 0;
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
+            border-radius: 0 6px 6px 0;
+            margin: 2rem 0;
+            color: var(--text-main);
         }
-        
-        .alert-info {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-        
-        .alert-success {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-        
-        .alert-warning {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-        
-        .alert-icon { font-size: 1.5rem; }
-        
-        /* Status Badge */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        
-        .status-ready {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-        }
-        
-        .status-pending {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-        }
-        
-        /* Responsive */
-        @media (max-width: 900px) {
-            .docs-layout {
-                grid-template-columns: 1fr;
-            }
-            
-            .sidebar {
-                position: static;
-                display: flex;
-                overflow-x: auto;
-                gap: 2rem;
-            }
-            
-            .sidebar-section { margin-bottom: 0; }
+
+        @media (max-width: 1024px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: 2rem; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="container header-content">
-            <a href="/" class="logo">
-                <div class="logo-icon">🤖</div>
-                <span class="logo-text">RobovAI Nova v3.0</span>
-            </a>
-            <div class="header-links">
-                <a href="/">الرئيسية</a>
-                <a href="/chat">المحادثة</a>
-                <a href="/admin">لوحة التحكم</a>
-                <a href="/developers">التوثيق</a>
+    <nav class="sidebar">
+        <a href="/" class="brand">
+            <div class="brand-icon">⚡</div>
+            <span style="font-weight: 700;">Nova API</span>
+        </a>
+        
+        <div class="nav-group">
+            <div class="nav-title">Overview</div>
+            <a href="#intro" class="nav-link active">Introduction</a>
+            <a href="#auth" class="nav-link">Authentication</a>
+            <a href="#errors" class="nav-link">Errors</a>
+        </div>
+        
+        <div class="nav-group">
+            <div class="nav-title">Endpoints</div>
+            <a href="#webhook" class="nav-link">Webhook (Chat)</a>
+            <a href="#upload" class="nav-link">Upload Media</a>
+            <a href="#tools" class="nav-link">List Tools</a>
+        </div>
+        
+        <div class="nav-group">
+            <div class="nav-title">Integration Guides</div>
+            <a href="#telegram" class="nav-link">Telegram Bot</a>
+            <a href="#whatsapp" class="nav-link">WhatsApp API</a>
+            <a href="#python" class="nav-link">Python SDK</a>
+        </div>
+    </nav>
+
+    <main class="main">
+        <section id="intro">
+            <h1>API Documentation</h1>
+            <p>Welcome to the RobovAI Nova API. Build powerful AI agents, automate workflows, and integrate 100+ tools into your applications with a single unified interface.</p>
+            
+            <div class="note">
+                <strong>Base URL:</strong> <code>https://robovai-nova.onrender.com</code>
             </div>
-        </div>
-    </header>
+        </section>
 
-    <div class="container">
-        <div class="docs-layout">
-            
-            <!-- Sidebar -->
-            <nav class="sidebar">
-                <div class="sidebar-section">
-                    <div class="sidebar-title">البداية</div>
-                    <ul class="sidebar-links">
-                        <li><a href="#intro" class="active">المقدمة</a></li>
-                        <li><a href="#quickstart">البداية السريعة</a></li>
-                        <li><a href="#system-status">حالة النظام</a></li>
-                    </ul>
-                </div>
-                
-                <div class="sidebar-section">
-                    <div class="sidebar-title">API Reference</div>
-                    <ul class="sidebar-links">
-                        <li><a href="#webhook">Webhook</a></li>
-                        <li><a href="#audio">Audio API</a></li>
-                        <li><a href="#upload">Upload API</a></li>
-                        <li><a href="#tools">Tools API</a></li>
-                    </ul>
-                </div>
-                
-                <div class="sidebar-section">
-                    <div class="sidebar-title">التكاملات</div>
-                    <ul class="sidebar-links">
-                        <li><a href="#telegram">Telegram</a></li>
-                        <li><a href="#whatsapp">WhatsApp</a></li>
-                        <li><a href="#messenger">Messenger</a></li>
-                        <li><a href="#discord">Discord</a></li>
-                        <li><a href="#widget">Web Widget</a></li>
-                    </ul>
-                </div>
-            </nav>
-            
-            <!-- Content -->
-            <main class="content">
-                <h1 id="intro">📚 توثيق RobovAI Nova API</h1>
-                
-                <p>مرحباً بك في توثيق RobovAI Nova v3.0! هنا هتلاقي كل اللي محتاجه عشان تدمج البوت في تطبيقك أو منصتك.</p>
-                
-                <div class="alert alert-info">
-                    <span class="alert-icon">💡</span>
-                    <div>
-                        <strong>نسخة API:</strong> v3.0.0<br>
-                        <strong>Base URL:</strong> <code class="inline-code">http://localhost:8000</code><br>
-                        <strong>الأدوات المسجلة:</strong> 106 أداة
-                    </div>
-                </div>
-                
-                <!-- System Status -->
-                <h2 id="system-status">🚦 حالة النظام</h2>
-                
-                <table>
-                    <tr>
-                        <th>المكون</th>
-                        <th>الحالة</th>
-                        <th>ملاحظات</th>
-                    </tr>
-                    <tr>
-                        <td>🛠️ Smart Router v3.0</td>
-                        <td><span class="status-badge status-ready">✓ جاهز</span></td>
-                        <td>ذاكرة محادثات، تقييم ثقة</td>
-                    </tr>
-                    <tr>
-                        <td>📱 Telegram Webhook</td>
-                        <td><span class="status-badge status-ready">✓ جاهز</span></td>
-                        <td>أضف Token في .env</td>
-                    </tr>
-                    <tr>
-                        <td>💬 WhatsApp Webhook</td>
-                        <td><span class="status-badge status-ready">✓ جاهز</span></td>
-                        <td>Meta Cloud API</td>
-                    </tr>
-                    <tr>
-                        <td>📘 Messenger Webhook</td>
-                        <td><span class="status-badge status-ready">✓ جاهز</span></td>
-                        <td>Facebook App مطلوب</td>
-                    </tr>
-                    <tr>
-                        <td>🎮 Discord Bot</td>
-                        <td><span class="status-badge status-ready">✓ جاهز</span></td>
-                        <td>يحتاج discord.py</td>
-                    </tr>
-                    <tr>
-                        <td>🌐 Web Widget</td>
-                        <td><span class="status-badge status-ready">✓ يعمل</span></td>
-                        <td>جاهز للتضمين</td>
-                    </tr>
-                </table>
-                
-                <!-- Quick Start -->
-                <h2 id="quickstart">🚀 البداية السريعة</h2>
-                
-                <p>أبسط طريقة للبدء هي إرسال رسالة عبر الـ Webhook:</p>
-                
-                <div class="code-block" data-lang="curl">
-<code>curl -X POST http://localhost:8000/webhook \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "user123",
-    "message": "/math 2+2",
-    "platform": "web"
-  }'</code>
-                </div>
-                
-                <p>الرد:</p>
-                
-                <div class="code-block" data-lang="json">
-<code>{
-  "status": "success",
-  "response": "🧮 **النتيجة:** `2+2` = **4**"
-}</code>
-                </div>
-                
-                <!-- Webhook API -->
-                <h2 id="webhook">📡 Webhook API</h2>
-                
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-path">/webhook</span>
-                    </div>
-                    <p>إرسال رسالة والحصول على رد من البوت مع اكتشاف تلقائي للأدوات.</p>
-                    
-                    <h4>Request Body:</h4>
-                    <table>
-                        <tr>
-                            <th>الحقل</th>
-                            <th>النوع</th>
-                            <th>الوصف</th>
-                        </tr>
-                        <tr>
-                            <td><code class="inline-code">user_id</code></td>
-                            <td>string</td>
-                            <td>معرف المستخدم الفريد</td>
-                        </tr>
-                        <tr>
-                            <td><code class="inline-code">message</code></td>
-                            <td>string</td>
-                            <td>نص الرسالة أو أمر الأداة</td>
-                        </tr>
-                        <tr>
-                            <td><code class="inline-code">platform</code></td>
-                            <td>string</td>
-                            <td>web, telegram, whatsapp, messenger, discord</td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <!-- Audio API -->
-                <h2 id="audio">🎤 Audio API</h2>
-                
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-path">/webhook_audio</span>
-                    </div>
-                    <p>إرسال ملف صوتي لتحويله لنص ومعالجته.</p>
-                    
-                    <h4>Form Data:</h4>
-                    <table>
-                        <tr>
-                            <th>الحقل</th>
-                            <th>النوع</th>
-                        </tr>
-                        <tr>
-                            <td><code class="inline-code">audio</code></td>
-                            <td>file (webm, mp3, wav)</td>
-                        </tr>
-                        <tr>
-                            <td><code class="inline-code">user_id</code></td>
-                            <td>string</td>
-                        </tr>
-                    </table>
-                </div>
-                
-                <!-- Upload API -->
-                <h2 id="upload">📤 Upload API</h2>
-                
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <span class="method post">POST</span>
-                        <span class="endpoint-path">/upload_image</span>
-                    </div>
-                    <p>رفع صورة على ImgBB والحصول على رابط مباشر.</p>
-                </div>
-                
-                <!-- Tools API -->
-                <h2 id="tools">🛠️ Tools API</h2>
-                
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <span class="method get">GET</span>
-                        <span class="endpoint-path">/tools</span>
-                    </div>
-                    <p>الحصول على قائمة بجميع الأدوات المتاحة (106 أداة).</p>
-                </div>
-                
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <span class="method get">GET</span>
-                        <span class="endpoint-path">/health</span>
-                    </div>
-                    <p>فحص حالة السيرفر.</p>
-                </div>
-                
-                <!-- Telegram -->
-                <h2 id="telegram">📱 Telegram</h2>
-                
-                <div class="alert alert-success">
-                    <span class="alert-icon">✅</span>
-                    <div><strong>جاهز للربط!</strong> اتبع الخطوات التالية.</div>
-                </div>
-                
-                <h3>الخطوات:</h3>
-                <ol style="padding-right: 1.5rem; color: var(--text-muted);">
-                    <li>أنشئ بوت من <code class="inline-code">@BotFather</code> على تليجرام</li>
-                    <li>احصل على Bot Token</li>
-                    <li>أضفه في <code class="inline-code">.env</code>:</li>
-                </ol>
-                
-                <div class="code-block" data-lang="env">
-<code>TELEGRAM_BOT_TOKEN=123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11</code>
-                </div>
-                
-                <p>4. بعد النشر على سيرفر عام، اضبط الـ Webhook:</p>
-                
-                <div class="code-block" data-lang="url">
-<code>https://api.telegram.org/bot{TOKEN}/setWebhook?url=https://your-domain.com/telegram_webhook</code>
-                </div>
-                
-                <!-- WhatsApp -->
-                <h2 id="whatsapp">💬 WhatsApp Business</h2>
-                
-                <h3>المتطلبات:</h3>
-                <ol style="padding-right: 1.5rem; color: var(--text-muted);">
-                    <li>حساب Meta for Developers</li>
-                    <li>تطبيق WhatsApp Business API</li>
-                </ol>
-                
-                <div class="code-block" data-lang="env">
-<code>WHATSAPP_ACCESS_TOKEN=EAAx...
-WHATSAPP_PHONE_ID=1234567890
-WHATSAPP_VERIFY_TOKEN=robovai_verify</code>
-                </div>
-                
-                <p>Webhook URL: <code class="inline-code">https://your-domain.com/whatsapp_webhook</code></p>
-                
-                <!-- Messenger -->
-                <h2 id="messenger">📘 Facebook Messenger</h2>
-                
-                <div class="code-block" data-lang="env">
-<code>MESSENGER_PAGE_TOKEN=EAAx...
-MESSENGER_VERIFY_TOKEN=robovai_verify</code>
-                </div>
-                
-                <p>Webhook URL: <code class="inline-code">https://your-domain.com/messenger_webhook</code></p>
-                
-                <!-- Discord -->
-                <h2 id="discord">🎮 Discord</h2>
-                
-                <div class="code-block" data-lang="env">
-<code>DISCORD_BOT_TOKEN=MTIx...
-DISCORD_APPLICATION_ID=123456789</code>
-                </div>
-                
-                <div class="alert alert-warning">
-                    <span class="alert-icon">⚠️</span>
-                    <div>Discord يحتاج تشغيل سكريبت منفصل لأنه يعتمد على WebSocket وليس Webhooks.</div>
-                </div>
-                
-                <!-- Web Widget -->
-                <h2 id="widget">🌐 Web Widget</h2>
-                
-                <p>أضف الـ Widget لموقعك بسطرين:</p>
-                
-                <div class="code-block" data-lang="html">
-<code>&lt;script src="https://your-domain.com/static/widget.js"&gt;&lt;/script&gt;
-&lt;script&gt;
-  RobovAI.init({
-    apiEndpoint: 'https://your-domain.com/webhook',
-    theme: 'dark',
-    position: 'bottom-right',
-    greeting: 'أهلاً! كيف ممكن أساعدك؟ 🤖',
-    primaryColor: '#00f0ff'
-  });
-&lt;/script&gt;</code>
-                </div>
-                
-                <h3>خيارات التخصيص:</h3>
-                <table>
-                    <tr>
-                        <th>الخيار</th>
-                        <th>النوع</th>
-                        <th>الافتراضي</th>
-                    </tr>
-                    <tr>
-                        <td><code class="inline-code">apiEndpoint</code></td>
-                        <td>string</td>
-                        <td>/webhook</td>
-                    </tr>
-                    <tr>
-                        <td><code class="inline-code">theme</code></td>
-                        <td>'dark' | 'light'</td>
-                        <td>'dark'</td>
-                    </tr>
-                    <tr>
-                        <td><code class="inline-code">position</code></td>
-                        <td>'bottom-right' | 'bottom-left'</td>
-                        <td>'bottom-right'</td>
-                    </tr>
-                    <tr>
-                        <td><code class="inline-code">greeting</code></td>
-                        <td>string</td>
-                        <td>أهلاً! كيف ممكن أساعدك؟</td>
-                    </tr>
-                    <tr>
-                        <td><code class="inline-code">primaryColor</code></td>
-                        <td>string (hex)</td>
-                        <td>#00f0ff</td>
-                    </tr>
-                </table>
-                
-                <div class="alert alert-info" style="margin-top: 3rem;">
-                    <span class="alert-icon">🎛️</span>
-                    <div>
-                        <strong>لوحة التحكم:</strong> استخدم <a href="/admin" style="color: var(--primary);">/admin</a> لإدارة المنصات بسهولة!
-                    </div>
-                </div>
-                
-            </main>
-        </div>
-    </div>
+        <section id="auth">
+            <h2>Authentication</h2>
+            <p>Currently, the API is open for public Webhook integrations in beta. For production use, please obtain an API Key.</p>
+            <div class="code-block">
+                <code>Authorization: Bearer YOUR_API_KEY</code>
+            </div>
+        </section>
 
-    <script>
-        // Active link highlighting
-        document.querySelectorAll('.sidebar-links a').forEach(link => {
-            link.addEventListener('click', function() {
-                document.querySelectorAll('.sidebar-links a').forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+        <section id="webhook">
+            <h2>Chat Webhook</h2>
+            <p>Send messages and get AI responses. The Smart Router will automatically detect intent and execute tools if needed.</p>
+            
+            <h3><span class="badge post">POST</span> /webhook</h3>
+            
+            <div class="code-block">
+<code><span class="keyword">import</span> requests
+
+url = <span class="string">"https://robovai-nova.onrender.com/webhook"</span>
+payload = {
+    <span class="string">"user_id"</span>: <span class="string">"user_123"</span>,
+    <span class="string">"message"</span>: <span class="string">"/weather Cairo"</span>,
+    <span class="string">"platform"</span>: <span class="string">"web"</span>
+}
+
+response = requests.post(url, json=payload)
+print(response.json())</code>
+            </div>
+
+            <h3>Parameters</h3>
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>user_id</code></td>
+                    <td>string</td>
+                    <td>Unique identifier for the user session</td>
+                </tr>
+                <tr>
+                    <td><code>message</code></td>
+                    <td>string</td>
+                    <td>The user's input text or command</td>
+                </tr>
+                <tr>
+                    <td><code>platform</code></td>
+                    <td>string</td>
+                    <td>Origin platform (web, telegram, whatsapp)</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="python">
+            <h2>Python Integration</h2>
+            <p>The easiest way to integrate Nova is using our Python snippet.</p>
+            
+            <div class="code-block">
+<code><span class="keyword">class</span> <span class="function">NovaClient</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, base_url):
+        self.base_url = base_url
+
+    <span class="keyword">def</span> <span class="function">chat</span>(self, user_id, message):
+        resp = requests.post(
+            f<span class="string">"{self.base_url}/webhook"</span>,
+            json={<span class="string">"user_id"</span>: user_id, <span class="string">"message"</span>: message, <span class="string">"platform"</span>: <span class="string">"api"</span>}
+        )
+        <span class="keyword">return</span> resp.json().get(<span class="string">"response"</span>)
+
+<span class="comment"># Usage</span>
+client = NovaClient(<span class="string">"https://robovai-nova.onrender.com"</span>)
+reply = client.chat(<span class="string">"user1"</span>, <span class="string">"Generate a QR code for my website"</span>)
+print(reply)</code>
+            </div>
+        </section>
         
-        // Intersection observer for active links
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const id = entry.target.id;
-                    document.querySelectorAll('.sidebar-links a').forEach(link => {
-                        link.classList.remove('active');
-                        if (link.getAttribute('href') === '#' + id) {
-                            link.classList.add('active');
-                        }
-                    });
-                }
-            });
-        }, { threshold: 0.5 });
-        
-        document.querySelectorAll('h2[id]').forEach(h2 => observer.observe(h2));
-    </script>
+        <footer style="margin-top: 5rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.9rem;">
+            © 2025 RobovAI Solutions. All rights reserved. <a href="/" style="color: var(--primary); text-decoration: none; margin-left: 10px;">Back to Home</a>
+        </footer>
+    </main>
 
 </body>
 </html>

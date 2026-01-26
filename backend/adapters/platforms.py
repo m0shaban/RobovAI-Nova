@@ -166,30 +166,53 @@ class TelegramAdapter(BasePlatformAdapter):
             return None
     
     async def send_message(self, message: OutgoingMessage) -> bool:
-        """Send message via Telegram"""
+        """Send message via Telegram with automatic fallback"""
         try:
-            payload = {
+            base_payload = {
                 "chat_id": message.chat_id,
                 "text": message.text,
-                "parse_mode": "MarkdownV2" if message.parse_mode == "markdown" else "HTML"
             }
             
             if message.reply_to:
-                payload["reply_to_message_id"] = message.reply_to
+                base_payload["reply_to_message_id"] = message.reply_to
             
             # Add inline keyboard if buttons provided
             if message.buttons:
                 keyboard = [[{"text": btn["text"], "callback_data": btn.get("data", btn["text"])}] 
                            for btn in message.buttons]
-                payload["reply_markup"] = json.dumps({"inline_keyboard": keyboard})
+                base_payload["reply_markup"] = json.dumps({"inline_keyboard": keyboard})
             
             async with httpx.AsyncClient() as client:
-                resp = await client.post(
-                    f"{self.api_base}/sendMessage",
-                    json=payload,
-                    timeout=30.0
-                )
-                return resp.status_code == 200
+                # Try 1: With HTML formatting
+                try:
+                    payload = {**base_payload, "parse_mode": "HTML"}
+                    resp = await client.post(
+                        f"{self.api_base}/sendMessage",
+                        json=payload,
+                        timeout=30.0
+                    )
+                    if resp.status_code == 200:
+                        return True
+                    logger.warning(f"HTML send failed: {resp.status_code} - {resp.text}")
+                except Exception as e:
+                    logger.warning(f"HTML send exception: {e}")
+                
+                # Try 2: Plain text (no formatting)
+                try:
+                    payload = {**base_payload}  # No parse_mode
+                    resp = await client.post(
+                        f"{self.api_base}/sendMessage",
+                        json=payload,
+                        timeout=30.0
+                    )
+                    if resp.status_code == 200:
+                        logger.info("Sent as plain text (fallback)")
+                        return True
+                    logger.error(f"Plain text send failed: {resp.status_code} - {resp.text}")
+                except Exception as e:
+                    logger.error(f"Plain text send exception: {e}")
+                
+                return False
                 
         except Exception as e:
             logger.error(f"Telegram send error: {e}")

@@ -323,76 +323,91 @@ async def handle_webhook(
     For Web Platform, it requires Authentication (current_user).
     For Webhooks (Telegram/WhatsApp), it relies on Platform Verification.
     """
-    # Security Check for Web
-    if payload.platform == "web":
-        if not current_user:
-            raise HTTPException(status_code=401, detail="Unauthorized Web Access")
-        # Enforce real user_id
-        payload.user_id = str(current_user["id"])
-
-    logger.info(f"Received from {payload.user_id}: {payload.message}")
-
-    user_id = payload.user_id
-    message = payload.message.strip()
-
-    # 1. SAVE USER MESSAGE 🧠
-    # Only if it's a real integer ID (Web User)
-    if payload.platform == "web":
-        await db_client.save_message(int(user_id), "user", message)
-
-    # 2. ROUTE MESSAGE 🚀
-    response_text = ""
-
-    # Check for direct tools first
-    if message.startswith("/"):
-        parts = message.split(" ", 1)
-        command = parts[0]
-        arg = parts[1] if len(parts) > 1 else ""
-
-        tool_class = ToolRegistry.get_tool(command)
-        if tool_class:
-            logger.info(f"Executing tool: {command}")
-            tool_instance = tool_class()
-            try:
-                result = await tool_instance.execute(arg, user_id)
-                response_text = result.get("output", "")
-                # Metadata could be useful later
-            except Exception as e:
-                response_text = f"❌ حدث خطأ أثناء تنفيذ الأداة: {str(e)}"
-        else:
-            response_text = f"⚠️ الأمر غير معروف: {command}"
-
-    else:
-        # 3. INTELLIGENT CHAT (LLM) 🤖
-        # Retrieve Context
-        context_str = ""
+    try:
+        # Security Check for Web
         if payload.platform == "web":
-            history = await db_client.get_recent_messages(int(user_id), limit=5)
-            # Format for LLM
-            context_str = "\n".join(
-                [f"{msg['role']}: {msg['content']}" for msg in history]
+            if not current_user:
+                raise HTTPException(status_code=401, detail="Unauthorized Web Access")
+            # Enforce real user_id
+            payload.user_id = str(current_user["id"])
+
+        logger.info(f"📨 Webhook received from {payload.user_id} [{payload.platform}]: {payload.message[:100]}")
+
+        user_id = payload.user_id
+        message = payload.message.strip()
+
+        # 1. SAVE USER MESSAGE 🧠
+        # Only if it's a real integer ID (Web User)
+        if payload.platform == "web":
+            try:
+                await db_client.save_message(int(user_id), "user", message)
+            except Exception as e:
+                logger.warning(f"Failed to save user message: {e}")
+
+        # 2. ROUTE MESSAGE using SmartToolRouter 🚀
+        response_text = ""
+        
+        try:
+            from backend.core.smart_router import SmartToolRouter
+            
+            routing_result = await SmartToolRouter.route_message(
+                message, user_id, platform=payload.platform
             )
+            
+            logger.info(f"Routing result: {routing_result['type']}")
+            
+            if routing_result["type"] == "tool":
+                response_text = routing_result["result"].get("output", "تم التنفيذ ✅")
+                logger.info(f"Tool executed: {routing_result.get('tool_name')}")
+            elif routing_result["type"] == "error":
+                response_text = f"❌ حدث خطأ: {routing_result.get('error', 'خطأ غير معروف')}"
+                logger.error(f"Tool error: {routing_result.get('error')}")
+            else:
+                # Chat mode - use LLM
+                from backend.core.llm import llm_client
+                
+                # Get context if web
+                context_str = ""
+                if payload.platform == "web":
+                    try:
+                        history = await db_client.get_recent_messages(int(user_id), limit=5)
+                        context_str = "\n".join(
+                            [f"{msg['role']}: {msg['content']}" for msg in history]
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to get history: {e}")
+                
+                system_persona = """
+                أنت نوفا (Nova)، مساعد ذكي متطور من تطوير RobovAI Solutions.
+                - تتحدث باللهجة المصرية الودودة أو العربية الفصحى المبسطة.
+                - أنت محترف، ذكي، وتتمتع بحس فكاهي خفيف.
+                - هدفك مساعدة المستخدم في مهامه.
+                - إذا لم تفهم، اطلب التوضيح بأدب.
+                """
+                
+                prompt = f"Context:\n{context_str}\n\nUser: {message}" if context_str else message
+                response_text = await llm_client.generate(prompt, system_prompt=system_persona)
+                logger.info(f"LLM response generated for user {user_id}")
+                
+        except Exception as e:
+            logger.error(f"Routing/LLM error: {e}", exc_info=True)
+            response_text = "⚠️ عذراً، حدث خطأ تقني. يرجى المحاولة مرة أخرى."
 
-        # Determine System Prompt
-        system_persona = """
-        أنت نوفا (Nova)، مساعد ذكي متطور من تطوير RobovAI Solutions.
-        - تتحدث باللهجة المصرية الودودة أو العربية الفصحى المبسطة.
-        - أنت محترف، ذكي، وتتمتع بحس فكاهي خفيف.
-        - هدفك مساعدة المستخدم في مهامه.
-        - إذا لم تفهم، اطلب التوضيح بأدب.
-        """
+        # 3. SAVE ASSISTANT RESPONSE 🧠
+        if payload.platform == "web" and response_text:
+            try:
+                await db_client.save_message(int(user_id), "assistant", response_text)
+            except Exception as e:
+                logger.warning(f"Failed to save assistant message: {e}")
 
-        # Generate Response
-        from backend.core.llm import llm_client
-
-        prompt = f"Context:\n{context_str}\n\nUser: {message}"
-        response_text = await llm_client.generate(prompt, system_prompt=system_persona)
-
-    # 4. SAVE ASSISTANT RESPONSE 🧠
-    if payload.platform == "web":
-        await db_client.save_message(int(user_id), "assistant", response_text)
-
-    return {"status": "success", "response": response_text}
+        logger.info(f"✅ Response sent to {user_id}")
+        return {"status": "success", "response": response_text}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Webhook critical error: {e}", exc_info=True)
+        return {"status": "error", "response": "⚠️ حدث خطأ تقني. يرجى المحاولة لاحقاً."}
 
 
 @app.post("/webhook_audio")

@@ -1,14 +1,14 @@
 """
-🤖 RobovAI Nova - Telegram AI Chief of Staff
+🤖 RobovAI Nova - Telegram AI Executive Assistant v2.0
 ═══════════════════════════════════════════════════════════════
-Professional Assistant for Productivity, Business, and Data Analysis.
+Professional AI Chief of Staff - SaaS Ready Edition
 """
 
 import logging
 import os
 import tempfile
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 
 logger = logging.getLogger("robovai.telegram")
 
@@ -26,328 +26,514 @@ except ImportError:
     logger.warning("LLM client not available")
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 📊 STATE MANAGEMENT
+# 📊 STATE & NAVIGATION
 # ═══════════════════════════════════════════════════════════════════════════
 
-USER_EDIT_STATE = {}  # Store user editing preferences
+USER_STATE = {}  # Track user menu state
 
 # ═══════════════════════════════════════════════════════════════════════════
-# ⌨️ PROFESSIONAL KEYBOARD
+# ⌨️ PROFESSIONAL KEYBOARD MENUS
 # ═══════════════════════════════════════════════════════════════════════════
 
 def get_main_keyboard():
-    """
-    Modern 2x3 Grid Menu for Executive Efficiency.
-    """
+    """Main Menu - Professional 2x3 Grid"""
     keyboard = [
-        [KeyboardButton("⚡ إجراءات سريعة"), KeyboardButton("📂 ملفاتي وتحليلاتي")],
-        [KeyboardButton("🔍 بحث ذكي"), KeyboardButton("🎙️ المساعد الصوتي")],
-        [KeyboardButton("🌐 بوابة الويب"), KeyboardButton("🆘 مساعدة / أوامر")]
+        [KeyboardButton("🤖 محادثة ذكية"), KeyboardButton("🛠️ الأدوات")],
+        [KeyboardButton("📊 تحليل ملفات"), KeyboardButton("🔍 بحث وبيانات")],
+        [KeyboardButton("⚙️ الإعدادات"), KeyboardButton("ℹ️ عن Nova")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
+
+def get_tools_keyboard():
+    """Tools Sub-Menu - Categorized"""
+    keyboard = [
+        [KeyboardButton("🎨 إبداعية"), KeyboardButton("💼 أعمال")],
+        [KeyboardButton("🔧 تقنية"), KeyboardButton("🌐 ويب")],
+        [KeyboardButton("🎭 ترفيه"), KeyboardButton("◀️ القائمة الرئيسية")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def get_creative_tools_keyboard():
+    """Creative Tools"""
+    keyboard = [
+        [KeyboardButton("/generate_image 🎨"), KeyboardButton("/qr 📱")],
+        [KeyboardButton("/chart 📊"), KeyboardButton("/diagram 📐")],
+        [KeyboardButton("◀️ الأدوات")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def get_business_tools_keyboard():
+    """Business Tools"""
+    keyboard = [
+        [KeyboardButton("/ask_pdf 📄"), KeyboardButton("/excel 📊")],
+        [KeyboardButton("/currency 💱"), KeyboardButton("/stock 📈")],
+        [KeyboardButton("◀️ الأدوات")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def get_dev_tools_keyboard():
+    """Developer Tools"""
+    keyboard = [
+        [KeyboardButton("/code_fix 🔧"), KeyboardButton("/sql 🗄️")],
+        [KeyboardButton("/regex 🔤"), KeyboardButton("/json 📋")],
+        [KeyboardButton("◀️ الأدوات")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def get_web_tools_keyboard():
+    """Web & Data Tools"""
+    keyboard = [
+        [KeyboardButton("/search 🔍"), KeyboardButton("/weather 🌤️")],
+        [KeyboardButton("/wikipedia 📚"), KeyboardButton("/translate 🌐")],
+        [KeyboardButton("◀️ الأدوات")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+def get_fun_tools_keyboard():
+    """Fun & Entertainment Tools"""
+    keyboard = [
+        [KeyboardButton("/joke 😂"), KeyboardButton("/quote 💭")],
+        [KeyboardButton("/cat 🐱"), KeyboardButton("/dog 🐕")],
+        [KeyboardButton("/fact 💡"), KeyboardButton("◀️ الأدوات")]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 🛡️ SAFE REPLY WRAPPER
 # ═══════════════════════════════════════════════════════════════════════════
 
-async def safe_reply(update: Update, text: str, reply_markup=None, parse_mode="Markdown"):
-    """
-    Robust Reply Wrapper:
-    1. Tries to send with Markdown.
-    2. If it fails (400 Bad Request), sends as Plain Text.
-    This prevents the bot from crashing on LLM formatting errors.
-    """
+async def safe_reply(update: Update, text: str, reply_markup=None, parse_mode="HTML"):
+    """Robust reply with automatic fallback"""
     try:
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
-        logger.info(f"Successfully sent message to user {update.effective_user.id}")
+        logger.info(f"Sent message to user {update.effective_user.id}")
     except Exception as e:
-        logger.warning(f"Markdown Reply Failed: {e}. Falling back to plain text.")
+        logger.warning(f"HTML failed: {e}. Trying plain text.")
         try:
-            # Fallback: Plain text
             await update.message.reply_text(text, reply_markup=reply_markup)
-            logger.info(f"Successfully sent plain text message to user {update.effective_user.id}")
         except Exception as e2:
-            logger.error(f"Reply Failed Completely: {e2}", exc_info=True)
+            logger.error(f"Reply failed: {e2}", exc_info=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 🎯 COMMAND HANDLERS
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Modern Start Screen"""
+    """Professional Welcome Screen"""
     logger.info(f"User {update.effective_user.id} started the bot")
-    welcome_msg = """✨ **أهلاً بك في RobovAI Nova**
+    
+    user_name = update.effective_user.first_name or "مستخدم"
+    
+    welcome_msg = f"""✨ <b>مرحباً {user_name}!</b>
 
-أنا مساعدك التنفيذي الشخصي (AI Chief of Staff). 
-تم تصميمي لمساعدتك على إدارة أعمالك، تحليل بياناتك، وتنظيم يومك بذكاء.
+أنا <b>Nova</b>، مساعدك التنفيذي الذكي من RobovAI.
 
-💡 **ماذا يمكنني أن أفعل؟**
-- 🎙️ **تفريغ الملاحظات الصوتية** بدقة.
-- 📊 **تحليل ملفات Excel** واستخراج النتائج.
-- 📄 **تلخيص العقود والمستندات**.
-- 🌐 **البحث في الإنترنت** ومتابعة الأسهم.
+━━━━━━━━━━━━━━━━━━━━
 
-👇 **اختر من القائمة بالأسفل للبدء:**
+📊 <b>ما يمكنني مساعدتك فيه:</b>
+
+• تحليل المستندات والبيانات
+• إنشاء تقارير ورسوم بيانية
+• البحث وجمع المعلومات
+• معالجة الصوت والصور
+• أتمتة المهام المتكررة
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 <b>ابدأ الآن:</b>
+اختر من القائمة بالأسفل أو اكتب طلبك مباشرة.
+
+🆕 <i>جديد: أرسل ملف صوتي للتفريغ أو PDF للتحليل!</i>
 """
     await safe_reply(update, welcome_msg, reply_markup=get_main_keyboard())
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Detailed Command List"""
+    """Comprehensive Help"""
     logger.info(f"User {update.effective_user.id} requested help")
-    help_text = """🆘 **دليل الأوامر السريعة**
+    
+    help_text = """📖 <b>دليل الاستخدام السريع</b>
 
-🔹 **البحث والمعلومات:**
-`/search [سؤالك]` - بحث حي في جوجل/الويب.
-`/weather [المدينة]` - معلومات الطقس.
-`/crypto [رمز]` - أسعار العملات الرقمية.
+━━━━━━━━━━━━━━━━━━━━
 
-🔹 **الوسائط والملفات:**
-`/qr [نص أو رابط]` - إنشاء كود QR.
-`/password` - توليد كلمة مرور قوية.
+<b>🔹 الأوامر الأساسية:</b>
+• /start - بدء المحادثة
+• /help - عرض المساعدة
+• /tools - قائمة الأدوات
 
-🔹 **الترفيه:**
-`/joke` - نكتة عشوائية.
-`/cat` - صورة قطة.
-`/dog` - صورة كلب.
+<b>🔹 أمثلة سريعة:</b>
+• <code>/search أخبار التقنية</code>
+• <code>/weather القاهرة</code>
+• <code>/generate_image غروب على النيل</code>
+• <code>/joke</code>
 
-💡 *نصيحة: يمكنك دائماً التحدث معي باللغة الطبيعية!*
+<b>🔹 معالجة الملفات:</b>
+• أرسل <b>ملف PDF</b> ← تحليل وتلخيص
+• أرسل <b>ملف Excel</b> ← تحليل البيانات
+• أرسل <b>ملاحظة صوتية</b> ← تفريغ نصي
+
+━━━━━━━━━━━━━━━━━━━━
+
+💬 أو اكتب طلبك بلغة طبيعية وسأفهمك تلقائياً!
 """
-    await safe_reply(update, help_text)
+    await safe_reply(update, help_text, reply_markup=get_main_keyboard())
 
 async def tools_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show available tools"""
-    logger.info(f"User {update.effective_user.id} requested tools list")
-    await safe_reply(update, "🛠️ انتقلت الأدوات إلى قائمة **إجراءات سريعة** في القائمة الرئيسية.", reply_markup=get_main_keyboard())
+    """Show tools menu"""
+    logger.info(f"User {update.effective_user.id} requested tools")
+    
+    tools_text = """🛠️ <b>اختر فئة الأدوات</b>
+
+━━━━━━━━━━━━━━━━━━━━
+
+🎨 <b>إبداعية</b> - توليد صور، QR، رسوم بيانية
+💼 <b>أعمال</b> - تحليل PDF، Excel، عملات
+🔧 <b>تقنية</b> - إصلاح كود، SQL، Regex
+🌐 <b>ويب</b> - بحث، طقس، ويكيبيديا
+🎭 <b>ترفيه</b> - نكت، حقائق، اقتباسات
+
+━━━━━━━━━━━━━━━━━━━━
+
+اختر فئة من الأزرار بالأسفل 👇
+"""
+    await safe_reply(update, tools_text, reply_markup=get_tools_keyboard())
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 📨 MESSAGE HANDLER
+# 📨 MAIN MESSAGE HANDLER
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Core Logic for 'AI Chief of Staff' - Modern & Professional.
-    """
+    """Core message handler with professional UX"""
     try:
         user_id = str(update.effective_user.id)
         message = update.message.text or ""
         
-        # Log for analytics
-        logger.info(f"Nova Req [{user_id}]: {message}")
+        logger.info(f"Nova [{user_id}]: {message}")
         
         response = ""
+        keyboard = get_main_keyboard()
         
         # ════════════════════════════════════════════════════════════════════════
-        # 1. SMART GRID MENU NAVIGATION
+        # 1. MENU NAVIGATION
         # ════════════════════════════════════════════════════════════════════════
-        if message == "⚡ إجراءات سريعة":
-            response = """🚀 **الإجراءات السريعة (Quick Actions)**
-            
-اختر ما تريد القيام به:
-1️⃣ **بحث ويب**: `/search سعر الذهب`
-2️⃣ **معلومات طقس**: `/weather Cairo`
-3️⃣ **كلمة مرور**: `/password`
-4️⃣ **QR Code**: `/qr نص أو رابط`
-"""
         
-        elif message == "📂 ملفاتي وتحليلاتي":
-            response = """📂 **مركز المستندات والبيانات**
-            
-يمكنك إرسال الملفات التالية وسأقوم بتحليلها فوراً:
-📄 **PDF/Word**: تلخيص واستخراج النقاط الهامة.
-📊 **Excel/CSV**: تحليل مالي وإحصائي شامل.
-🖼️ **صور**: استخراج نص (OCR) أو تحليل.
-"""
+        # Main Menu Items
+        if message == "🤖 محادثة ذكية":
+            response = """🤖 <b>وضع المحادثة الذكية</b>
+
+أنا جاهز للمحادثة! اكتب أي سؤال أو طلب وسأساعدك.
+
+<b>أمثلة:</b>
+• "اشرح لي الذكاء الاصطناعي ببساطة"
+• "ساعدني في كتابة إيميل رسمي"
+• "ما هي أفضل الممارسات في إدارة المشاريع؟"
+
+💬 اكتب رسالتك..."""
         
-        elif message == "🎙️ المساعد الصوتي":
-            response = """🎙️ **المساعد الصوتي (Voice Hub)**
-            
-أرسل **ملاحظة صوتية** (Voice Note) في أي وقت.
-- ✅ تفريغ نصي دقيق (Whisper).
-- ✅ تلخيص النقاط الهامة.
-- ✅ دعم اللهجة المصرية والعربية.
-"""
+        elif message == "🛠️ الأدوات":
+            await tools_command(update, context)
+            return
         
-        elif message == "🔍 بحث ذكي":
-            response = "🔍 **ماذا تريد أن تعرف؟**\nاكتب `/search` متبوعاً بسؤالك، وسأبحث لك في الإنترنت فوراً."
+        elif message == "📊 تحليل ملفات":
+            response = """📊 <b>مركز تحليل الملفات</b>
+
+━━━━━━━━━━━━━━━━━━━━
+
+<b>الملفات المدعومة:</b>
+
+📄 <b>PDF</b> - استخراج النص والتلخيص
+📊 <b>Excel/CSV</b> - تحليل البيانات
+📝 <b>Word</b> - معالجة المستندات
+🖼️ <b>صور</b> - استخراج النص (OCR)
+🎤 <b>صوت</b> - تفريغ نصي
+
+━━━━━━━━━━━━━━━━━━━━
+
+📤 <b>أرسل ملفك الآن</b> وسأقوم بتحليله تلقائياً!"""
         
-        elif message == "🌐 بوابة الويب":
+        elif message == "🔍 بحث وبيانات":
+            response = """🔍 <b>البحث وجمع البيانات</b>
+
+━━━━━━━━━━━━━━━━━━━━
+
+<b>الأوامر المتاحة:</b>
+
+🔎 <code>/search [سؤالك]</code> - بحث في الويب
+🌤️ <code>/weather [مدينة]</code> - حالة الطقس
+📚 <code>/wikipedia [موضوع]</code> - ويكيبيديا
+💱 <code>/currency USD EGP</code> - أسعار العملات
+📈 <code>/stock AAPL</code> - أسعار الأسهم
+
+━━━━━━━━━━━━━━━━━━━━
+
+اكتب الأمر المطلوب 👆"""
+            keyboard = get_web_tools_keyboard()
+        
+        elif message == "⚙️ الإعدادات":
             web_url = os.getenv("EXTERNAL_URL") or os.getenv("RENDER_EXTERNAL_URL") or "https://robovai.com"
-            response = f"""🌐 **منصة RobovAI Nova المتكاملة**
+            response = f"""⚙️ <b>الإعدادات والحساب</b>
 
-للوصول إلى لوحات المعلومات المتقدمة (Dashboards)، إدارة المشاريع، والتقارير التفصيلية، يرجى زيارة بوابتك الشخصية:
+━━━━━━━━━━━━━━━━━━━━
 
-🔗 {web_url}
+👤 <b>معرفك:</b> <code>{user_id}</code>
+📱 <b>المنصة:</b> Telegram
 
-💡 *هنا في تليجرام نركز على السرعة، وهناك نركز على العمق.*"""
+🌐 <b>لوحة التحكم الكاملة:</b>
+{web_url}
+
+━━━━━━━━━━━━━━━━━━━━
+
+<i>للإعدادات المتقدمة، قم بزيارة بوابة الويب.</i>"""
         
-        elif message == "🆘 مساعدة / أوامر":
-            await help_command(update, context)
+        elif message == "ℹ️ عن Nova":
+            response = """ℹ️ <b>عن RobovAI Nova</b>
+
+━━━━━━━━━━━━━━━━━━━━
+
+🤖 <b>Nova</b> هو مساعد ذكاء اصطناعي متقدم 
+مصمم للأعمال والإنتاجية.
+
+<b>الميزات:</b>
+• 100+ أداة ذكية متكاملة
+• تحليل المستندات والبيانات
+• توليد صور ورسوم بيانية
+• تفريغ الصوت بدقة عالية
+• دعم متعدد اللغات
+
+━━━━━━━━━━━━━━━━━━━━
+
+⚡ <b>الإصدار:</b> 2.0 SaaS
+🏢 <b>من:</b> RobovAI Solutions
+🌐 <b>الموقع:</b> robovai.com"""
+        
+        # Tools Categories
+        elif message == "🎨 إبداعية":
+            response = """🎨 <b>الأدوات الإبداعية</b>
+
+<code>/generate_image [وصف]</code> - توليد صورة AI
+<code>/qr [نص أو رابط]</code> - إنشاء QR Code
+<code>/chart [بيانات]</code> - رسم بياني
+<code>/diagram [وصف]</code> - رسم مخطط
+
+اختر أداة من الأزرار 👇"""
+            keyboard = get_creative_tools_keyboard()
+        
+        elif message == "💼 أعمال":
+            response = """💼 <b>أدوات الأعمال</b>
+
+<code>/ask_pdf</code> - تحليل ملفات PDF
+<code>/excel</code> - معالجة Excel
+<code>/currency [عملة]</code> - أسعار العملات
+<code>/stock [رمز]</code> - أسعار الأسهم
+
+اختر أداة من الأزرار 👇"""
+            keyboard = get_business_tools_keyboard()
+        
+        elif message == "🔧 تقنية":
+            response = """🔧 <b>الأدوات التقنية</b>
+
+<code>/code_fix [كود]</code> - إصلاح الكود
+<code>/sql [استعلام]</code> - بناء SQL
+<code>/regex [نمط]</code> - اختبار Regex
+<code>/json [بيانات]</code> - تنسيق JSON
+
+اختر أداة من الأزرار 👇"""
+            keyboard = get_dev_tools_keyboard()
+        
+        elif message == "🌐 ويب":
+            response = """🌐 <b>أدوات الويب والبيانات</b>
+
+<code>/search [سؤال]</code> - بحث ويب
+<code>/weather [مدينة]</code> - الطقس
+<code>/wikipedia [موضوع]</code> - ويكيبيديا
+<code>/translate [نص]</code> - ترجمة
+
+اختر أداة من الأزرار 👇"""
+            keyboard = get_web_tools_keyboard()
+        
+        elif message == "🎭 ترفيه":
+            response = """🎭 <b>أدوات الترفيه</b>
+
+<code>/joke</code> - نكتة عشوائية
+<code>/quote</code> - اقتباس ملهم
+<code>/cat</code> - صورة قطة 🐱
+<code>/dog</code> - صورة كلب 🐕
+<code>/fact</code> - حقيقة مثيرة
+
+اختر أداة من الأزرار 👇"""
+            keyboard = get_fun_tools_keyboard()
+        
+        # Navigation
+        elif message == "◀️ القائمة الرئيسية":
+            response = "🏠 العودة للقائمة الرئيسية"
+            keyboard = get_main_keyboard()
+        
+        elif message == "◀️ الأدوات":
+            await tools_command(update, context)
             return
         
         # ════════════════════════════════════════════════════════════════════════
-        # 2. TOOL COMMANDS (Using ToolRegistry)
+        # 2. TOOL COMMANDS
         # ════════════════════════════════════════════════════════════════════════
         elif message.startswith("/") and ToolRegistry:
             parts = message.split(" ", 1)
-            command = parts[0]
+            command = parts[0].split("_")[0] if "_" in parts[0] else parts[0]  # Handle button format
+            command = command.replace(" ", "").split()[0]  # Clean command
             arg = parts[1] if len(parts) > 1 else ""
             
             tool_class = ToolRegistry.get_tool(command)
             if tool_class:
-                logger.info(f"Executing tool: {command} for user {user_id}")
+                logger.info(f"Executing tool: {command}")
                 try:
                     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-                    tool_instance = tool_class()
-                    result = await tool_instance.execute(arg, user_id)
-                    response = result.get("output", "تم التنفيذ ✅")
-                    logger.info(f"Tool {command} executed successfully for user {user_id}")
+                    tool = tool_class()
+                    result = await tool.execute(arg, user_id)
+                    response = result.get("output", "✅ تم التنفيذ")
+                    logger.info(f"Tool {command} success")
                 except Exception as e:
-                    logger.error(f"Tool execution error for {command}: {e}", exc_info=True)
-                    response = f"❌ حدث خطأ أثناء تنفيذ الأداة: {str(e)}"
+                    logger.error(f"Tool error: {e}", exc_info=True)
+                    response = f"❌ خطأ في تنفيذ الأداة: {str(e)[:100]}"
             else:
-                logger.warning(f"Unknown command: {command}")
-                response = f"⚠️ الأمر غير معروف: {command}\nاستخدم /help لعرض الأوامر المتاحة."
+                response = f"⚠️ الأمر <code>{command}</code> غير متاح.\nاستخدم /help للمساعدة."
         
         # ════════════════════════════════════════════════════════════════════════
-        # 3. AI EXECUTIVE CHAT (MODERN PERSONA)
+        # 3. AI CHAT
         # ════════════════════════════════════════════════════════════════════════
         elif not response:
-            # Modern Executive Persona Prompt
-            system_prompt = """
-            أنت (RobovAI Nova)، مدير المكتب الرقمي التنفيذي (AI Chief of Staff).
-            - **الشخصية**: ذكي جداً، محترف، حديث، وموجز.
-            - **اللهجة**: عربية "بيضاء" (راقية ومفهومة لكل العرب)، بلمسة مصرية خفيفة جداً للود.
-            - **الأسلوب**: استخدم النقاط (- Bullet points) دائماً للإجابات الطويلة. استخدم التنسيق (**Bold**) للكلمات المهمة.
-            - **المهمة**: مساعدة المستخدم على الإنجاز بأسرع وقت.
-            - إذا سأل عن شيء معقد (مثل لوحة بيانات)، وجهه لـ "بوابة الويب" بلباقة.
-            """
+            system_prompt = """أنت Nova، مساعد ذكاء اصطناعي تنفيذي من RobovAI.
+
+الشخصية:
+- محترف وذكي
+- ودود بدون مبالغة
+- موجز ومنظم
+
+الأسلوب:
+- استخدم النقاط للقوائم
+- كن مباشراً في الإجابة
+- قدم معلومات عملية
+
+اللغة:
+- عربية فصحى مبسطة
+- تجنب العامية المفرطة"""
             
             try:
                 await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
                 if llm_client:
                     response = await llm_client.generate(message, provider="groq", system_prompt=system_prompt)
-                    logger.info(f"LLM response generated for user {user_id}")
                 else:
-                    response = "⚠️ **عذراً،** النظام الذكي غير متاح حالياً. يرجى المحاولة لاحقاً."
-                    logger.error("LLM client not available")
+                    response = "⚠️ النظام غير متاح حالياً. يرجى المحاولة لاحقاً."
             except Exception as e:
-                logger.error(f"LLM Error for user {user_id}: {e}", exc_info=True)
-                response = "⚠️ **عذراً،** حدث انقطاع لحظي في الاتصال العصبي. يرجى المحاولة مرة أخرى."
+                logger.error(f"LLM error: {e}", exc_info=True)
+                response = "⚠️ حدث خطأ. يرجى المحاولة مرة أخرى."
         
         # Send response
         if response:
-            await safe_reply(update, response, reply_markup=get_main_keyboard())
+            await safe_reply(update, response, reply_markup=keyboard)
         
     except Exception as e:
-        logger.error(f"Critical error in handle_message: {e}", exc_info=True)
-        try:
-            await safe_reply(update, "⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك. يرجى المحاولة مرة أخرى.")
-        except:
-            pass
+        logger.error(f"Critical error: {e}", exc_info=True)
+        await safe_reply(update, "⚠️ حدث خطأ تقني. يرجى المحاولة لاحقاً.")
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 📎 DOCUMENT UPLOAD HANDLER
+# 📎 DOCUMENT HANDLER
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def handle_document_upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle document uploads (PDF, Excel, Word, etc.)"""
+    """Handle document uploads"""
     try:
         user_id = str(update.effective_user.id)
         document = update.message.document
         
-        logger.info(f"User {user_id} uploaded document: {document.file_name}")
+        logger.info(f"User {user_id} uploaded: {document.file_name}")
         
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
         
-        # Download file
-        file = await context.bot.get_file(document.file_id)
-        file_bytes = await file.download_as_bytearray()
-        
-        # Save temporarily
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(document.file_name)[1]) as temp_file:
-            temp_file.write(file_bytes)
-            temp_path = temp_file.name
-        
-        # Try to use appropriate tool based on file type
         file_ext = os.path.splitext(document.file_name)[1].lower()
-        response = f"📄 تم استلام الملف: `{document.file_name}`\n\n"
         
-        if file_ext == '.pdf' and ToolRegistry:
-            tool_class = ToolRegistry.get_tool("/ask_pdf")
-            if tool_class:
-                tool = tool_class()
-                result = await tool.execute(temp_path, user_id)
-                response += result.get("output", "تم معالجة الملف")
-            else:
-                response += "📑 ملف PDF تم استلامه. استخدم `/ask_pdf` مع رابط الملف للتحليل."
+        response = f"""📄 <b>تم استلام الملف</b>
+
+<b>الاسم:</b> <code>{document.file_name}</code>
+<b>الحجم:</b> {document.file_size // 1024} KB
+<b>النوع:</b> {file_ext.upper()}
+
+━━━━━━━━━━━━━━━━━━━━
+
+"""
+        
+        if file_ext == '.pdf':
+            response += "📑 جاري تحليل ملف PDF..."
+            # Download and process
+            file = await context.bot.get_file(document.file_id)
+            file_bytes = await file.download_as_bytearray()
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tf:
+                tf.write(file_bytes)
+                temp_path = tf.name
+            
+            if ToolRegistry:
+                tool = ToolRegistry.get_tool("/ask_pdf")
+                if tool:
+                    result = await tool().execute(temp_path, user_id)
+                    response += "\n\n" + result.get("output", "تم المعالجة")
+            
+            try:
+                os.unlink(temp_path)
+            except:
+                pass
+                
         elif file_ext in ['.xlsx', '.xls', '.csv']:
-            response += "📊 ملف Excel/CSV تم استلامه. جاري تحليله...\n"
-            response += "_(ملاحظة: تحليل البيانات قيد التطوير)_"
+            response += "📊 <i>تحليل Excel قيد التطوير</i>"
         elif file_ext in ['.doc', '.docx']:
-            response += "📝 ملف Word تم استلامه.\n_(ملاحظة: معالجة Word قيد التطوير)_"
+            response += "📝 <i>معالجة Word قيد التطوير</i>"
         else:
-            response += "ℹ️ نوع الملف غير مدعوم حالياً للتحليل التلقائي."
-        
-        # Cleanup
-        try:
-            os.unlink(temp_path)
-        except:
-            pass
+            response += f"ℹ️ نوع الملف {file_ext} غير مدعوم للتحليل التلقائي."
         
         await safe_reply(update, response, reply_markup=get_main_keyboard())
         
     except Exception as e:
-        logger.error(f"Error handling document: {e}", exc_info=True)
-        await safe_reply(update, "❌ حدث خطأ أثناء معالجة الملف. يرجى المحاولة مرة أخرى.")
+        logger.error(f"Document error: {e}", exc_info=True)
+        await safe_reply(update, "❌ خطأ في معالجة الملف.")
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 🎙️ VOICE NOTE HANDLER
+# 🎙️ VOICE HANDLER
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def handle_voice_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle voice note uploads"""
+    """Handle voice notes"""
     try:
         user_id = str(update.effective_user.id)
         voice = update.message.voice
         
-        logger.info(f"User {user_id} sent voice note (duration: {voice.duration}s)")
+        logger.info(f"User {user_id} sent voice ({voice.duration}s)")
         
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-        await update.message.reply_text("🎙️ **جاري تفريغ الصوت...**")
+        await update.message.reply_text("🎙️ <b>جاري تفريغ الصوت...</b>", parse_mode="HTML")
         
-        # Download voice file
+        # Download
         file = await context.bot.get_file(voice.file_id)
         file_bytes = await file.download_as_bytearray()
         
-        # Save temporarily
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as temp_file:
-            temp_file.write(file_bytes)
-            temp_path = temp_file.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as tf:
+            tf.write(file_bytes)
+            temp_path = tf.name
         
-        # Try to transcribe using LLM or VoiceNote tool
         response = ""
         
         if ToolRegistry:
-            tool_class = ToolRegistry.get_tool("/voice_note")
-            if tool_class:
-                tool = tool_class()
-                result = await tool.execute(temp_path, user_id)
-                response = result.get("output", "تم معالجة الصوت")
-            else:
-                # Fallback to direct LLM transcription
-                if llm_client:
-                    try:
-                        transcription = await llm_client.transcribe_audio(file_bytes, "audio.ogg")
-                        response = f"📝 **نص التفريغ:**\n\n{transcription}"
-                    except Exception as e:
-                        logger.error(f"Transcription error: {e}")
-                        response = "❌ فشل تفريغ الصوت. يرجى المحاولة مرة أخرى."
-                else:
-                    response = "⚠️ خدمة تفريغ الصوت غير متاحة حالياً."
-        else:
-            response = "⚠️ خدمة تفريغ الصوت غير متاحة حالياً."
+            tool = ToolRegistry.get_tool("/voice_note")
+            if tool:
+                result = await tool().execute(temp_path, user_id)
+                response = result.get("output", "تم المعالجة")
         
-        # Cleanup
+        if not response and llm_client:
+            try:
+                transcription = await llm_client.transcribe_audio(file_bytes, "audio.ogg")
+                response = f"📝 <b>نص التفريغ:</b>\n\n{transcription}"
+            except:
+                response = "❌ فشل تفريغ الصوت."
+        
+        if not response:
+            response = "⚠️ خدمة التفريغ غير متاحة حالياً."
+        
         try:
             os.unlink(temp_path)
         except:
@@ -356,8 +542,8 @@ async def handle_voice_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await safe_reply(update, response, reply_markup=get_main_keyboard())
         
     except Exception as e:
-        logger.error(f"Error handling voice note: {e}", exc_info=True)
-        await safe_reply(update, "❌ حدث خطأ أثناء معالجة الصوت. يرجى المحاولة مرة أخرى.")
+        logger.error(f"Voice error: {e}", exc_info=True)
+        await safe_reply(update, "❌ خطأ في معالجة الصوت.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 🚀 APP SETUP
@@ -368,27 +554,27 @@ def create_telegram_app():
     try:
         token = os.getenv("TELEGRAM_BOT_TOKEN")
         if not token:
-            logger.error("TELEGRAM_BOT_TOKEN not set in environment")
+            logger.error("TELEGRAM_BOT_TOKEN not set")
             return None
         
-        logger.info("Creating Telegram application...")
-        application = Application.builder().token(token).build()
+        logger.info("Creating Telegram app...")
+        app = Application.builder().token(token).build()
         
         # Commands
-        application.add_handler(CommandHandler("start", start_command))
-        application.add_handler(CommandHandler("help", help_command))
-        application.add_handler(CommandHandler("tools", tools_command))
+        app.add_handler(CommandHandler("start", start_command))
+        app.add_handler(CommandHandler("help", help_command))
+        app.add_handler(CommandHandler("tools", tools_command))
         
-        # Media Handlers
-        application.add_handler(MessageHandler(filters.Document.ALL, handle_document_upload))
-        application.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, handle_voice_note))
+        # Media
+        app.add_handler(MessageHandler(filters.Document.ALL, handle_document_upload))
+        app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, handle_voice_note))
         
-        # Text Message Handler
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+        # Text
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         
-        logger.info("✅ Telegram application created successfully")
-        return application
+        logger.info("✅ Telegram app created")
+        return app
         
     except Exception as e:
-        logger.error(f"Failed to build Telegram App: {e}", exc_info=True)
+        logger.error(f"Failed to create app: {e}", exc_info=True)
         return None

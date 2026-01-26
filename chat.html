@@ -1126,6 +1126,20 @@
                 
                 // Check if response is OK
                 if (!res.ok) {
+                    // Handle session expiry specifically
+                    if (res.status === 401) {
+                        hideTyping(loadingId);
+                        addMessage(`🔐 <b>انتهت جلسة تسجيل الدخول</b>
+
+جلستك الحالية منتهية. من فضلك <a href="/login?redirect=/chat" style="color: var(--primary); text-decoration: underline;">سجل دخول من جديد</a>
+
+<i style="opacity: 0.7;">سيتم التوجيه تلقائياً خلال 5 ثواني...</i>`, 'bot');
+                        
+                        setTimeout(() => {
+                            window.location.href = '/login?redirect=/chat';
+                        }, 5000);
+                        return;
+                    }
                     throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 }
                 

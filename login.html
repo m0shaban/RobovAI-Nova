@@ -156,6 +156,10 @@
 </div>
 
 <script>
+    // Get redirect URL from query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUrl = urlParams.get('redirect') || '/chat';
+    
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
@@ -185,13 +189,12 @@
             if (res.ok) {
                 // Save Token
                 localStorage.setItem('token', data.access_token);
-                // Redirect relative to API_BASE if needed, or just /chat
-                // If API_BASE is localhost:8000, we assume the user is serving from there or wants to go there
+                // Redirect to original page or /chat
                 if (API_BASE === 'http://localhost:8000' && window.location.protocol === 'file:') {
                      // Can't redirect to /chat for file protocol easily unless served
                      alert("تم تسجيل الدخول بنجاح! ولكنك تفتح الملف مباشرة. يرجى فتح http://localhost:8000/chat");
                 } else {
-                     window.location.href = '/chat';
+                     window.location.href = redirectUrl;
                 }
             } else {
                 errorMsg.textContent = data.detail || 'فشل تسجيل الدخول';

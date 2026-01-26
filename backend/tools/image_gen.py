@@ -131,17 +131,19 @@ class ImageGenTool(BaseTool):
                 display_url = upload_result["data"]["display_url"]
                 
                 # إرجاع الصورة بصيغة Markdown
-                output = f"""🎨 **تم توليد الصورة بنجاح!**
+                # تنسيق الرسالة بشكل احترافي
+                caption = f"""🎨 *تم توليد الصورة بنجاح*
+━━━━━━━━━━━━━━━━━━━━
+💡 *الوصف:* {english_prompt}
+🤖 *النموذج:* FLUX.1 (High Quality)
+🔗 [رابط مباشر]({image_url})
+━━━━━━━━━━━━━━━━━━━━
+✨ Powered by RobovAI Nova"""
 
-📝 **الوصف الأصلي:** {user_input}
-🌐 **Prompt:** {english_prompt}
-🤖 **Model:** FLUX (High Quality)
+                # إرجاع الصورة بصيغة Markdown للويب
+                output = f"""{caption}
 
-![Generated Image]({display_url})
-
----
-✨ **Powered by Pollinations.ai** | 📦 **Hosted by ImgBB**
-🔗 Direct Link: {image_url}"""
+![Generated Image]({display_url})"""
                 
                 return {
                     "status": "success",

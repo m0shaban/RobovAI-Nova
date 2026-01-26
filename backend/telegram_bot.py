@@ -141,6 +141,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 اختر من القائمة للبدء 👇
 """
+    # Try to send logo if exists
+    try:
+        logo_path = os.path.join("public", "assets", "logo.png")
+        if os.path.exists(logo_path):
+            await update.message.reply_photo(photo=open(logo_path, "rb"))
+    except:
+        pass
+
     await safe_reply(update, welcome_msg, reply_markup=get_main_keyboard())
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -418,7 +426,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
                     tool = tool_class()
                     result = await tool.execute(arg, user_id)
-                    response = result.get("output", "✅ تم التنفيذ")
+                    
+                    # Handle Image Generation Special Case
+                    if result.get("image_url"):
+                        try:
+                            caption = result.get("caption", result.get("output", ""))
+                            # Remove markdown image link if present in caption
+                            import re
+                            caption = re.sub(r'!\[.*?\]\(.*?\)', '', caption).strip()
+                            
+                            await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="upload_photo")
+                            await context.bot.send_photo(
+                                chat_id=update.effective_chat.id,
+                                photo=result["image_url"],
+                                caption=caption,
+                                parse_mode="Markdown"
+                            )
+                            response = "" # Handled
+                        except Exception as e:
+                            logger.error(f"Failed to send photo: {e}")
+                            response = result.get("output", "✅ تم التنفيذ")
+                    else:
+                        response = result.get("output", "✅ تم التنفيذ")
+                        
                     logger.info(f"Tool {command} success")
                 except Exception as e:
                     logger.error(f"Tool error: {e}", exc_info=True)
@@ -458,6 +488,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Send response
         if response:
+            # Check if there is an image URL in the response (from image_gen tool usually handles this internally, 
+            # but if we want generic handling):
+            # Actually, image_gen tool returns a dict. We need to handle the dict result up there.
+            
+            # Let's fix the tool execution block instead.
             await safe_reply(update, response, reply_markup=keyboard)
         
     except Exception as e:

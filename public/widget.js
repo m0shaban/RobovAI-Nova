@@ -262,6 +262,34 @@
                     bottom: 80px;
                 }
             }
+                }
+            }
+            
+            .robovai-image-card {
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 12px;
+                overflow: hidden;
+                margin-top: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .robovai-image-card img {
+                width: 100%;
+                height: auto;
+                display: block;
+                cursor: pointer;
+                transition: transform 0.3s;
+            }
+            
+            .robovai-image-card img:hover {
+                transform: scale(1.02);
+            }
+            
+            .robovai-card-content {
+                padding: 12px;
+                font-size: 0.9em;
+                color: #ddd;
+            }
         `;
     }
 
@@ -275,7 +303,7 @@
         // Create button
         const button = document.createElement('button');
         button.className = 'robovai-widget-button';
-        button.innerHTML = '🤖';
+        button.innerHTML = '<img src="assets/logo.png" alt="Chat" style="width: 70%; height: 70%; object-fit: contain;">';
         button.onclick = toggleWidget;
         document.body.appendChild(button);
 
@@ -285,7 +313,7 @@
         container.innerHTML = `
             <div class="robovai-widget-header">
                 <div class="robovai-widget-header-left">
-                    <div class="robovai-widget-avatar">🤖</div>
+                    <div class="robovai-widget-avatar"><img src="assets/logo.png" alt="Nova" style="width: 70%; height: 70%; object-fit: contain;"></div>
                     <div>
                         <div class="robovai-widget-title">${config.title}</div>
                         <div class="robovai-widget-status">● متصل الآن</div>
@@ -322,7 +350,7 @@
             document.getElementById('robovai-input').focus();
         } else {
             container.classList.remove('open');
-            button.innerHTML = '🤖';
+            button.innerHTML = '<img src="assets/logo.png" alt="Chat" style="width: 70%; height: 70%; object-fit: contain;">';
         }
     }
 
@@ -338,10 +366,32 @@
 
     // Format text (basic markdown)
     function formatText(text) {
+        // Check for generated image
+        if (text.includes('![Generated Image]')) {
+            const imgMatch = text.match(/!\[Generated Image\]\((.*?)\)/);
+            const url = imgMatch ? imgMatch[1] : '';
+            
+            // Clean text
+            let cleanText = text.replace(/!\[Generated Image\]\(.*?\)/, '').trim();
+            cleanText = cleanText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                               .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                               .replace(/\n/g, '<br>');
+            
+            return `
+                <div class="robovai-image-card">
+                    <img src="${url}" onclick="window.open('${url}', '_blank')">
+                    <div class="robovai-card-content">
+                        ${cleanText}
+                    </div>
+                </div>
+            `;
+        }
+
         return text
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/`([^`]+)`/g, '<code style="background:#333;padding:2px 5px;border-radius:3px;">$1</code>');
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.1);padding:2px 5px;border-radius:3px;">$1</code>');
     }
 
     // Show typing indicator

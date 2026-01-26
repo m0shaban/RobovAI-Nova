@@ -16,7 +16,6 @@ pandas
 openpyxl
 ics
 vosk
-SpeechRecognition
 pillow
 qrcode[pil]
 yfinance

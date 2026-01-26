@@ -6,178 +6,34 @@ Professional Assistant for Productivity, Business, and Data Analysis.
 
 import logging
 import os
-from backend.core.llm import llm_client
+import tempfile
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 logger = logging.getLogger("robovai.telegram")
 
 # Safe imports
 try:
-    from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-    from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-    TELEGRAM_AVAILABLE = True
-except ImportError:
-    logger.warning("python-telegram-bot not installed. Telegram bot disabled.")
-    TELEGRAM_AVAILABLE = False
-
-try:
     from backend.tools.registry import ToolRegistry
 except ImportError:
     ToolRegistry = None
+    logger.warning("ToolRegistry not available")
 
 try:
-    from backend.core.smart_router import SmartToolRouter
+    from backend.core.llm import llm_client
 except ImportError:
-    SmartToolRouter = None
+    llm_client = None
+    logger.warning("LLM client not available")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 📊 STATE MANAGEMENT
+# ═══════════════════════════════════════════════════════════════════════════
+
+USER_EDIT_STATE = {}  # Store user editing preferences
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ⌨️ PROFESSIONAL KEYBOARD
 # ═══════════════════════════════════════════════════════════════════════════
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Core Logic for 'AI Chief of Staff' - Modern & Professional.
-    """
-    user_id = str(update.effective_user.id)
-    message = update.message.text
-    
-    # Log for analytics
-    logger.info(f"Nova Req [{user_id}]: {message}")
-    
-    response = ""
-    
-    # ════════════════════════════════════════════════════════════════════════
-    # 1. SMART GRID MENU NAVIGATION
-    # ════════════════════════════════════════════════════════════════════════
-    if message == "⚡ إجراءات سريعة":
-        response = """🚀 **الإجراءات السريعة (Quick Actions)**
-        
-اختر ما تريد القيام به:
-1️⃣ **بحث ويب**: `/search سعر الذهب`
-2️⃣ **تحليل سهم**: `/stock NVDA`
-3️⃣ **تحويل عملة**: `/convert 100 USD to EGP`
-4️⃣ **تحميل فيديو**: `/download [الرابط]`
-"""
-
-    elif message == "📂 ملفاتي وتحليلاتي":
-        response = """📂 **مركز المستندات والبيانات**
-        
-يمكنك إرسال الملفات التالية وسأقوم بتحليلها فوراً:
-📄 **PDF/Word**: تلخيص واستخراج النقاط الهامة.
-📊 **Excel/CSV**: تحليل مالي وإحصائي شامل.
-🖼️ **صور**: استخراج نص (OCR) أو تعديل (`/edit`).
-"""
-
-    elif message == "🎙️ المساعد الصوتي":
-        response = """🎙️ **المساعد الصوتي (Voice Hub)**
-        
-أرسل **ملاحظة صوتية** (Voice Note) في أي وقت.
-- ✅ تفريغ نصي دقيق (Whisper).
-- ✅ تلخيص النقاط الهامة.
-- ✅ دعم اللهجة المصرية والعربية.
-"""
-
-    elif message == "🔍 بحث ذكي":
-        response = "🔍 **ماذا تريد أن تعرف؟**\nاكتب `/search` متبوعاً بسؤالك، وسأبحث لك في الإنترنت فوراً."
-
-    elif message == "🌐 بوابة الويب":
-        # THE WEB BRIDGE
-        web_url = os.getenv("EXTERNAL_URL") or "https://robovai.com"
-        await update.message.reply_text(
-            f"🌐 **منصة RobovAI Nova المتكاملة**\n\n"
-            "للوصول إلى لوحات المعلومات المتقدمة (Dashboards)، إدارة المشاريع، والتقارير التفصيلية، يرجى زيارة بوابتك الشخصية:\n\n"
-            f"🔗 {web_url}\n\n"
-            "💡 *هنا في تليجرام نركز على السرعة، وهناك نركز على العمق.*",
-            disable_web_page_preview=True
-        )
-        return
-
-    elif message == "🆘 مساعدة / أوامر":
-        await help_command(update, context)
-        return
-
-    # ════════════════════════════════════════════════════════════════════════
-    # 2. SWISS ARMY TOOLS (COMMANDS)
-    # ════════════════════════════════════════════════════════════════════════
-    
-    # [WEB TOOLS]
-    elif message.startswith("/search") or message.startswith("بحث"):
-        if SearchTool:
-             clean = message.replace("/search", "").replace("بحث", "").strip()
-             await update.message.reply_text("⏳ **جاري البحث في المصادر الحية...**")
-             tool = SearchTool()
-             result = await tool.execute(clean, user_id)
-             response = result.get("output")
-
-    elif message.startswith("/stock") or message.startswith("سهم"):
-        if FinanceTool:
-             clean = message.replace("/stock", "").replace("سهم", "").strip()
-             await update.message.reply_text("📈 **جاري الاتصال ببيانات البورصة...**")
-             tool = FinanceTool()
-             result = await tool.execute(clean, user_id)
-             response = result.get("output")
-
-    elif message.startswith("/download") or message.startswith("تحميل"):
-        if MediaTool:
-             clean = message.replace("/download", "").replace("تحميل", "").strip()
-             await update.message.reply_text("📥 **جاري معالجة الرابط...**")
-             tool = MediaTool()
-             result = await tool.execute(clean, user_id)
-             response = result.get("output")
-
-    # [VISION TOOLS]
-    elif message.startswith("/qr"):
-        if QRCodeTool:
-            clean = message.replace("/qr", "").strip()
-            tool = QRCodeTool()
-            res = await tool.execute(clean, user_id)
-            if res.get("status") == "success":
-                await update.message.reply_photo(res.get("file_content"), caption="📱 **QR Code جاهز.**")
-                return
-            response = res.get("output")
-
-    elif message.startswith("/edit"):
-        USER_EDIT_STATE[user_id] = message.split()[1] if len(message.split()) > 1 else "gray"
-        response = "📸 **وضع التعديل:** أرسل الصورة الآن لتطبيق التأثير."
-        
-    # [OFFICE TOOLS]
-    elif message.startswith("/schedule") or message.startswith("جدول"):
-        if CalendarEventTool:
-            clean = message.replace("/schedule", "").replace("جدول", "").strip()
-            tool = CalendarEventTool()
-            res = await tool.execute(clean, user_id)
-            if res.get("status") == "success":
-                # Convert string logic to file logic if needed or tool returns bytes? Tool returns valid ICS string usually.
-                # Let's assume tool returns string content for ICS.
-                import io
-                f = io.BytesIO(res.get("file_content").encode('utf-8'))
-                f.name = "meeting.ics"
-                await update.message.reply_document(f, caption="📅 **تم جدولة الموعد.**\nإضغط لفتحه في التقويم.")
-                return
-            response = res.get("output")
-
-    # ════════════════════════════════════════════════════════════════════════
-    # 3. AI EXECUTIVE CHAT (MODERN PERSONA)
-    # ════════════════════════════════════════════════════════════════════════
-    if not response and not message.startswith("/"):
-        # Modern Executive Persona Prompt
-        system_prompt = """
-        أنت (RobovAI Nova)، مدير المكتب الرقمي التنفيذي (AI Chief of Staff).
-        - **الشخصية**: ذكي جداً، محترف، حديث، وموجز.
-        - **اللهجة**: عربية "بيضاء" (راقية ومفهومة لكل العرب)، بلمسة مصرية خفيفة جداً للود.
-        - **الأسلوب**: استخدم النقاط (- Bullet points) دائماً للإجابات الطويلة. استخدم التنسيق (**Bold**) للكلمات المهمة.
-        - **المهمة**: مساعدة المستخدم على الإنجاز بأسرع وقت.
-        - إذا سأل عن شيء معقد (مثل لوحة بيانات)، وجهه لـ "بوابة الويب" بلباقة.
-        """
-        
-        try:
-             await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-             response = await llm_client.generate(message, provider="groq", system_prompt=system_prompt)
-        except Exception as e:
-             logger.error(f"LLM Error: {e}")
-             response = "⚠️ **عذراً،** حدث انقطاع لحظي في الاتصال العصبي. يرجى المحاولة."
-
-    if response:
-        await update.message.reply_text(response, reply_markup=get_main_keyboard(), parse_mode="Markdown")
 
 def get_main_keyboard():
     """
@@ -190,7 +46,11 @@ def get_main_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, is_persistent=True)
 
-async def safe_reply(update: Update, text: str, reply_markup=None):
+# ═══════════════════════════════════════════════════════════════════════════
+# 🛡️ SAFE REPLY WRAPPER
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def safe_reply(update: Update, text: str, reply_markup=None, parse_mode="Markdown"):
     """
     Robust Reply Wrapper:
     1. Tries to send with Markdown.
@@ -198,14 +58,16 @@ async def safe_reply(update: Update, text: str, reply_markup=None):
     This prevents the bot from crashing on LLM formatting errors.
     """
     try:
-        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
+        logger.info(f"Successfully sent message to user {update.effective_user.id}")
     except Exception as e:
         logger.warning(f"Markdown Reply Failed: {e}. Falling back to plain text.")
         try:
             # Fallback: Plain text
             await update.message.reply_text(text, reply_markup=reply_markup)
+            logger.info(f"Successfully sent plain text message to user {update.effective_user.id}")
         except Exception as e2:
-            logger.error(f"Reply Failed Completely: {e2}")
+            logger.error(f"Reply Failed Completely: {e2}", exc_info=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 🎯 COMMAND HANDLERS
@@ -213,6 +75,7 @@ async def safe_reply(update: Update, text: str, reply_markup=None):
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Modern Start Screen"""
+    logger.info(f"User {update.effective_user.id} started the bot")
     welcome_msg = """✨ **أهلاً بك في RobovAI Nova**
 
 أنا مساعدك التنفيذي الشخصي (AI Chief of Staff). 
@@ -230,166 +93,271 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Detailed Command List"""
+    logger.info(f"User {update.effective_user.id} requested help")
     help_text = """🆘 **دليل الأوامر السريعة**
 
 🔹 **البحث والمعلومات:**
 `/search [سؤالك]` - بحث حي في جوجل/الويب.
-`/stock [رمز]` - سعر السهم (مثال: `/stock AAPL`).
-`/convert [قيمة] [من] to [إلى]` - تحويل عملات.
+`/weather [المدينة]` - معلومات الطقس.
+`/crypto [رمز]` - أسعار العملات الرقمية.
 
 🔹 **الوسائط والملفات:**
-`/download [رابط]` - تحميل فيديو.
-`/qr [رابط]` - إنشاء كود QR.
-`/edit [gray|blur]` - تعديل صور.
+`/qr [نص أو رابط]` - إنشاء كود QR.
+`/password` - توليد كلمة مرور قوية.
 
-🔹 **التنظيم:**
-`/schedule [الحدث] | [الوقت]` - إنشاء ملف تقويم.
+🔹 **الترفيه:**
+`/joke` - نكتة عشوائية.
+`/cat` - صورة قطة.
+`/dog` - صورة كلب.
 
 💡 *نصيحة: يمكنك دائماً التحدث معي باللغة الطبيعية!*
 """
     await safe_reply(update, help_text)
 
 async def tools_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Deprecated in favor of 'Quick Actions' menu, but kept for legacy compat
+    """Show available tools"""
+    logger.info(f"User {update.effective_user.id} requested tools list")
     await safe_reply(update, "🛠️ انتقلت الأدوات إلى قائمة **إجراءات سريعة** في القائمة الرئيسية.", reply_markup=get_main_keyboard())
 
-# ... (Feature Handlers)
+# ═══════════════════════════════════════════════════════════════════════════
+# 📨 MESSAGE HANDLER
+# ═══════════════════════════════════════════════════════════════════════════
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # ... (Same message parsing logic)
-    user_id = str(update.effective_user.id)
-    message = update.message.text
-    logger.info(f"Nova Req [{user_id}]: {message}")
-    response = ""
-    
-    # ════════════════════════════════════════════════════════════════════════
-    # 1. SMART GRID MENU NAVIGATION
-    # ════════════════════════════════════════════════════════════════════════
-    if message == "⚡ إجراءات سريعة":
-        response = """🚀 **الإجراءات السريعة (Quick Actions)**
+    """
+    Core Logic for 'AI Chief of Staff' - Modern & Professional.
+    """
+    try:
+        user_id = str(update.effective_user.id)
+        message = update.message.text or ""
         
+        # Log for analytics
+        logger.info(f"Nova Req [{user_id}]: {message}")
+        
+        response = ""
+        
+        # ════════════════════════════════════════════════════════════════════════
+        # 1. SMART GRID MENU NAVIGATION
+        # ════════════════════════════════════════════════════════════════════════
+        if message == "⚡ إجراءات سريعة":
+            response = """🚀 **الإجراءات السريعة (Quick Actions)**
+            
 اختر ما تريد القيام به:
 1️⃣ **بحث ويب**: `/search سعر الذهب`
-2️⃣ **تحليل سهم**: `/stock NVDA`
-3️⃣ **تحويل عملة**: `/convert 100 USD to EGP`
-4️⃣ **تحميل فيديو**: `/download [الرابط]`
+2️⃣ **معلومات طقس**: `/weather Cairo`
+3️⃣ **كلمة مرور**: `/password`
+4️⃣ **QR Code**: `/qr نص أو رابط`
 """
-
-    elif message == "📂 ملفاتي وتحليلاتي":
-        response = """📂 **مركز المستندات والبيانات**
         
+        elif message == "📂 ملفاتي وتحليلاتي":
+            response = """📂 **مركز المستندات والبيانات**
+            
 يمكنك إرسال الملفات التالية وسأقوم بتحليلها فوراً:
 📄 **PDF/Word**: تلخيص واستخراج النقاط الهامة.
 📊 **Excel/CSV**: تحليل مالي وإحصائي شامل.
-🖼️ **صور**: استخراج نص (OCR) أو تعديل (`/edit`).
+🖼️ **صور**: استخراج نص (OCR) أو تحليل.
 """
-
-    elif message == "🎙️ المساعد الصوتي":
-        response = """🎙️ **المساعد الصوتي (Voice Hub)**
         
+        elif message == "🎙️ المساعد الصوتي":
+            response = """🎙️ **المساعد الصوتي (Voice Hub)**
+            
 أرسل **ملاحظة صوتية** (Voice Note) في أي وقت.
 - ✅ تفريغ نصي دقيق (Whisper).
 - ✅ تلخيص النقاط الهامة.
 - ✅ دعم اللهجة المصرية والعربية.
 """
-
-    elif message == "🔍 بحث ذكي":
-        response = "🔍 **ماذا تريد أن تعرف؟**\nاكتب `/search` متبوعاً بسؤالك، وسأبحث لك في الإنترنت فوراً."
-
-    elif message == "🌐 بوابة الويب":
-        # THE WEB BRIDGE
-        web_url = os.getenv("EXTERNAL_URL") or "https://robovai.com"
-        await safe_reply(update, 
-            f"🌐 **منصة RobovAI Nova المتكاملة**\n\n"
-            "للوصول إلى لوحات المعلومات المتقدمة (Dashboards)، إدارة المشاريع، والتقارير التفصيلية، يرجى زيارة بوابتك الشخصية:\n\n"
-            f"🔗 {web_url}\n\n"
-            "💡 *هنا في تليجرام نركز على السرعة، وهناك نركز على العمق.*"
-        )
-        return
-
-    elif message == "🆘 مساعدة / أوامر":
-        await help_command(update, context)
-        return
-
-    # ════════════════════════════════════════════════════════════════════════
-    # 2. SWISS ARMY TOOLS (COMMANDS)
-    # ════════════════════════════════════════════════════════════════════════
-    
-    # [WEB TOOLS]
-    elif message.startswith("/search") or message.startswith("بحث"):
-        if SearchTool:
-             clean = message.replace("/search", "").replace("بحث", "").strip()
-             await update.message.reply_text("⏳ **جاري البحث في المصادر الحية...**")
-             tool = SearchTool()
-             result = await tool.execute(clean, user_id)
-             response = result.get("output")
-
-    elif message.startswith("/stock") or message.startswith("سهم"):
-        if FinanceTool:
-             clean = message.replace("/stock", "").replace("سهم", "").strip()
-             await update.message.reply_text("📈 **جاري الاتصال ببيانات البورصة...**")
-             tool = FinanceTool()
-             result = await tool.execute(clean, user_id)
-             response = result.get("output")
-
-    elif message.startswith("/download") or message.startswith("تحميل"):
-        if MediaTool:
-             clean = message.replace("/download", "").replace("تحميل", "").strip()
-             await update.message.reply_text("📥 **جاري معالجة الرابط...**")
-             tool = MediaTool()
-             result = await tool.execute(clean, user_id)
-             response = result.get("output")
-
-    # [VISION TOOLS]
-    elif message.startswith("/qr"):
-        if QRCodeTool:
-            clean = message.replace("/qr", "").strip()
-            tool = QRCodeTool()
-            res = await tool.execute(clean, user_id)
-            if res.get("status") == "success":
-                await update.message.reply_photo(res.get("file_content"), caption="📱 **QR Code جاهز.**")
-                return
-            response = res.get("output")
-
-    elif message.startswith("/edit"):
-        USER_EDIT_STATE[user_id] = message.split()[1] if len(message.split()) > 1 else "gray"
-        response = "📸 **وضع التعديل:** أرسل الصورة الآن لتطبيق التأثير."
         
-    # [OFFICE TOOLS]
-    elif message.startswith("/schedule") or message.startswith("جدول"):
-        if CalendarEventTool:
-            clean = message.replace("/schedule", "").replace("جدول", "").strip()
-            tool = CalendarEventTool()
-            res = await tool.execute(clean, user_id)
-            if res.get("status") == "success":
-                import io
-                f = io.BytesIO(res.get("file_content").encode('utf-8'))
-                f.name = "meeting.ics"
-                await update.message.reply_document(f, caption="📅 **تم جدولة الموعد.**\nإضغط لفتحه في التقويم.")
-                return
-            response = res.get("output")
-
-    # ════════════════════════════════════════════════════════════════════════
-    # 3. AI EXECUTIVE CHAT (MODERN PERSONA)
-    # ════════════════════════════════════════════════════════════════════════
-    if not response and not message.startswith("/"):
-        # Modern Executive Persona Prompt
-        system_prompt = """
-        أنت (RobovAI Nova)، مدير المكتب الرقمي التنفيذي (AI Chief of Staff).
-        - **الشخصية**: ذكي جداً، محترف، حديث، وموجز.
-        - **الأسلوب**: استخدم النقاط دائماً. تحاشى الرموز الغريبة التي تكسر التنسيق. استخدم (**) للعناوين.
-        - **المهمة**: مساعدة المستخدم على الإنجاز بأسرع وقت.
-        """
+        elif message == "🔍 بحث ذكي":
+            response = "🔍 **ماذا تريد أن تعرف؟**\nاكتب `/search` متبوعاً بسؤالك، وسأبحث لك في الإنترنت فوراً."
         
+        elif message == "🌐 بوابة الويب":
+            web_url = os.getenv("EXTERNAL_URL") or os.getenv("RENDER_EXTERNAL_URL") or "https://robovai.com"
+            response = f"""🌐 **منصة RobovAI Nova المتكاملة**
+
+للوصول إلى لوحات المعلومات المتقدمة (Dashboards)، إدارة المشاريع، والتقارير التفصيلية، يرجى زيارة بوابتك الشخصية:
+
+🔗 {web_url}
+
+💡 *هنا في تليجرام نركز على السرعة، وهناك نركز على العمق.*"""
+        
+        elif message == "🆘 مساعدة / أوامر":
+            await help_command(update, context)
+            return
+        
+        # ════════════════════════════════════════════════════════════════════════
+        # 2. TOOL COMMANDS (Using ToolRegistry)
+        # ════════════════════════════════════════════════════════════════════════
+        elif message.startswith("/") and ToolRegistry:
+            parts = message.split(" ", 1)
+            command = parts[0]
+            arg = parts[1] if len(parts) > 1 else ""
+            
+            tool_class = ToolRegistry.get_tool(command)
+            if tool_class:
+                logger.info(f"Executing tool: {command} for user {user_id}")
+                try:
+                    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+                    tool_instance = tool_class()
+                    result = await tool_instance.execute(arg, user_id)
+                    response = result.get("output", "تم التنفيذ ✅")
+                    logger.info(f"Tool {command} executed successfully for user {user_id}")
+                except Exception as e:
+                    logger.error(f"Tool execution error for {command}: {e}", exc_info=True)
+                    response = f"❌ حدث خطأ أثناء تنفيذ الأداة: {str(e)}"
+            else:
+                logger.warning(f"Unknown command: {command}")
+                response = f"⚠️ الأمر غير معروف: {command}\nاستخدم /help لعرض الأوامر المتاحة."
+        
+        # ════════════════════════════════════════════════════════════════════════
+        # 3. AI EXECUTIVE CHAT (MODERN PERSONA)
+        # ════════════════════════════════════════════════════════════════════════
+        elif not response:
+            # Modern Executive Persona Prompt
+            system_prompt = """
+            أنت (RobovAI Nova)، مدير المكتب الرقمي التنفيذي (AI Chief of Staff).
+            - **الشخصية**: ذكي جداً، محترف، حديث، وموجز.
+            - **اللهجة**: عربية "بيضاء" (راقية ومفهومة لكل العرب)، بلمسة مصرية خفيفة جداً للود.
+            - **الأسلوب**: استخدم النقاط (- Bullet points) دائماً للإجابات الطويلة. استخدم التنسيق (**Bold**) للكلمات المهمة.
+            - **المهمة**: مساعدة المستخدم على الإنجاز بأسرع وقت.
+            - إذا سأل عن شيء معقد (مثل لوحة بيانات)، وجهه لـ "بوابة الويب" بلباقة.
+            """
+            
+            try:
+                await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+                if llm_client:
+                    response = await llm_client.generate(message, provider="groq", system_prompt=system_prompt)
+                    logger.info(f"LLM response generated for user {user_id}")
+                else:
+                    response = "⚠️ **عذراً،** النظام الذكي غير متاح حالياً. يرجى المحاولة لاحقاً."
+                    logger.error("LLM client not available")
+            except Exception as e:
+                logger.error(f"LLM Error for user {user_id}: {e}", exc_info=True)
+                response = "⚠️ **عذراً،** حدث انقطاع لحظي في الاتصال العصبي. يرجى المحاولة مرة أخرى."
+        
+        # Send response
+        if response:
+            await safe_reply(update, response, reply_markup=get_main_keyboard())
+        
+    except Exception as e:
+        logger.error(f"Critical error in handle_message: {e}", exc_info=True)
         try:
-             await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-             response = await llm_client.generate(message, provider="groq", system_prompt=system_prompt)
-        except Exception as e:
-             logger.error(f"LLM Error: {e}")
-             response = "⚠️ **عذراً،** حدث انقطاع لحظي في الاتصال العصبي. يرجى المحاولة."
+            await safe_reply(update, "⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك. يرجى المحاولة مرة أخرى.")
+        except:
+            pass
 
-    if response:
+# ═══════════════════════════════════════════════════════════════════════════
+# 📎 DOCUMENT UPLOAD HANDLER
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def handle_document_upload(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle document uploads (PDF, Excel, Word, etc.)"""
+    try:
+        user_id = str(update.effective_user.id)
+        document = update.message.document
+        
+        logger.info(f"User {user_id} uploaded document: {document.file_name}")
+        
+        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+        
+        # Download file
+        file = await context.bot.get_file(document.file_id)
+        file_bytes = await file.download_as_bytearray()
+        
+        # Save temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(document.file_name)[1]) as temp_file:
+            temp_file.write(file_bytes)
+            temp_path = temp_file.name
+        
+        # Try to use appropriate tool based on file type
+        file_ext = os.path.splitext(document.file_name)[1].lower()
+        response = f"📄 تم استلام الملف: `{document.file_name}`\n\n"
+        
+        if file_ext == '.pdf' and ToolRegistry:
+            tool_class = ToolRegistry.get_tool("/ask_pdf")
+            if tool_class:
+                tool = tool_class()
+                result = await tool.execute(temp_path, user_id)
+                response += result.get("output", "تم معالجة الملف")
+            else:
+                response += "📑 ملف PDF تم استلامه. استخدم `/ask_pdf` مع رابط الملف للتحليل."
+        elif file_ext in ['.xlsx', '.xls', '.csv']:
+            response += "📊 ملف Excel/CSV تم استلامه. جاري تحليله...\n"
+            response += "_(ملاحظة: تحليل البيانات قيد التطوير)_"
+        elif file_ext in ['.doc', '.docx']:
+            response += "📝 ملف Word تم استلامه.\n_(ملاحظة: معالجة Word قيد التطوير)_"
+        else:
+            response += "ℹ️ نوع الملف غير مدعوم حالياً للتحليل التلقائي."
+        
+        # Cleanup
+        try:
+            os.unlink(temp_path)
+        except:
+            pass
+        
         await safe_reply(update, response, reply_markup=get_main_keyboard())
+        
+    except Exception as e:
+        logger.error(f"Error handling document: {e}", exc_info=True)
+        await safe_reply(update, "❌ حدث خطأ أثناء معالجة الملف. يرجى المحاولة مرة أخرى.")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎙️ VOICE NOTE HANDLER
+# ═══════════════════════════════════════════════════════════════════════════
+
+async def handle_voice_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle voice note uploads"""
+    try:
+        user_id = str(update.effective_user.id)
+        voice = update.message.voice
+        
+        logger.info(f"User {user_id} sent voice note (duration: {voice.duration}s)")
+        
+        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+        await update.message.reply_text("🎙️ **جاري تفريغ الصوت...**")
+        
+        # Download voice file
+        file = await context.bot.get_file(voice.file_id)
+        file_bytes = await file.download_as_bytearray()
+        
+        # Save temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as temp_file:
+            temp_file.write(file_bytes)
+            temp_path = temp_file.name
+        
+        # Try to transcribe using LLM or VoiceNote tool
+        response = ""
+        
+        if ToolRegistry:
+            tool_class = ToolRegistry.get_tool("/voice_note")
+            if tool_class:
+                tool = tool_class()
+                result = await tool.execute(temp_path, user_id)
+                response = result.get("output", "تم معالجة الصوت")
+            else:
+                # Fallback to direct LLM transcription
+                if llm_client:
+                    try:
+                        transcription = await llm_client.transcribe_audio(file_bytes, "audio.ogg")
+                        response = f"📝 **نص التفريغ:**\n\n{transcription}"
+                    except Exception as e:
+                        logger.error(f"Transcription error: {e}")
+                        response = "❌ فشل تفريغ الصوت. يرجى المحاولة مرة أخرى."
+                else:
+                    response = "⚠️ خدمة تفريغ الصوت غير متاحة حالياً."
+        else:
+            response = "⚠️ خدمة تفريغ الصوت غير متاحة حالياً."
+        
+        # Cleanup
+        try:
+            os.unlink(temp_path)
+        except:
+            pass
+        
+        await safe_reply(update, response, reply_markup=get_main_keyboard())
+        
+    except Exception as e:
+        logger.error(f"Error handling voice note: {e}", exc_info=True)
+        await safe_reply(update, "❌ حدث خطأ أثناء معالجة الصوت. يرجى المحاولة مرة أخرى.")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 🚀 APP SETUP
@@ -397,12 +365,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def create_telegram_app():
     """Create and configure Telegram application"""
-    if not TELEGRAM_AVAILABLE: return None
-    
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not token: return None
-    
     try:
+        token = os.getenv("TELEGRAM_BOT_TOKEN")
+        if not token:
+            logger.error("TELEGRAM_BOT_TOKEN not set in environment")
+            return None
+        
+        logger.info("Creating Telegram application...")
         application = Application.builder().token(token).build()
         
         # Commands
@@ -410,14 +379,16 @@ def create_telegram_app():
         application.add_handler(CommandHandler("help", help_command))
         application.add_handler(CommandHandler("tools", tools_command))
         
-        # Media Handlers (New)
+        # Media Handlers
         application.add_handler(MessageHandler(filters.Document.ALL, handle_document_upload))
         application.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, handle_voice_note))
         
         # Text Message Handler
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         
+        logger.info("✅ Telegram application created successfully")
         return application
+        
     except Exception as e:
-        logger.error(f"Failed to build Telegram App: {e}")
+        logger.error(f"Failed to build Telegram App: {e}", exc_info=True)
         return None

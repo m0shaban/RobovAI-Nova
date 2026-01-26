@@ -592,23 +592,30 @@ async def get_tools():
 async def telegram_webhook(request: Request):
     """
     Telegram Bot Webhook
-    Setup: https://api.telegram.org/bot<TOKEN>/setWebhook?url=YOUR_URL/telegram_webhook
+    Setup: https://api.telegram.org/bot<TOKEN>/setWebhook?url=YOUR_URL/telegram-webhook
     """
     try:
+        logger.info("📨 Telegram webhook received")
+        
         from backend.adapters.platforms import TelegramAdapter, OutgoingMessage
 
         payload = await request.json()
+        logger.info(f"Telegram payload: {payload}")
+        
         bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
         if not bot_token:
-            logger.error("TELEGRAM_BOT_TOKEN not set")
+            logger.error("❌ TELEGRAM_BOT_TOKEN not set")
             return {"ok": True}
 
         adapter = TelegramAdapter(bot_token)
         message = await adapter.parse_webhook(payload)
 
         if not message:
+            logger.info("No message to process (might be a non-message update)")
             return {"ok": True}
+
+        logger.info(f"📩 Received message from user {message.user_id}: {message.text}")
 
         # Send typing indicator
         await adapter.send_typing(message.chat_id)
@@ -616,48 +623,75 @@ async def telegram_webhook(request: Request):
         # Route message
         from backend.core.smart_router import SmartToolRouter
 
-        routing_result = await SmartToolRouter.route_message(
-            message.text, message.user_id, platform="telegram"
-        )
-
-        # Get response
-        if routing_result["type"] == "tool":
-            response = routing_result["result"].get("output", "تم التنفيذ ✅")
-        else:
-            from backend.core.llm import llm_client
-
-            response = await llm_client.generate(
-                message.text,
-                provider="groq",
-                system_prompt="أنت RobovAI Nova Agent - مساعد ذكي مصري ودود. رد بالمصري العامي.",
+        try:
+            routing_result = await SmartToolRouter.route_message(
+                message.text, message.user_id, platform="telegram"
             )
 
-        # Send response
-        await adapter.send_message(
-            OutgoingMessage(
-                text=response[:4000],  # Telegram limit
-                chat_id=message.chat_id,
-                reply_to=message.message_id,
+            # Get response
+            if routing_result["type"] == "tool":
+                response = routing_result["result"].get("output", "تم التنفيذ ✅")
+                logger.info(f"Tool response generated for user {message.user_id}")
+            else:
+                from backend.core.llm import llm_client
+
+                response = await llm_client.generate(
+                    message.text,
+                    provider="groq",
+                    system_prompt="أنت RobovAI Nova Agent - مساعد ذكي مصري ودود. رد بالمصري العامي.",
+                )
+                logger.info(f"LLM response generated for user {message.user_id}")
+
+            # Send response
+            await adapter.send_message(
+                OutgoingMessage(
+                    text=response[:4000],  # Telegram limit
+                    chat_id=message.chat_id,
+                    reply_to=message.message_id,
+                )
             )
-        )
+            
+            logger.info(f"✅ Successfully sent response to user {message.user_id}")
+
+        except Exception as routing_error:
+            logger.error(f"❌ Routing/LLM error: {routing_error}", exc_info=True)
+            # Send error message to user
+            try:
+                await adapter.send_message(
+                    OutgoingMessage(
+                        text="⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك. يرجى المحاولة مرة أخرى.",
+                        chat_id=message.chat_id,
+                        reply_to=message.message_id
+                    )
+                )
+            except:
+                pass
 
         return {"ok": True}
 
     except Exception as e:
-        logger.error(f"Telegram webhook error: {e}")
-        # Critical Fix: Notify user of error instead of silence
+        logger.error(f"❌ Telegram webhook critical error: {e}", exc_info=True)
+        # Try to notify user if possible
         try:
-             # Try to parse chat_id from payload manually if possible, or use the message object if existing
-            if 'message' in vars() and message:
-                 await adapter.send_message(
-                    OutgoingMessage(
-                        text="⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك.",
-                        chat_id=message.chat_id,
-                        reply_to=message.message_id
-                    )
-                 )
-        except:
-            pass # Failsafe
+            payload = await request.json()
+            msg = payload.get("message") or payload.get("edited_message")
+            if msg:
+                chat_id = msg.get("chat", {}).get("id")
+                message_id = msg.get("message_id")
+                if chat_id:
+                    from backend.adapters.platforms import TelegramAdapter, OutgoingMessage
+                    bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+                    if bot_token:
+                        adapter = TelegramAdapter(bot_token)
+                        await adapter.send_message(
+                            OutgoingMessage(
+                                text="⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك.",
+                                chat_id=str(chat_id),
+                                reply_to=str(message_id) if message_id else None
+                            )
+                        )
+        except Exception as notify_error:
+            logger.error(f"Failed to notify user of error: {notify_error}")
             
         return {"ok": True}
 

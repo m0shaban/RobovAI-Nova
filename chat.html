@@ -905,6 +905,57 @@
       if (!token) {
         window.location.href = '/login';
       }
+
+      // 👤 Global user state
+      let currentUser = { id: 'web_user', email: '', full_name: '', role: 'user', balance: 0, daily_used: 0, daily_limit: 50, tier: 'free' };
+
+      async function fetchUserProfile() {
+        try {
+          const res = await fetch(`${window.location.origin}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
+          });
+          if (res.ok) {
+            currentUser = await res.json();
+            updateBalanceUI();
+          } else if (res.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+          }
+        } catch(e) { console.error('Profile fetch failed:', e); }
+      }
+
+      function updateBalanceUI() {
+        const el = document.getElementById('balanceDisplay');
+        if (el) el.innerHTML = `💰 <b>${currentUser.balance}</b> توكن &nbsp;|&nbsp; 📊 ${currentUser.daily_used}/${currentUser.daily_limit === -1 ? '∞' : currentUser.daily_limit} يومي`;
+        const nameEl = document.getElementById('userNameDisplay');
+        if (nameEl) nameEl.textContent = currentUser.full_name || currentUser.email;
+        const tierEl = document.getElementById('tierBadge');
+        if (tierEl) {
+          const badges = { free: '🆓 مجاني', pro: '⭐ Pro', enterprise: '🏢 Enterprise' };
+          tierEl.textContent = badges[currentUser.tier] || '🆓 مجاني';
+        }
+      }
+
+      async function refreshBalance() {
+        try {
+          const res = await fetch(`${window.location.origin}/user/balance`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            credentials: 'include'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            currentUser.balance = data.balance;
+            currentUser.daily_used = data.daily_used;
+            currentUser.daily_limit = data.daily_limit;
+            currentUser.tier = data.tier;
+            updateBalanceUI();
+          }
+        } catch(e) {}
+      }
+
+      // Fetch profile immediately
+      fetchUserProfile();
     </script>
 
     <!-- 🎬 STARTUP ANIMATION -->
@@ -950,7 +1001,15 @@
           </div>
           <div class="brand-info">
             <div class="brand-name">RobovAI Nova</div>
-            <div class="brand-tag">Agent • 99 أداة</div>
+            <div class="brand-tag" id="tierBadge">🆓 مجاني</div>
+          </div>
+        </div>
+
+        <!-- User Info & Balance -->
+        <div style="padding: 10px 15px; margin: 0;">
+          <div style="background: rgba(102,126,234,0.1); border: 1px solid rgba(102,126,234,0.2); border-radius: 12px; padding: 10px 14px; font-size: 13px;">
+            <div id="userNameDisplay" style="font-weight: 600; color: var(--text); margin-bottom: 4px;">...</div>
+            <div id="balanceDisplay" style="color: var(--text-muted); font-size: 12px;">💰 ... توكن</div>
           </div>
         </div>
 
@@ -1314,7 +1373,7 @@
 
         try {
           const res = await fetch(
-            `${API}/history/conversations?user_id=default`,
+            `${API}/history/conversations?user_id=${currentUser.id}`,
           );
           const data = await res.json();
 
@@ -1443,7 +1502,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               message: text,
-              user_id: 'web_user',
+              user_id: String(currentUser.id),
               platform: 'web',
             }),
           });
@@ -1457,6 +1516,7 @@
           } else {
             addBotMessage('❌ حدث خطأ: ' + (data.error || 'خطأ غير معروف'));
           }
+          refreshBalance(); // Update balance after request
         } catch (e) {
           console.error('API error:', e);
           removeThinkingIndicator(thinkingId);
@@ -1505,7 +1565,7 @@
         // Create EventSource for streaming
         const params = new URLSearchParams({
           message: text,
-          user_id: 'web_user',
+          user_id: String(currentUser.id),
           platform: 'web',
         });
 
@@ -1580,6 +1640,7 @@
 
           addMessage(streamedContent, 'bot');
           eventSource.close();
+          refreshBalance(); // Update balance after request
         });
 
         // Event: Done (stream finished)
@@ -1592,6 +1653,7 @@
             }
           }
           eventSource.close();
+          refreshBalance(); // Update balance after request
         });
 
         // Event: Error
@@ -1817,7 +1879,7 @@
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('user_id', 'web_user');
+        formData.append('user_id', String(currentUser.id));
 
         const headers = {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -1907,7 +1969,7 @@
 
         const formData = new FormData();
         formData.append('audio', blob, 'recording.webm');
-        formData.append('user_id', 'web_user');
+        formData.append('user_id', String(currentUser.id));
         formData.append('platform', 'web');
 
         try {

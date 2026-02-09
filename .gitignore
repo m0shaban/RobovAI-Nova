@@ -1,4 +1,5 @@
 .env
+.jwt_secret
 users.db
 __pycache__/
 *.pyc

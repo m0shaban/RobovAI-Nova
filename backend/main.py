@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException, File, UploadFile, Form
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,6 +12,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import logging
 import tempfile
+import json
 import os
 from backend.tools.registry import ToolRegistry
 from backend.core.config import settings
@@ -109,6 +111,15 @@ async def root():
     return FileResponse("index.html")
 
 
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve favicon to avoid noisy 404s in browser console."""
+    icon_path = Path(__file__).resolve().parent.parent / "favicon_io" / "favicon.ico"
+    if icon_path.exists():
+        return FileResponse(str(icon_path))
+    raise HTTPException(status_code=404, detail="Not Found")
+
+
 # Serve other top-level HTML files (e.g., chat.html, signup.html)
 @app.get("/{page}.html")
 async def serve_html_page(page: str):
@@ -141,7 +152,7 @@ from fastapi import Depends, status, Response, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import RedirectResponse
 from backend.core.database import db_client
-from backend.core.security import create_access_token, decode_access_token
+from backend.core.security import create_access_token, decode_access_token, validate_password_strength
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -218,6 +229,13 @@ async def get_current_user(
     return user
 
 
+async def require_admin(current_user: dict = Depends(get_current_user)):
+    """Dependency that requires admin role."""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="⛔ صلاحيات المسؤول مطلوبة")
+    return current_user
+
+
 @app.post("/auth/register")
 async def register(user: UserCreate, response: Response):
     """Register and Auto-Login"""
@@ -225,6 +243,15 @@ async def register(user: UserCreate, response: Response):
         f"Register endpoint called for email={user.email} full_name={user.full_name}"
     )
     try:
+        # Validate password strength
+        valid, msg = validate_password_strength(user.password)
+        if not valid:
+            raise HTTPException(status_code=400, detail=msg)
+
+        # Validate email format
+        if "@" not in user.email or "." not in user.email:
+            raise HTTPException(status_code=400, detail="البريد الإلكتروني غير صحيح")
+
         res = await db_client.create_user(user.email, user.password, user.full_name)
         logger.info(f"create_user returned: {res}")
         if not res:
@@ -302,7 +329,32 @@ async def logout(response: Response, request: Request):
 
 @app.get("/auth/me")
 async def read_users_me(current_user: dict = Depends(get_current_user)):
-    return current_user
+    """Get current user info including balance and role."""
+    usage = await db_client.get_daily_usage(str(current_user["id"]))
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+        "full_name": current_user.get("full_name", ""),
+        "role": current_user.get("role", "user"),
+        "balance": usage["balance"],
+        "daily_used": usage["daily_used"],
+        "daily_limit": usage["daily_limit"],
+        "tier": usage["tier"],
+    }
+
+
+@app.get("/user/balance")
+async def get_user_balance(current_user: dict = Depends(get_current_user)):
+    """Get current balance and usage stats."""
+    usage = await db_client.get_daily_usage(str(current_user["id"]))
+    return usage
+
+
+@app.get("/user/usage-history")
+async def get_usage_history(current_user: dict = Depends(get_current_user)):
+    """Get recent usage history."""
+    history = await db_client.get_usage_history(str(current_user["id"]))
+    return {"status": "success", "history": history}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -905,65 +957,147 @@ async def telegram_webhook(request: Request):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 💳 LEMONSQUEEZY PAYMENTS
+# 💳 UNIFIED PAYMENT GATEWAY (Stripe + Paymob + LemonSqueezy)
 # ═══════════════════════════════════════════════════════════════════════════
 
-from backend.lemonsqueezy import LemonSqueezyPayment, PRICING_TIERS
+from backend.payment_gateway import PaymentGateway, PLANS, TOKEN_PACKAGES
 
 
 @app.post("/payments/checkout")
 async def create_checkout(
-    tier: str = "pro", current_user: dict = Depends(get_current_user)
+    plan: str = "pro",
+    provider: str = "auto",
+    method: str = "card",
+    current_user: dict = Depends(get_current_user),
 ):
-    """Create LemonSqueezy checkout URL"""
-    if tier not in ["pro", "enterprise"]:
-        raise HTTPException(status_code=400, detail="Invalid tier")
+    """Create checkout URL with any configured payment provider."""
+    if plan not in ["pro", "enterprise"]:
+        raise HTTPException(status_code=400, detail="الباقة غير متاحة")
 
-    checkout_url = await LemonSqueezyPayment.create_checkout(
+    result = await PaymentGateway.create_checkout(
         user_id=str(current_user.get("id")),
         user_email=current_user.get("email"),
-        tier=tier,
+        user_name=current_user.get("full_name", ""),
+        plan=plan,
+        provider=provider,
+        method=method,
     )
 
-    if not checkout_url:
-        raise HTTPException(status_code=503, detail="Payment service unavailable")
+    if not result.get("checkout_url"):
+        raise HTTPException(
+            status_code=503, detail=result.get("error", "خدمة الدفع غير متاحة")
+        )
 
-    return {"checkout_url": checkout_url}
+    return result
 
 
+@app.post("/payments/buy-tokens")
+async def buy_tokens(
+    package_id: str = "tokens_500",
+    provider: str = "auto",
+    current_user: dict = Depends(get_current_user),
+):
+    """Buy token package (one-time purchase)."""
+    if package_id not in TOKEN_PACKAGES:
+        raise HTTPException(status_code=400, detail="الباكج غير متاح")
+
+    result = await PaymentGateway.create_checkout(
+        user_id=str(current_user.get("id")),
+        user_email=current_user.get("email"),
+        user_name=current_user.get("full_name", ""),
+        provider=provider,
+        is_token_package=True,
+        package_id=package_id,
+    )
+
+    if not result.get("checkout_url"):
+        raise HTTPException(
+            status_code=503, detail=result.get("error", "خدمة الدفع غير متاحة")
+        )
+
+    return result
+
+
+@app.post("/payments/webhook/{provider}")
+async def payment_webhook(provider: str, request: Request):
+    """Unified webhook handler — /payments/webhook/stripe|paymob|lemonsqueezy"""
+    if provider not in ("stripe", "paymob", "lemonsqueezy"):
+        raise HTTPException(status_code=400, detail="Unknown provider")
+
+    raw_body = await request.body()
+
+    data: Dict[str, Any] = {}
+    # 1) Try JSON
+    try:
+        if raw_body:
+            data = json.loads(raw_body)
+    except Exception:
+        data = {}
+
+    # 2) Fallback: form-encoded (Paymob callbacks may hit here)
+    if not data:
+        try:
+            form = await request.form()
+            data = dict(form)
+        except Exception:
+            pass
+
+    # 3) Always include query params (Paymob response callback can be GET with params)
+    try:
+        qp = dict(request.query_params)
+        if qp:
+            data = {**qp, **data}
+    except Exception:
+        pass
+
+    headers = dict(request.headers)
+
+    result = await PaymentGateway.handle_webhook(
+        provider, data, raw_body, headers, db_client
+    )
+
+    if result.get("success"):
+        logger.info(f"💰 Payment webhook [{provider}]: {result}")
+        return {"status": "ok", **result}
+    else:
+        logger.warning(f"⚠️ Payment webhook [{provider}] failed: {result}")
+        raise HTTPException(status_code=400, detail=result.get("error", "Webhook failed"))
+
+
+# Keep old endpoint for backwards compatibility
 @app.post("/payments/webhook")
-async def lemonsqueezy_webhook(request: Request):
-    """Handle LemonSqueezy webhook events"""
-    signature = request.headers.get("X-Signature", "")
-    payload = await request.body()
-
-    # Verify signature
-    if not LemonSqueezyPayment.verify_webhook(payload, signature):
-        raise HTTPException(status_code=401, detail="Invalid signature")
-
-    data = await request.json()
-    event_name = data.get("meta", {}).get("event_name", "")
-
-    await LemonSqueezyPayment.process_webhook(event_name, data, db_client)
-
-    return {"status": "ok"}
+async def legacy_webhook(request: Request):
+    """Legacy webhook — auto-detect provider from headers."""
+    headers = dict(request.headers)
+    if "stripe-signature" in headers:
+        return await payment_webhook("stripe", request)
+    elif "x-signature" in headers:
+        return await payment_webhook("lemonsqueezy", request)
+    else:
+        return await payment_webhook("paymob", request)
 
 
 @app.get("/payments/pricing")
 async def get_pricing():
-    """Get pricing tiers"""
-    return PRICING_TIERS
+    """Get pricing tiers + available providers."""
+    return {
+        "plans": PLANS,
+        "token_packages": TOKEN_PACKAGES,
+        "providers": PaymentGateway.get_providers(),
+    }
 
 
 @app.get("/payments/subscription")
 async def get_subscription(current_user: dict = Depends(get_current_user)):
-    """Get user's current subscription"""
-    from backend.payments import PaymentSystem
-
-    subscription = await PaymentSystem.check_subscription(
-        str(current_user.get("id")), db_client
-    )
-    return subscription
+    """Get user's current subscription."""
+    usage = await db_client.get_daily_usage(str(current_user.get("id")))
+    return {
+        "tier": usage.get("tier", "free"),
+        "balance": usage.get("balance", 0),
+        "daily_used": usage.get("daily_used", 0),
+        "daily_limit": usage.get("daily_limit", 50),
+        "can_use": usage.get("can_use", False),
+    }
 
 
 @app.get("/health")
@@ -1071,14 +1205,31 @@ async def stream_agent_endpoint(request: AgentRequest):
 
 @app.get("/agent/stream")
 async def stream_agent_get(
-    message: str, user_id: str = "web_user", platform: str = "web"
+    message: str, user_id: str = "web_user", platform: str = "web",
+    request: Request = None,
 ):
     """
-    🔄 Stream agent execution step by step (GET version for EventSource)
-
-    Returns Server-Sent Events for real-time updates.
+    🔄 Stream agent execution (GET for EventSource).
+    Authenticates via cookie, deducts 1 token per request.
     """
-    return await _stream_agent(message, user_id, platform)
+    # Try to authenticate from cookie
+    real_user_id = user_id
+    if request:
+        user = await get_current_user_from_cookie(request)
+        if user:
+            real_user_id = str(user["id"])
+            # Check balance before running
+            usage = await db_client.get_daily_usage(real_user_id)
+            if not usage["can_use"]:
+                import json as _json
+                from fastapi.responses import StreamingResponse as _SR
+                async def _no_balance():
+                    yield f'event: error\ndata: {_json.dumps({"error": "رصيدك غير كافي. يرجى شراء توكنز إضافية أو ترقية الباقة."}, ensure_ascii=False)}\n\n'
+                return _SR(_no_balance(), media_type="text/event-stream")
+            # Deduct 1 token for the request
+            await db_client.deduct_tokens(real_user_id, 1, "agent_chat")
+
+    return await _stream_agent(message, real_user_id, platform)
 
 
 async def _stream_agent(message: str, user_id: str, platform: str):
@@ -1332,14 +1483,13 @@ async def export_conversation(
 
 
 @app.get("/admin/stats")
-async def get_admin_stats():
-    """إحصائيات لوحة التحكم"""
+async def get_admin_stats(admin: dict = Depends(require_admin)):
+    """إحصائيات لوحة التحكم — للمسؤولين فقط"""
     try:
         tools = ToolRegistry.list_tools()
+        db_stats = await db_client.get_stats()
 
-        # إحصائيات الأدوات
         tool_stats = {"total": len(tools), "by_category": {}}
-
         for tool_name in tools:
             try:
                 tool_cls = ToolRegistry.get_tool(tool_name)
@@ -1355,9 +1505,10 @@ async def get_admin_stats():
             "status": "success",
             "stats": {
                 "tools": tool_stats,
+                "users": db_stats,
                 "system": {
                     "uptime": "running",
-                    "version": "2.0.0",
+                    "version": "3.0.0",
                     "agent": "Nova Multi-Agent",
                 },
             },
@@ -1367,8 +1518,8 @@ async def get_admin_stats():
 
 
 @app.get("/admin/tools")
-async def get_tools_detailed():
-    """قائمة الأدوات مع التفاصيل"""
+async def get_tools_detailed(admin: dict = Depends(require_admin)):
+    """قائمة الأدوات مع التفاصيل — للمسؤولين فقط"""
     try:
         tools = ToolRegistry.list_tools()
         detailed = []
@@ -1394,8 +1545,8 @@ async def get_tools_detailed():
 
 
 @app.get("/admin/memory/{user_id}")
-async def get_user_memory(user_id: str):
-    """الحصول على ذاكرة المستخدم"""
+async def get_user_memory(user_id: str, admin: dict = Depends(require_admin)):
+    """الحصول على ذاكرة المستخدم — للمسؤولين فقط"""
     try:
         from backend.agent.memory import get_memory_manager
 
@@ -1406,9 +1557,39 @@ async def get_user_memory(user_id: str):
         return {"status": "error", "error": str(e)}
 
 
+@app.get("/admin/users")
+async def get_admin_users(admin: dict = Depends(require_admin)):
+    """قائمة المستخدمين — للمسؤولين فقط"""
+    try:
+        users = await db_client.get_all_users()
+        return {"status": "success", "users": users, "total": len(users)}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.post("/admin/set-role")
+async def set_user_role(user_id: int, role: str, admin: dict = Depends(require_admin)):
+    """تغيير صلاحية مستخدم — للمسؤولين فقط"""
+    if role not in ["user", "admin"]:
+        raise HTTPException(status_code=400, detail="Role must be 'user' or 'admin'")
+    ok = await db_client.update_user_role(user_id, role)
+    if not ok:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"status": "success", "message": f"User {user_id} role set to {role}"}
+
+
+@app.post("/admin/add-tokens")
+async def admin_add_tokens(user_id: int, amount: int, admin: dict = Depends(require_admin)):
+    """إضافة توكنز لمستخدم — للمسؤولين فقط"""
+    ok = await db_client.add_tokens(str(user_id), amount)
+    if not ok:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"status": "success", "message": f"Added {amount} tokens to user {user_id}"}
+
+
 @app.get("/admin/logs")
-async def get_system_logs(limit: int = 50):
-    """الحصول على آخر السجلات"""
+async def get_system_logs(limit: int = 50, admin: dict = Depends(require_admin)):
+    """الحصول على آخر السجلات — للمسؤولين فقط"""
     try:
         logs = []
         log_file = Path("logs/robovai.log")

@@ -1,12 +1,22 @@
+"""
+🗄️ RobovAI Nova — Database Layer
+═══════════════════════════════════════════
+• User roles (user / admin)
+• Atomic balance deduction (no race conditions)
+• Indexes for performance
+• Subscription tiers
+• Usage tracking per day
+"""
+
 import sqlite3
 import json
 import os
 import logging
 from typing import Optional, Dict, Any, List
+from datetime import datetime
 from .security import get_password_hash, verify_password
 
-DB_PATH = "users.db"
-
+DB_PATH = os.getenv("DATABASE_PATH", "users.db")
 logger = logging.getLogger("robovai.database")
 
 
@@ -14,26 +24,62 @@ class Database:
     def __init__(self):
         self._init_db()
 
+    def _get_conn(self):
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        return conn
+
     def _init_db(self):
-        """Initialize SQLite database"""
-        with sqlite3.connect(DB_PATH) as conn:
+        """Initialize SQLite database with roles, indexes, and proper schema."""
+        with self._get_conn() as conn:
             c = conn.cursor()
-            # Users Table
-            c.execute(
-                """
+
+            # Users Table — with role field
+            c.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     email TEXT UNIQUE NOT NULL,
                     full_name TEXT,
                     password_hash TEXT NOT NULL,
+                    role TEXT DEFAULT 'user',
+                    balance INTEGER DEFAULT 100,
+                    daily_used INTEGER DEFAULT 0,
+                    daily_reset_date TEXT,
+                    subscription_tier TEXT DEFAULT 'free',
+                    subscription_expires TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    balance INTEGER DEFAULT 100
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
+
+            # Add missing columns to existing tables (safe migration)
+            for col, defn in [
+                ("role", "TEXT DEFAULT 'user'"),
+                ("daily_used", "INTEGER DEFAULT 0"),
+                ("daily_reset_date", "TEXT"),
+                ("subscription_tier", "TEXT DEFAULT 'free'"),
+                ("subscription_expires", "TEXT"),
+                ("updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+            ]:
+                try:
+                    c.execute(f"ALTER TABLE users ADD COLUMN {col} {defn}")
+                except sqlite3.OperationalError:
+                    pass  # Column already exists
+
+            # Sessions Table
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    token TEXT UNIQUE,
+                    expires_at TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
+
             # Logs Table
-            c.execute(
-                """
+            c.execute("""
                 CREATE TABLE IF NOT EXISTS logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT,
@@ -41,36 +87,22 @@ class Database:
                     tokens INTEGER,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-            # Conversations Table (Agent Memory)
-            c.execute(
-                """
+            """)
+
+            # Conversations Table
+            c.execute("""
                 CREATE TABLE IF NOT EXISTS conversations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER,
-                    role TEXT, -- 'user' or 'assistant'
+                    role TEXT,
                     content TEXT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY(user_id) REFERENCES users(id)
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
                 )
-            """
-            )
-            # Sessions Table (Advanced Auth)
-            c.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sessions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    token TEXT UNIQUE,
-                    expires_at TIMESTAMP,
-                    FOREIGN KEY(user_id) REFERENCES users(id)
-                )
-            """
-            )
-            # Subscriptions Table (Payment System)
-            c.execute(
-                """
+            """)
+
+            # Subscriptions Table
+            c.execute("""
                 CREATE TABLE IF NOT EXISTS subscriptions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT UNIQUE,
@@ -78,11 +110,10 @@ class Database:
                     expires_at TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-            # OTP Codes Table (Verification)
-            c.execute(
-                """
+            """)
+
+            # OTP Codes Table
+            c.execute("""
                 CREATE TABLE IF NOT EXISTS otp_codes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT,
@@ -92,76 +123,126 @@ class Database:
                     used INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
-            # Usage Logs Table (Analytics)
-            c.execute(
-                """
+            """)
+
+            # Usage Logs Table
+            c.execute("""
                 CREATE TABLE IF NOT EXISTS usage_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT,
                     tool_name TEXT,
+                    tokens_cost INTEGER DEFAULT 0,
                     platform TEXT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
+
+            # Add tokens_cost column if missing
+            try:
+                c.execute("ALTER TABLE usage_logs ADD COLUMN tokens_cost INTEGER DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+
+            # ── Indexes ──
+            for idx in [
+                "CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)",
+                "CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)",
+                "CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id)",
+                "CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id)",
+                "CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)",
+                "CREATE INDEX IF NOT EXISTS idx_usage_logs_user_date ON usage_logs(user_id, timestamp)",
+            ]:
+                c.execute(idx)
+
             conn.commit()
+            logger.info("✅ Database initialized with roles, indexes, and billing")
+
+    # ═══════════════════════════════════════════════════════════════
+    # 👤 USER MANAGEMENT
+    # ═══════════════════════════════════════════════════════════════
 
     async def create_user(
-        self, email: str, password: str, full_name: str
+        self, email: str, password: str, full_name: str, role: str = "user"
     ) -> Optional[Dict[str, Any]]:
-        """Create a new user"""
         try:
             password_hash = get_password_hash(password)
-            with sqlite3.connect(DB_PATH) as conn:
+            today = datetime.now().strftime("%Y-%m-%d")
+            with self._get_conn() as conn:
                 c = conn.cursor()
                 c.execute(
-                    "INSERT INTO users (email, password_hash, full_name) VALUES (?, ?, ?)",
-                    (email, password_hash, full_name),
+                    """INSERT INTO users (email, password_hash, full_name, role, balance, daily_used, daily_reset_date)
+                       VALUES (?, ?, ?, ?, 100, 0, ?)""",
+                    (email, password_hash, full_name, role, today),
                 )
                 conn.commit()
-                created = {"id": c.lastrowid, "email": email, "full_name": full_name}
-                logger.info(f"User created: {created}")
-                return created
+                return {
+                    "id": c.lastrowid,
+                    "email": email,
+                    "full_name": full_name,
+                    "role": role,
+                    "balance": 100,
+                }
         except sqlite3.IntegrityError:
-            logger.info(f"create_user failed - email exists: {email}")
-            return None  # Email already exists
+            return None
         except Exception as e:
-            logger.exception(f"Unexpected error in create_user for email={email}: {e}")
+            logger.exception(f"create_user error: {e}")
             raise
 
-    async def authenticate_user(
-        self, email: str, password: str
-    ) -> Optional[Dict[str, Any]]:
-        """Authenticate user and return user info"""
-        with sqlite3.connect(DB_PATH) as conn:
+    async def authenticate_user(self, email: str, password: str) -> Optional[Dict[str, Any]]:
+        with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute("SELECT * FROM users WHERE email = ?", (email,))
             user = c.fetchone()
-
             if user and verify_password(password, user["password_hash"]):
                 return dict(user)
         return None
 
     async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        with sqlite3.connect(DB_PATH) as conn:
+        with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute(
-                "SELECT id, email, full_name, balance FROM users WHERE email = ?",
+                "SELECT id, email, full_name, role, balance, daily_used, subscription_tier FROM users WHERE email = ?",
                 (email,),
             )
             user = c.fetchone()
-            if user:
-                return dict(user)
-        return None
+            return dict(user) if user else None
 
-    # --- Existing Token Logic (Upgraded) ---
+    async def get_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT id, email, full_name, role, balance, daily_used, subscription_tier FROM users WHERE id = ?",
+                (user_id,),
+            )
+            user = c.fetchone()
+            return dict(user) if user else None
+
+    async def update_user_role(self, user_id: int, role: str) -> bool:
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            c.execute("UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (role, user_id))
+            conn.commit()
+            return c.rowcount > 0
+
+    async def get_all_users(self, limit: int = 100) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT id, email, full_name, role, balance, daily_used, subscription_tier, created_at FROM users ORDER BY id DESC LIMIT ?",
+                (limit,),
+            )
+            return [dict(r) for r in c.fetchall()]
+
+    # ═══════════════════════════════════════════════════════════════
+    # 💰 BALANCE & BILLING (Atomic Operations)
+    # ═══════════════════════════════════════════════════════════════
 
     async def get_user_balance(self, user_id: str) -> int:
-        with sqlite3.connect(DB_PATH) as conn:
+        with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
                 "SELECT balance FROM users WHERE email = ? OR id = ?",
@@ -170,28 +251,76 @@ class Database:
             result = c.fetchone()
         return result[0] if result else 0
 
-    async def deduct_tokens(self, user_id: str, amount: int) -> bool:
-        with sqlite3.connect(DB_PATH) as conn:
+    async def deduct_tokens(self, user_id: str, amount: int, tool_name: str = "") -> bool:
+        """Atomic balance deduction — check + deduct in one transaction."""
+        with self._get_conn() as conn:
             c = conn.cursor()
-            # Check balance
+            # Atomic: only deduct if balance >= amount
             c.execute(
-                "SELECT balance FROM users WHERE email = ? OR id = ?",
-                (user_id, user_id),
+                """UPDATE users SET balance = balance - ?, daily_used = daily_used + ?, updated_at = CURRENT_TIMESTAMP
+                   WHERE (email = ? OR id = ?) AND balance >= ?""",
+                (amount, amount, user_id, user_id, amount),
             )
-            result = c.fetchone()
-            if not result or result[0] < amount:
+            if c.rowcount == 0:
                 return False
 
-            # Deduct
-            c.execute(
-                "UPDATE users SET balance = balance - ? WHERE email = ? OR id = ?",
-                (amount, user_id, user_id),
-            )
+            # Log the usage
+            if tool_name:
+                c.execute(
+                    "INSERT INTO usage_logs (user_id, tool_name, tokens_cost, platform) VALUES (?, ?, ?, 'web')",
+                    (str(user_id), tool_name, amount),
+                )
             conn.commit()
         return True
 
-    async def log_usage(self, user_id: str, tool_name: str, tokens: int, summary: str):
-        with sqlite3.connect(DB_PATH) as conn:
+    async def add_tokens(self, user_id: str, amount: int) -> bool:
+        """Add tokens to user balance (after purchase)."""
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            c.execute(
+                "UPDATE users SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP WHERE email = ? OR id = ?",
+                (amount, user_id, user_id),
+            )
+            conn.commit()
+            return c.rowcount > 0
+
+    async def reset_daily_usage(self, user_id: str):
+        """Reset daily counter if date changed."""
+        today = datetime.now().strftime("%Y-%m-%d")
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            c.execute(
+                "UPDATE users SET daily_used = 0, daily_reset_date = ? WHERE (email = ? OR id = ?) AND (daily_reset_date IS NULL OR daily_reset_date != ?)",
+                (today, user_id, user_id, today),
+            )
+            conn.commit()
+
+    async def get_daily_usage(self, user_id: str) -> Dict[str, Any]:
+        """Get daily usage stats."""
+        await self.reset_daily_usage(user_id)
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT balance, daily_used, subscription_tier FROM users WHERE email = ? OR id = ?",
+                (user_id, user_id),
+            )
+            row = c.fetchone()
+            if row:
+                tier = row["subscription_tier"] or "free"
+                tier_limits = {"free": 50, "pro": 500, "enterprise": -1}
+                daily_limit = tier_limits.get(tier, 50)
+                return {
+                    "balance": row["balance"],
+                    "daily_used": row["daily_used"],
+                    "daily_limit": daily_limit,
+                    "tier": tier,
+                    "can_use": daily_limit == -1 or row["daily_used"] < daily_limit,
+                }
+        return {"balance": 0, "daily_used": 0, "daily_limit": 50, "tier": "free", "can_use": False}
+
+    async def log_usage(self, user_id: str, tool_name: str, tokens: int, summary: str = ""):
+        with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
                 "INSERT INTO logs (user_id, tool_name, tokens) VALUES (?, ?, ?)",
@@ -199,11 +328,22 @@ class Database:
             )
             conn.commit()
 
-    # --- Agent Memory ---
+    async def get_usage_history(self, user_id: str, limit: int = 20) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT tool_name, tokens_cost, timestamp FROM usage_logs WHERE user_id = ? ORDER BY id DESC LIMIT ?",
+                (str(user_id), limit),
+            )
+            return [dict(r) for r in c.fetchall()]
+
+    # ═══════════════════════════════════════════════════════════════
+    # 🧠 Agent Memory
+    # ═══════════════════════════════════════════════════════════════
 
     async def save_message(self, user_id: int, role: str, content: str):
-        """Save a message to persistent memory"""
-        with sqlite3.connect(DB_PATH) as conn:
+        with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
                 "INSERT INTO conversations (user_id, role, content) VALUES (?, ?, ?)",
@@ -211,11 +351,8 @@ class Database:
             )
             conn.commit()
 
-    async def get_recent_messages(
-        self, user_id: int, limit: int = 10
-    ) -> List[Dict[str, str]]:
-        """Retrieve recent context for LLM"""
-        with sqlite3.connect(DB_PATH) as conn:
+    async def get_recent_messages(self, user_id: int, limit: int = 10) -> List[Dict[str, str]]:
+        with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute(
@@ -223,14 +360,14 @@ class Database:
                 (user_id, limit),
             )
             rows = c.fetchall()
-            return [
-                {"role": r["role"], "content": r["content"]} for r in reversed(rows)
-            ]
+            return [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
 
-    # --- Session Management (Advanced Security) ---
+    # ═══════════════════════════════════════════════════════════════
+    # 🔑 Session Management
+    # ═══════════════════════════════════════════════════════════════
 
     async def create_session(self, user_id: int, token: str, expires_at: str):
-        with sqlite3.connect(DB_PATH) as conn:
+        with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
                 "INSERT INTO sessions (user_id, token, expires_at) VALUES (?, ?, ?)",
@@ -239,36 +376,64 @@ class Database:
             conn.commit()
 
     async def get_session(self, token: str) -> Optional[Dict[str, Any]]:
-        with sqlite3.connect(DB_PATH) as conn:
+        with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute("SELECT * FROM sessions WHERE token = ?", (token,))
             row = c.fetchone()
-            if row:
-                return dict(row)
-        return None
-
-    async def execute(self, query: str, params: tuple = ()) -> Optional[List[Dict]]:
-        """Generic execute method for payment system queries"""
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-            c.execute(query, params)
-
-            # If SELECT query, return results
-            if query.strip().upper().startswith("SELECT"):
-                rows = c.fetchall()
-                return [dict(row) for row in rows]
-
-            # Otherwise commit and return None
-            conn.commit()
-            return None
+            return dict(row) if row else None
 
     async def delete_session(self, token: str):
-        with sqlite3.connect(DB_PATH) as conn:
+        with self._get_conn() as conn:
             c = conn.cursor()
             c.execute("DELETE FROM sessions WHERE token = ?", (token,))
             conn.commit()
+
+    async def cleanup_expired_sessions(self):
+        """Remove expired sessions."""
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            c.execute("DELETE FROM sessions WHERE expires_at < ?", (datetime.now().isoformat(),))
+            conn.commit()
+
+    # ═══════════════════════════════════════════════════════════════
+    # 🔧 Generic Execute (for payment system compatibility)
+    # ═══════════════════════════════════════════════════════════════
+
+    async def execute(self, query: str, params: tuple = ()) -> Optional[List[Dict]]:
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(query, params)
+            if query.strip().upper().startswith("SELECT"):
+                return [dict(row) for row in c.fetchall()]
+            conn.commit()
+            return None
+
+    # ═══════════════════════════════════════════════════════════════
+    # 📊 Admin Stats
+    # ═══════════════════════════════════════════════════════════════
+
+    async def get_stats(self) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) FROM users")
+            total_users = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'")
+            admins = c.fetchone()[0]
+            c.execute("SELECT SUM(balance) FROM users")
+            total_balance = c.fetchone()[0] or 0
+            c.execute("SELECT COUNT(*) FROM usage_logs WHERE DATE(timestamp) = DATE('now')")
+            today_requests = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM usage_logs")
+            total_requests = c.fetchone()[0]
+        return {
+            "total_users": total_users,
+            "admins": admins,
+            "total_balance": total_balance,
+            "today_requests": today_requests,
+            "total_requests": total_requests,
+        }
 
 
 db_client = Database()

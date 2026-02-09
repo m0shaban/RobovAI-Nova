@@ -1,59 +1,79 @@
 """
-🔐 Security Module
-Handles password hashing and JWT token generation.
+🔐 Security Module — RobovAI Nova
+═══════════════════════════════════════════
+• Independent JWT secret (not Supabase key)
+• Role-based access (user / admin)
+• 24-hour token expiry (actually enforced)
+• Password strength validation
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Dict, Any
 import jwt  # Needs: pip install pyjwt
-from passlib.context import CryptContext  # Needs: pip install passlib[bcrypt]
-import os
-from .config import settings
+from passlib.context import CryptContext
+import os, secrets, re
 
-# Configuration
-SECRET_KEY = (
-    settings.SUPABASE_KEY
-    if len(settings.SUPABASE_KEY) > 20
-    else "super_secret_fallback_key_change_in_prod"
-)
+# ─── Independent JWT Secret ───────────────────────────────────
+# Priority: env var → auto-generated (persisted in .jwt_secret)
+_SECRET_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".jwt_secret")
+
+def _load_or_create_secret() -> str:
+    """Load or generate a persistent JWT secret — NEVER uses Supabase key."""
+    env = os.getenv("JWT_SECRET_KEY", "").strip()
+    if env and len(env) >= 32:
+        return env
+    if os.path.exists(_SECRET_FILE):
+        with open(_SECRET_FILE, "r") as f:
+            stored = f.read().strip()
+            if len(stored) >= 32:
+                return stored
+    new_secret = secrets.token_urlsafe(64)
+    try:
+        with open(_SECRET_FILE, "w") as f:
+            f.write(new_secret)
+    except Exception:
+        pass
+    return new_secret
+
+SECRET_KEY = _load_or_create_secret()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
-# Password Hashing
-# Use PBKDF2-SHA256 to avoid bcrypt native dependency issues on some systems
+# ─── Password Hashing ─────────────────────────────────────────
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Check if password matches hash"""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Hash a password"""
     return pwd_context.hash(password)
 
 
+def validate_password_strength(password: str) -> tuple[bool, str]:
+    """Check password meets minimum requirements."""
+    if len(password) < 6:
+        return False, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
+    if not re.search(r"[A-Za-z]", password):
+        return False, "كلمة المرور يجب أن تحتوي على حرف واحد على الأقل"
+    if not re.search(r"[0-9]", password):
+        return False, "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل"
+    return True, ""
+
+
+# ─── JWT Tokens ────────────────────────────────────────────────
 def create_access_token(
     data: Dict[str, Any], expires_delta: Optional[timedelta] = None
 ) -> str:
-    """Create a JWT token"""
     to_encode = data.copy()
-
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
-    """Decode and verify a JWT token"""
     try:
-        decoded_token = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return decoded_token
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.PyJWTError:
         return None

@@ -230,13 +230,17 @@
             }
 
             if (res.ok && data && data.status === 'success') {
+              // Save auth token and auto-login
+              if (data.access_token) {
+                localStorage.setItem('token', data.access_token);
+              }
               successMsg.textContent =
-                'تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.';
+                'تم إنشاء الحساب بنجاح! جارٍ تحويلك...';
               successMsg.style.display = 'block';
               errorMsg.style.display = 'none';
               setTimeout(() => {
-                window.location.href = '/login';
-              }, 2000);
+                window.location.href = '/chat';
+              }, 1000);
             } else {
               errorMsg.textContent =
                 (data && (data.detail || data.message)) || 'فشل إنشاء الحساب';

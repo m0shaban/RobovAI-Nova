@@ -806,9 +806,24 @@
             📱 محفظة إلكترونية
           </button>
         </div>
-        <div id="walletPhoneInput" style="display:none; margin: 12px 0;">
-          <input type="tel" id="walletPhone" placeholder="01xxxxxxxxx رقم المحفظة" 
-            style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#fff; font-size:15px; font-family:inherit; direction:ltr; text-align:center;" />
+        <div id="walletPhoneInput" style="display: none; margin: 12px 0">
+          <input
+            type="tel"
+            id="walletPhone"
+            placeholder="01xxxxxxxxx رقم المحفظة"
+            style="
+              width: 100%;
+              padding: 12px 16px;
+              border-radius: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              background: rgba(255, 255, 255, 0.05);
+              color: #fff;
+              font-size: 15px;
+              font-family: inherit;
+              direction: ltr;
+              text-align: center;
+            "
+          />
         </div>
         <button class="btn btn-primary" id="buyTokensBtn" onclick="buyTokens()">
           💳 شراء التوكنز الآن
@@ -1006,7 +1021,8 @@
         el.classList.add('active');
         selectedMethod = method;
         const phoneInput = document.getElementById('walletPhoneInput');
-        if (phoneInput) phoneInput.style.display = method === 'wallet' ? 'block' : 'none';
+        if (phoneInput)
+          phoneInput.style.display = method === 'wallet' ? 'block' : 'none';
       }
 
       async function buyTokens() {
@@ -1037,7 +1053,11 @@
           });
           const data = await res.json();
           if (data.payment_type === 'wallet_pending') {
-            showToast(data.message || 'تم إرسال طلب الدفع لهاتفك. افتح تطبيق المحفظة لتأكيد الدفع.', 'success');
+            showToast(
+              data.message ||
+                'تم إرسال طلب الدفع لهاتفك. افتح تطبيق المحفظة لتأكيد الدفع.',
+              'success',
+            );
             btn.innerHTML = orig;
             btn.disabled = false;
           } else if (data.checkout_url) {
@@ -1074,7 +1094,11 @@
           });
           const data = await res.json();
           if (data.payment_type === 'wallet_pending') {
-            showToast(data.message || 'تم إرسال طلب الدفع لهاتفك. افتح تطبيق المحفظة لتأكيد الدفع.', 'success');
+            showToast(
+              data.message ||
+                'تم إرسال طلب الدفع لهاتفك. افتح تطبيق المحفظة لتأكيد الدفع.',
+              'success',
+            );
           } else if (data.checkout_url) {
             showToast('جاري التحويل لصفحة الدفع...', 'info');
             setTimeout(() => {
@@ -1115,27 +1139,41 @@
             }
           });
           // Card button
-          overlay.querySelector('[data-val="card"]').addEventListener('click', () => {
-            overlay.remove();
-            resolve({ method: 'card', phone_number: '' });
-          });
+          overlay
+            .querySelector('[data-val="card"]')
+            .addEventListener('click', () => {
+              overlay.remove();
+              resolve({ method: 'card', phone_number: '' });
+            });
           // Wallet button — show phone input
-          overlay.querySelector('#modalWalletBtn').addEventListener('click', () => {
-            overlay.querySelector('#modalWalletPhone').style.display = 'block';
-            overlay.querySelector('#modalPhoneInput').focus();
-          });
+          overlay
+            .querySelector('#modalWalletBtn')
+            .addEventListener('click', () => {
+              overlay.querySelector('#modalWalletPhone').style.display =
+                'block';
+              overlay.querySelector('#modalPhoneInput').focus();
+            });
           // Wallet confirm
-          overlay.querySelector('#modalWalletConfirm')?.addEventListener('click', () => {
-            const phone = overlay.querySelector('#modalPhoneInput').value.trim();
-            if (!phone) { alert('أدخل رقم المحفظة'); return; }
-            overlay.remove();
-            resolve({ method: 'wallet', phone_number: phone });
-          });
+          overlay
+            .querySelector('#modalWalletConfirm')
+            ?.addEventListener('click', () => {
+              const phone = overlay
+                .querySelector('#modalPhoneInput')
+                .value.trim();
+              if (!phone) {
+                alert('أدخل رقم المحفظة');
+                return;
+              }
+              overlay.remove();
+              resolve({ method: 'wallet', phone_number: phone });
+            });
           // Cancel
-          overlay.querySelector('[data-val=""]').addEventListener('click', () => {
-            overlay.remove();
-            resolve(null);
-          });
+          overlay
+            .querySelector('[data-val=""]')
+            .addEventListener('click', () => {
+              overlay.remove();
+              resolve(null);
+            });
           document.body.appendChild(overlay);
         });
       }

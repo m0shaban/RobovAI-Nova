@@ -1033,8 +1033,8 @@
 
         const phoneEl = document.getElementById('walletPhone');
         const phone_number = phoneEl ? phoneEl.value.trim() : '';
-        if (selectedMethod === 'wallet' && !phone_number) {
-          showToast('أدخل رقم المحفظة أولاً', 'error');
+        if (selectedMethod === 'wallet' && (!phone_number || !/^01[0-9]{9}$/.test(phone_number))) {
+          showToast('أدخل رقم محفظة صحيح (01xxxxxxxxx)', 'error');
           btn.innerHTML = orig;
           btn.disabled = false;
           return;
@@ -1160,8 +1160,8 @@
               const phone = overlay
                 .querySelector('#modalPhoneInput')
                 .value.trim();
-              if (!phone) {
-                alert('أدخل رقم المحفظة');
+              if (!phone || !/^01[0-9]{9}$/.test(phone)) {
+                alert('أدخل رقم محفظة صحيح (01xxxxxxxxx)');
                 return;
               }
               overlay.remove();

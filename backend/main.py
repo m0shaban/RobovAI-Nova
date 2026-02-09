@@ -1861,17 +1861,25 @@ async def _process_wallet_payment(payment_token: str, phone_number: str) -> dict
     """Process Paymob mobile wallet payment (server-side POST)."""
     import httpx
 
-    # Clean phone number (ensure Egyptian format)
-    phone = phone_number.strip().replace(" ", "").replace("-", "")
-    if phone.startswith("0"):
-        phone = "2" + phone  # 01xxxxxxxxx → 201xxxxxxxxx
-    elif not phone.startswith("2"):
-        phone = "2" + phone
+    # Clean phone number — Paymob expects Egyptian local format: 01xxxxxxxxx
+    phone = phone_number.strip().replace(" ", "").replace("-", "").replace("+", "")
+    # Remove country code if present
+    if phone.startswith("20") and len(phone) == 12:
+        phone = "0" + phone[2:]  # 201xxxxxxxxx → 01xxxxxxxxx
+    elif phone.startswith("2") and len(phone) == 11 and not phone.startswith("01"):
+        phone = "0" + phone[1:]  # 21xxxxxxxxx → 01xxxxxxxxx
+    # Ensure starts with 01
+    if not phone.startswith("01") or len(phone) != 11:
+        logger.warning(f"Invalid wallet phone format: {phone} (original: {phone_number})")
+        return {"status": "error", "detail": f"رقم الهاتف غير صحيح. يجب أن يكون بصيغة 01xxxxxxxxx (11 رقم)"}
+
+    logger.info(f"💳 Wallet payment: phone={phone}, token_prefix={payment_token[:20]}...")
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
                 "https://accept.paymob.com/api/acceptance/payments/pay",
+                headers={"Content-Type": "application/json"},
                 json={
                     "source": {
                         "identifier": phone,
@@ -1881,8 +1889,15 @@ async def _process_wallet_payment(payment_token: str, phone_number: str) -> dict
                 },
             )
             data = resp.json()
+            logger.info(f"💳 Wallet response status={resp.status_code}, body={data}")
+
             if resp.status_code in (200, 201):
-                redirect_url = data.get("redirect_url") or data.get("iframe_redirection_url")
+                # Paymob returns redirect_url for wallet confirmation
+                redirect_url = (
+                    data.get("redirect_url")
+                    or data.get("iframe_redirection_url")
+                    or data.get("redirection_url")
+                )
                 if redirect_url:
                     return {
                         "status": "success",
@@ -1890,7 +1905,7 @@ async def _process_wallet_payment(payment_token: str, phone_number: str) -> dict
                         "provider": "paymob",
                         "payment_type": "wallet",
                     }
-                # Some wallets show a confirmation on phone directly
+                # Some wallets send push notification to phone directly
                 return {
                     "status": "success",
                     "message": "تم إرسال طلب الدفع لهاتفك. افتح تطبيق المحفظة لتأكيد الدفع.",
@@ -1898,10 +1913,11 @@ async def _process_wallet_payment(payment_token: str, phone_number: str) -> dict
                     "payment_type": "wallet_pending",
                 }
             else:
-                logger.error(f"Wallet payment failed: {data}")
+                error_msg = data.get("message") or data.get("detail") or str(data)
+                logger.error(f"Wallet payment failed [{resp.status_code}]: {error_msg}")
                 return {
                     "status": "error",
-                    "detail": data.get("message") or data.get("detail") or "فشل الدفع بالمحفظة",
+                    "detail": f"فشل الدفع بالمحفظة: {error_msg}",
                 }
     except Exception as e:
         logger.error(f"Wallet payment error: {e}")

@@ -1,213 +1,247 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>تسجيل الدخول - RobovAI Nova</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        :root {
-            --bg: #0a0a1a;
-            --surface: #111122;
-            --primary: #00f0ff;
-            --secondary: #8b5cf6;
-            --text: #e0e0e0;
-            --text-muted: #6b7280;
-            --border: rgba(255,255,255,0.1);
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a1a 100%);
-        }
-        
-        .auth-card {
-            background: var(--surface);
-            padding: 2.5rem;
-            border-radius: 24px;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid var(--border);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-            text-align: center;
-        }
-        
-        .logo {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 900;
-        }
-        
-        h1 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        p {
-            color: var(--text-muted);
-            margin-bottom: 2rem;
-            font-size: 0.9rem;
-        }
-        
-        .input-group {
-            margin-bottom: 1.25rem;
-            text-align: right;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-        
-        input {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: white;
-            font-family: inherit;
-            transition: all 0.3s;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 0.9rem;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            border: none;
-            border-radius: 12px;
-            color: black;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 1rem;
-            font-family: inherit;
-            transition: transform 0.2s;
-        }
-        
-        .btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-        }
-        
-        .footer-text {
-            margin-top: 1.5rem;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-        
-        .footer-text a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-        
-        .error-msg {
-            color: #ef4444;
-            margin-top: 1rem;
-            display: none;
-            font-size: 0.85rem;
-        }
-    </style>
-</head>
-<body>
+      :root {
+        --bg: #0a0a1a;
+        --surface: #111122;
+        --primary: #00f0ff;
+        --secondary: #8b5cf6;
+        --text: #e0e0e0;
+        --text-muted: #6b7280;
+        --border: rgba(255, 255, 255, 0.1);
+      }
 
-<div class="auth-card">
-    <div class="logo"><img src="public/assets/logo.png" alt="Logo" style="width: 100px; height: auto;"></div>
-    <h1>أهلاً بك مجدداً</h1>
-    <p>سجل دخولك للمتابعة إلى لوحة التحكم</p>
-    
-    <form id="loginForm">
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Cairo', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-image: radial-gradient(
+          circle at 50% 50%,
+          #1a1a2e 0%,
+          #0a0a1a 100%
+        );
+      }
+
+      .auth-card {
+        background: var(--surface);
+        padding: 2.5rem;
+        border-radius: 24px;
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid var(--border);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+        text-align: center;
+      }
+
+      .logo {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 900;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+      }
+
+      .input-group {
+        margin-bottom: 1.25rem;
+        text-align: right;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      input {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: white;
+        font-family: inherit;
+        transition: all 0.3s;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 0.9rem;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        border: none;
+        border-radius: 12px;
+        color: black;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 1rem;
+        font-family: inherit;
+        transition: transform 0.2s;
+      }
+
+      .btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+      }
+
+      .footer-text {
+        margin-top: 1.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .footer-text a {
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      .error-msg {
+        color: #ef4444;
+        margin-top: 1rem;
+        display: none;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="auth-card">
+      <div class="logo">
+        <img
+          src="public/assets/logo.png"
+          alt="Logo"
+          style="width: 100px; height: auto"
+        />
+      </div>
+      <h1>أهلاً بك مجدداً</h1>
+      <p>سجل دخولك للمتابعة إلى لوحة التحكم</p>
+
+      <form id="loginForm">
         <div class="input-group">
-            <label>البريد الإلكتروني</label>
-            <input type="email" id="email" required placeholder="name@example.com">
+          <label>البريد الإلكتروني</label>
+          <input
+            type="email"
+            id="email"
+            required
+            placeholder="name@example.com"
+          />
         </div>
-        
+
         <div class="input-group">
-            <label>كلمة المرور</label>
-            <input type="password" id="password" required placeholder="••••••••">
+          <label>كلمة المرور</label>
+          <input
+            type="password"
+            id="password"
+            required
+            placeholder="••••••••"
+          />
         </div>
-        
+
         <button type="submit" class="btn">دخول</button>
         <div class="error-msg" id="errorMsg">خطأ في البريد أو كلمة المرور</div>
-    </form>
-    
-    <div class="footer-text">
+      </form>
+
+      <div class="footer-text">
         لا تملك حساباً؟ <a href="/signup">أنشئ حساباً جديداً</a>
+      </div>
     </div>
-</div>
 
-<script>
-    // Get redirect URL from query parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirectUrl = urlParams.get('redirect') || '/chat';
-    
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const errorMsg = document.getElementById('errorMsg');
-        
-        // Determine API Base URL
-        const API_BASE = window.location.hostname === '' || window.location.protocol === 'file:' 
-            ? 'http://localhost:8000' 
-            : window.location.origin;
+    <script>
+      // Get redirect URL from query parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectUrl = urlParams.get('redirect') || '/chat';
 
-        // Form Data format for OAuth2
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
-        
-        try {
+      document
+        .getElementById('loginForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('email').value;
+          const password = document.getElementById('password').value;
+          const errorMsg = document.getElementById('errorMsg');
+
+          // Determine API Base URL
+          const API_BASE =
+            window.location.hostname === '' ||
+            window.location.protocol === 'file:'
+              ? 'http://localhost:8000'
+              : window.location.origin;
+
+          // Form Data format for OAuth2
+          const formData = new URLSearchParams();
+          formData.append('username', email);
+          formData.append('password', password);
+
+          try {
             errorMsg.style.display = 'none';
             const res = await fetch(`${API_BASE}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData,
-                credentials: 'include'
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: formData,
+              credentials: 'include',
             });
-            
+
             const data = await res.json();
-            
+
             if (res.ok) {
-                // Save Token
-                localStorage.setItem('token', data.access_token);
-                // Redirect to original page or /chat
-                if (API_BASE === 'http://localhost:8000' && window.location.protocol === 'file:') {
-                     // Can't redirect to /chat for file protocol easily unless served
-                     alert("تم تسجيل الدخول بنجاح! ولكنك تفتح الملف مباشرة. يرجى فتح http://localhost:8000/chat");
-                } else {
-                     window.location.href = redirectUrl;
-                }
+              // Save Token
+              localStorage.setItem('token', data.access_token);
+              // Redirect to original page or /chat
+              if (
+                API_BASE === 'http://localhost:8000' &&
+                window.location.protocol === 'file:'
+              ) {
+                // Can't redirect to /chat for file protocol easily unless served
+                alert(
+                  'تم تسجيل الدخول بنجاح! ولكنك تفتح الملف مباشرة. يرجى فتح http://localhost:8000/chat',
+                );
+              } else {
+                window.location.href = redirectUrl;
+              }
             } else {
-                errorMsg.textContent = data.detail || 'فشل تسجيل الدخول';
-                errorMsg.style.display = 'block';
+              errorMsg.textContent = data.detail || 'فشل تسجيل الدخول';
+              errorMsg.style.display = 'block';
             }
-        } catch (e) {
+          } catch (e) {
             console.error(e);
             errorMsg.textContent = `فشل الاتصال بالسيرفر (${API_BASE})`;
             errorMsg.style.display = 'block';
-        }
-    });
-</script>
-
-</body>
+          }
+        });
+    </script>
+  </body>
 </html>

@@ -135,7 +135,13 @@
   </head>
   <body>
     <div class="auth-card">
-      <div class="logo"><img src="public/assets/logo.png" alt="Logo" style="width: 100px; height: auto;"></div>
+      <div class="logo">
+        <img
+          src="public/assets/logo.png"
+          alt="Logo"
+          style="width: 100px; height: auto"
+        />
+      </div>
       <h1>إنشاء حساب جديد</h1>
 
       <form id="signupForm">
@@ -234,8 +240,7 @@
               if (data.access_token) {
                 localStorage.setItem('token', data.access_token);
               }
-              successMsg.textContent =
-                'تم إنشاء الحساب بنجاح! جارٍ تحويلك...';
+              successMsg.textContent = 'تم إنشاء الحساب بنجاح! جارٍ تحويلك...';
               successMsg.style.display = 'block';
               errorMsg.style.display = 'none';
               setTimeout(() => {

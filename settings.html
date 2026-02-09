@@ -621,25 +621,25 @@
                     </div>
 
                     <div class="model-grid">
-                        <div class="model-option selected" onclick="selectModel(this, 'llama-3.3-70b')">
+                        <div class="model-option selected" data-model="llama-3.3-70b" onclick="selectModel(this, 'llama-3.3-70b')">
                             <div class="model-icon">🦙</div>
                             <div class="model-name">Llama 3.3 70B</div>
                             <div class="model-desc">سريع ومجاني (Groq)</div>
                         </div>
-                        <div class="model-option" onclick="selectModel(this, 'gpt-4')">
-                            <div class="model-icon">🤖</div>
-                            <div class="model-name">GPT-4</div>
-                            <div class="model-desc">OpenAI الأقوى</div>
+                        <div class="model-option" data-model="nvidia-llama" onclick="selectModel(this, 'nvidia-llama')">
+                            <div class="model-icon">🟢</div>
+                            <div class="model-name">NVIDIA Llama</div>
+                            <div class="model-desc">NVIDIA NIM</div>
                         </div>
-                        <div class="model-option" onclick="selectModel(this, 'claude-3')">
-                            <div class="model-icon">🎭</div>
-                            <div class="model-name">Claude 3</div>
-                            <div class="model-desc">Anthropic</div>
+                        <div class="model-option" data-model="openrouter" onclick="selectModel(this, 'openrouter')">
+                            <div class="model-icon">🌐</div>
+                            <div class="model-name">OpenRouter</div>
+                            <div class="model-desc">Multi-model Router</div>
                         </div>
-                        <div class="model-option" onclick="selectModel(this, 'gemini-pro')">
-                            <div class="model-icon">💎</div>
-                            <div class="model-name">Gemini Pro</div>
-                            <div class="model-desc">Google AI</div>
+                        <div class="model-option" data-model="auto" onclick="selectModel(this, 'auto')">
+                            <div class="model-icon">⚡</div>
+                            <div class="model-name">Auto (Smart)</div>
+                            <div class="model-desc">اختيار تلقائي ذكي</div>
                         </div>
                     </div>
                 </div>
@@ -694,7 +694,7 @@
                             <h4>🧠 Multi-Agent System</h4>
                             <p>استخدام عدة agents متخصصة</p>
                         </div>
-                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                        <div class="toggle-switch active" data-toggle="multiAgent" onclick="toggleSwitch(this)"></div>
                     </div>
 
                     <div class="toggle-row">
@@ -702,7 +702,7 @@
                             <h4>💾 الذاكرة طويلة المدى</h4>
                             <p>حفظ التفضيلات والسياق</p>
                         </div>
-                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                        <div class="toggle-switch active" data-toggle="longTermMemory" onclick="toggleSwitch(this)"></div>
                     </div>
 
                     <div class="toggle-row">
@@ -710,7 +710,7 @@
                             <h4>⚡ التنفيذ المتوازي</h4>
                             <p>تشغيل أدوات متعددة في وقت واحد</p>
                         </div>
-                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                        <div class="toggle-switch active" data-toggle="parallelExecution" onclick="toggleSwitch(this)"></div>
                     </div>
 
                     <div class="toggle-row">
@@ -718,7 +718,7 @@
                             <h4>📦 Caching</h4>
                             <p>حفظ نتائج الأدوات المكررة</p>
                         </div>
-                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                        <div class="toggle-switch active" data-toggle="caching" onclick="toggleSwitch(this)"></div>
                     </div>
                 </div>
 
@@ -798,19 +798,19 @@
                     </div>
 
                     <div class="theme-grid">
-                        <div class="theme-option active" onclick="selectTheme(this, 'cosmic-dark')">
+                        <div class="theme-option active" data-theme="cosmic-dark" onclick="selectTheme(this, 'cosmic-dark')">
                             <div class="theme-preview" style="background: linear-gradient(135deg, #000, #1a1a2e);"></div>
                             <div>Cosmic Dark</div>
                         </div>
-                        <div class="theme-option" onclick="selectTheme(this, 'light-future')">
+                        <div class="theme-option" data-theme="light-future" onclick="selectTheme(this, 'light-future')">
                             <div class="theme-preview" style="background: linear-gradient(135deg, #ffffff, #f0f0f0); border: 1px solid #ddd;"></div>
                             <div>Light Future</div>
                         </div>
-                        <div class="theme-option" onclick="selectTheme(this, 'slate-deep')">
+                        <div class="theme-option" data-theme="slate-deep" onclick="selectTheme(this, 'slate-deep')">
                             <div class="theme-preview" style="background: linear-gradient(135deg, #0f172a, #1e293b);"></div>
                             <div>Slate Deep</div>
                         </div>
-                        <div class="theme-option" onclick="selectTheme(this, 'midnight-purple')">
+                        <div class="theme-option" data-theme="midnight-purple" onclick="selectTheme(this, 'midnight-purple')">
                             <div class="theme-preview" style="background: linear-gradient(135deg, #1a0a2e, #2d1b4e);"></div>
                             <div>Midnight Purple</div>
                         </div>
@@ -917,6 +917,7 @@
     <div class="toast" id="toast">✅ تم الحفظ بنجاح!</div>
 
     <script>
+        const API = window.location.origin;
         let hasChanges = false;
         let currentSettings = {};
 
@@ -942,6 +943,8 @@
             document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
             el.classList.add('active');
             currentSettings.theme = theme;
+            // Apply theme preview immediately
+            applyTheme(theme);
             markChanged();
         }
 
@@ -962,6 +965,8 @@
             } else if (type === 'font') {
                 document.getElementById('fontValue').textContent = value + 'px';
                 currentSettings.fontSize = parseInt(value);
+                // Live preview font size
+                document.documentElement.style.fontSize = value + 'px';
             }
             markChanged();
         }
@@ -979,29 +984,73 @@
             loadSettings();
         }
 
+        // Apply theme
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            const themes = {
+                'cosmic-dark': { bg: '#030014', surface: 'rgba(255,255,255,0.03)', primary: '#00f0ff', secondary: '#8b5cf6', text: '#e0e0e0' },
+                'light-future': { bg: '#f5f5f5', surface: 'rgba(0,0,0,0.03)', primary: '#0066ff', secondary: '#7c3aed', text: '#1a1a1a' },
+                'slate-deep': { bg: '#0f172a', surface: 'rgba(255,255,255,0.05)', primary: '#38bdf8', secondary: '#818cf8', text: '#e2e8f0' },
+                'midnight-purple': { bg: '#1a0a2e', surface: 'rgba(255,255,255,0.04)', primary: '#c084fc', secondary: '#f472b6', text: '#e0d4f5' }
+            };
+            const t = themes[theme] || themes['cosmic-dark'];
+            root.style.setProperty('--bg-primary', t.bg);
+            root.style.setProperty('--surface', t.surface);
+            root.style.setProperty('--primary', t.primary);
+            root.style.setProperty('--secondary', t.secondary);
+            root.style.setProperty('--text-primary', t.text);
+        }
+
         // Save settings
         function saveSettings() {
-            // Collect all settings
+            // Collect toggle states via data-toggle
+            const toggles = {};
+            document.querySelectorAll('[data-toggle]').forEach(el => {
+                toggles[el.dataset.toggle] = el.classList.contains('active');
+            });
+
             currentSettings = {
                 model: document.querySelector('.model-option.selected')?.dataset?.model || 'llama-3.3-70b',
                 temperature: parseFloat(document.getElementById('temperature').value),
                 maxTokens: parseInt(document.getElementById('maxTokens').value),
                 theme: document.querySelector('.theme-option.active')?.dataset?.theme || 'cosmic-dark',
                 language: document.getElementById('language').value,
+                fontSize: parseInt(document.querySelector('[oninput*="font"]')?.value || '16'),
                 userName: document.getElementById('userName').value,
-                multiAgent: document.querySelector('.toggle-row:nth-child(1) .toggle-switch').classList.contains('active'),
-                longTermMemory: document.querySelector('.toggle-row:nth-child(2) .toggle-switch').classList.contains('active'),
-                parallelExecution: document.querySelector('.toggle-row:nth-child(3) .toggle-switch').classList.contains('active'),
-                caching: document.querySelector('.toggle-row:nth-child(4) .toggle-switch').classList.contains('active'),
+                // API keys (stored locally, sent as headers if user provides them)
+                groqKey: document.getElementById('groqKey')?.value || '',
+                openaiKey: document.getElementById('openaiKey')?.value || '',
+                anthropicKey: document.getElementById('anthropicKey')?.value || '',
+                geminiKey: document.getElementById('geminiKey')?.value || '',
+                telegramToken: document.getElementById('telegramToken')?.value || '',
+                // Toggles
+                ...toggles,
+                // Timestamp
+                savedAt: new Date().toISOString()
             };
 
-            // Save to localStorage
+            // Save to localStorage  
             localStorage.setItem('novaSettings', JSON.stringify(currentSettings));
 
-            // Show toast
+            // Also try to save user preferences to server
+            saveToServer(currentSettings);
+
             hasChanges = false;
             document.getElementById('saveBar').classList.remove('visible');
             showToast('✅ تم الحفظ بنجاح!');
+        }
+
+        // Save preferences to server (best-effort)
+        async function saveToServer(settings) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                await fetch(`${API}/auth/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ temperature: settings.temperature, max_tokens: settings.maxTokens, model: settings.model, theme: settings.theme, language: settings.language })
+                });
+            } catch(e) { /* server save is optional */ }
         }
 
         // Load settings
@@ -1010,19 +1059,75 @@
             if (saved) {
                 currentSettings = JSON.parse(saved);
                 
-                // Apply settings to UI
-                if (currentSettings.temperature) {
+                // Temperature
+                if (currentSettings.temperature != null) {
                     document.getElementById('temperature').value = currentSettings.temperature;
                     document.getElementById('tempValue').textContent = currentSettings.temperature;
                 }
+                // Max Tokens
                 if (currentSettings.maxTokens) {
                     document.getElementById('maxTokens').value = currentSettings.maxTokens;
                     document.getElementById('tokensValue').textContent = currentSettings.maxTokens;
                 }
+                // User name
                 if (currentSettings.userName) {
                     document.getElementById('userName').value = currentSettings.userName;
                 }
+                // Font size
+                if (currentSettings.fontSize) {
+                    const fontSlider = document.querySelector('[oninput*="font"]');
+                    if (fontSlider) { fontSlider.value = currentSettings.fontSize; }
+                    const fv = document.getElementById('fontValue');
+                    if (fv) fv.textContent = currentSettings.fontSize + 'px';
+                }
+                // Model selection
+                if (currentSettings.model) {
+                    document.querySelectorAll('.model-option').forEach(el => {
+                        el.classList.toggle('selected', el.dataset.model === currentSettings.model);
+                    });
+                }
+                // Theme selection
+                if (currentSettings.theme) {
+                    document.querySelectorAll('.theme-option').forEach(el => {
+                        el.classList.toggle('active', el.dataset.theme === currentSettings.theme);
+                    });
+                    applyTheme(currentSettings.theme);
+                }
+                // Language
+                if (currentSettings.language) {
+                    document.getElementById('language').value = currentSettings.language;
+                }
+                // Toggle switches
+                document.querySelectorAll('[data-toggle]').forEach(el => {
+                    const key = el.dataset.toggle;
+                    if (currentSettings[key] !== undefined) {
+                        el.classList.toggle('active', currentSettings[key]);
+                    }
+                });
+                // API keys
+                if (currentSettings.groqKey) document.getElementById('groqKey').value = currentSettings.groqKey;
+                if (currentSettings.openaiKey) document.getElementById('openaiKey').value = currentSettings.openaiKey;
+                if (currentSettings.anthropicKey) document.getElementById('anthropicKey').value = currentSettings.anthropicKey;
+                if (currentSettings.geminiKey) document.getElementById('geminiKey').value = currentSettings.geminiKey;
+                if (currentSettings.telegramToken) document.getElementById('telegramToken').value = currentSettings.telegramToken;
             }
+        }
+
+        // Load profile data from server
+        async function loadProfile() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const res = await fetch(`${API}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.username) document.getElementById('userName').value = data.username;
+                    const emailEl = document.querySelector('input[type="email"]');
+                    if (emailEl && data.email) emailEl.value = data.email;
+                }
+            } catch(e) { /* profile load is optional */ }
         }
 
         // Show toast
@@ -1034,16 +1139,30 @@
         }
 
         // Clear actions
-        function clearHistory() {
+        async function clearHistory() {
             if (confirm('⚠️ هل أنت متأكد من مسح جميع المحادثات؟')) {
                 localStorage.removeItem('conversations');
+                try {
+                    const token = localStorage.getItem('token');
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    if (token && user.id) {
+                        await fetch(`${API}/conversations/${user.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                    }
+                } catch(e) {}
                 showToast('🗑️ تم مسح المحادثات');
             }
         }
 
-        function clearMemory() {
+        async function clearMemory() {
             if (confirm('⚠️ هل أنت متأكد من مسح الذاكرة؟')) {
                 localStorage.removeItem('novaMemory');
+                try {
+                    const token = localStorage.getItem('token');
+                    const user = JSON.parse(localStorage.getItem('user') || '{}');
+                    if (token && user.id) {
+                        await fetch(`${API}/memory/${user.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                    }
+                } catch(e) {}
                 showToast('🧹 تم مسح الذاكرة');
             }
         }
@@ -1053,8 +1172,13 @@
             el.addEventListener('input', markChanged);
         });
 
-        // Load on page load
-        document.addEventListener('DOMContentLoaded', loadSettings);
+        // Auth check
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/login'; return; }
+            loadSettings();
+            loadProfile();
+        });
     </script>
 
 </body>

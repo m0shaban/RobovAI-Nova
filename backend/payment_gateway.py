@@ -103,7 +103,9 @@ STRIPE_ENTERPRISE_PRICE_ID = os.getenv("STRIPE_ENTERPRISE_PRICE_ID", "")
 # Paymob (Egypt / MENA)
 PAYMOB_API_KEY = os.getenv("PAYMOB_API_KEY", "")
 PAYMOB_INTEGRATION_ID = os.getenv("PAYMOB_INTEGRATION_ID", "")  # card
-PAYMOB_WALLET_INTEGRATION_ID = os.getenv("PAYMOB_WALLET_INTEGRATION_ID", "")  # mobile wallet
+PAYMOB_WALLET_INTEGRATION_ID = os.getenv(
+    "PAYMOB_WALLET_INTEGRATION_ID", ""
+)  # mobile wallet
 PAYMOB_IFRAME_ID = os.getenv("PAYMOB_IFRAME_ID", "")
 PAYMOB_HMAC_SECRET = os.getenv("PAYMOB_HMAC_SECRET", "")
 
@@ -133,6 +135,7 @@ def get_active_providers() -> List[str]:
 # ═══════════════════════════════════════════════════════════════
 # 💳 STRIPE
 # ═══════════════════════════════════════════════════════════════
+
 
 class StripeProvider:
     """Stripe payment provider (International / Cards)."""
@@ -168,28 +171,38 @@ class StripeProvider:
 
                 if is_token_package and package_id in TOKEN_PACKAGES:
                     pkg = TOKEN_PACKAGES[package_id]
-                    params.update({
-                        "mode": "payment",
-                        "line_items[0][price_data][currency]": "usd",
-                        "line_items[0][price_data][product_data][name]": f"RobovAI Tokens ({pkg['tokens']})",
-                        "line_items[0][price_data][unit_amount]": int(pkg["price_usd"] * 100),
-                        "line_items[0][quantity]": "1",
-                        "metadata[type]": "tokens",
-                        "metadata[tokens]": str(pkg["tokens"]),
-                        "metadata[package_id]": package_id,
-                    })
+                    params.update(
+                        {
+                            "mode": "payment",
+                            "line_items[0][price_data][currency]": "usd",
+                            "line_items[0][price_data][product_data][name]": f"RobovAI Tokens ({pkg['tokens']})",
+                            "line_items[0][price_data][unit_amount]": int(
+                                pkg["price_usd"] * 100
+                            ),
+                            "line_items[0][quantity]": "1",
+                            "metadata[type]": "tokens",
+                            "metadata[tokens]": str(pkg["tokens"]),
+                            "metadata[package_id]": package_id,
+                        }
+                    )
                 else:
                     # Subscription
-                    price_id = STRIPE_PRO_PRICE_ID if plan == "pro" else STRIPE_ENTERPRISE_PRICE_ID
+                    price_id = (
+                        STRIPE_PRO_PRICE_ID
+                        if plan == "pro"
+                        else STRIPE_ENTERPRISE_PRICE_ID
+                    )
                     if not price_id:
                         logger.warning(f"Stripe price ID not set for plan: {plan}")
                         return None
-                    params.update({
-                        "mode": "subscription",
-                        "line_items[0][price]": price_id,
-                        "line_items[0][quantity]": "1",
-                        "metadata[type]": "subscription",
-                    })
+                    params.update(
+                        {
+                            "mode": "subscription",
+                            "line_items[0][price]": price_id,
+                            "line_items[0][quantity]": "1",
+                            "metadata[type]": "subscription",
+                        }
+                    )
 
                 resp = await client.post(
                     f"{cls.API_BASE}/checkout/sessions",
@@ -210,12 +223,17 @@ class StripeProvider:
             return None
         try:
             import stripe
+
             stripe.api_key = STRIPE_SECRET_KEY
-            event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, STRIPE_WEBHOOK_SECRET
+            )
             return event
         except ImportError:
             # Manual verification without stripe library
-            parts = dict(item.split("=", 1) for item in sig_header.split(",") if "=" in item)
+            parts = dict(
+                item.split("=", 1) for item in sig_header.split(",") if "=" in item
+            )
             timestamp = parts.get("t", "")
             v1 = parts.get("v1", "")
             signed_payload = f"{timestamp}.{payload.decode()}"
@@ -232,6 +250,7 @@ class StripeProvider:
 # ═══════════════════════════════════════════════════════════════
 # 🇪🇬 PAYMOB (Egypt / MENA — Card + Mobile Wallet)
 # ═══════════════════════════════════════════════════════════════
+
 
 class PaymobProvider:
     """Paymob payment provider (Egypt/MENA — Visa, Mastercard, Fawry, Wallets)."""
@@ -251,7 +270,9 @@ class PaymobProvider:
         return None
 
     @classmethod
-    async def _create_order(cls, auth_token: str, amount_cents: int, user_id: str, plan: str) -> Optional[int]:
+    async def _create_order(
+        cls, auth_token: str, amount_cents: int, user_id: str, plan: str
+    ) -> Optional[int]:
         """Step 2: Register an order."""
         async with httpx.AsyncClient() as client:
             resp = await client.post(
@@ -299,7 +320,11 @@ class PaymobProvider:
                     "billing_data": {
                         "email": user_email,
                         "first_name": user_name.split()[0] if user_name else "User",
-                        "last_name": user_name.split()[-1] if user_name and len(user_name.split()) > 1 else "NA",
+                        "last_name": (
+                            user_name.split()[-1]
+                            if user_name and len(user_name.split()) > 1
+                            else "NA"
+                        ),
                         "phone_number": "NA",
                         "apartment": "NA",
                         "floor": "NA",
@@ -362,14 +387,24 @@ class PaymobProvider:
                 return None
 
             # Step 3: Payment Key
-            integration_id = PAYMOB_WALLET_INTEGRATION_ID if method == "wallet" else PAYMOB_INTEGRATION_ID
+            integration_id = (
+                PAYMOB_WALLET_INTEGRATION_ID
+                if method == "wallet"
+                else PAYMOB_INTEGRATION_ID
+            )
             if not integration_id:
                 logger.error(f"Paymob integration ID not set for method: {method}")
                 return None
 
             payment_key = await cls._get_payment_key(
-                auth_token, order_id, amount_cents, user_email, user_name or "User",
-                integration_id, user_id, plan,
+                auth_token,
+                order_id,
+                amount_cents,
+                user_email,
+                user_name or "User",
+                integration_id,
+                user_id,
+                plan,
             )
             if not payment_key:
                 logger.error("Paymob payment key failed")
@@ -395,12 +430,26 @@ class PaymobProvider:
 
         # Paymob requires sorting specific fields
         hmac_fields = [
-            "amount_cents", "created_at", "currency", "error_occured",
-            "has_parent_transaction", "id", "integration_id",
-            "is_3d_secure", "is_auth", "is_capture", "is_refunded",
-            "is_standalone_payment", "is_voided", "order",
-            "owner", "pending", "source_data_pan",
-            "source_data_sub_type", "source_data_type", "success",
+            "amount_cents",
+            "created_at",
+            "currency",
+            "error_occured",
+            "has_parent_transaction",
+            "id",
+            "integration_id",
+            "is_3d_secure",
+            "is_auth",
+            "is_capture",
+            "is_refunded",
+            "is_standalone_payment",
+            "is_voided",
+            "order",
+            "owner",
+            "pending",
+            "source_data_pan",
+            "source_data_sub_type",
+            "source_data_type",
+            "success",
         ]
 
         obj = data.get("obj", data)
@@ -423,6 +472,7 @@ class PaymobProvider:
 # ═══════════════════════════════════════════════════════════════
 # 🍋 LEMONSQUEEZY (Already implemented — kept for compatibility)
 # ═══════════════════════════════════════════════════════════════
+
 
 class LemonSqueezyProvider:
     """LemonSqueezy payment provider."""
@@ -495,6 +545,7 @@ class LemonSqueezyProvider:
 # 🌐 UNIFIED GATEWAY — Auto-pick provider
 # ═══════════════════════════════════════════════════════════════
 
+
 class PaymentGateway:
     """Unified payment gateway — auto-selects configured provider."""
 
@@ -533,8 +584,13 @@ class PaymentGateway:
             )
         elif provider == "paymob":
             url = await PaymobProvider.create_checkout(
-                user_id, user_email, user_name, plan, method,
-                is_token_package, package_id,
+                user_id,
+                user_email,
+                user_name,
+                plan,
+                method,
+                is_token_package,
+                package_id,
             )
         elif provider == "lemonsqueezy":
             url = await LemonSqueezyProvider.create_checkout(user_id, user_email, plan)
@@ -581,12 +637,22 @@ class PaymentGateway:
                         # Upgrade subscription
                         await db_client.execute(
                             "UPDATE users SET subscription_tier=?, subscription_expires=? WHERE id=? OR email=?",
-                            (plan, (datetime.now() + timedelta(days=30)).isoformat(), user_id, user_id),
+                            (
+                                plan,
+                                (datetime.now() + timedelta(days=30)).isoformat(),
+                                user_id,
+                                user_id,
+                            ),
                         )
                         if tokens > 0:
                             await db_client.add_tokens(user_id, tokens)
                         logger.info(f"Stripe: {plan} subscription for user {user_id}")
-                        return {"success": True, "user_id": user_id, "plan": plan, "tokens": tokens}
+                        return {
+                            "success": True,
+                            "user_id": user_id,
+                            "plan": plan,
+                            "tokens": tokens,
+                        }
 
             return {"success": False, "error": f"Unhandled event: {event_type}"}
 
@@ -606,7 +672,10 @@ class PaymentGateway:
             if isinstance(order_val, dict):
                 merchant_order_id = str(order_val.get("merchant_order_id", ""))
             if not merchant_order_id:
-                merchant_order_id = str(obj.get("merchant_order_id", "") or request_data.get("merchant_order_id", ""))
+                merchant_order_id = str(
+                    obj.get("merchant_order_id", "")
+                    or request_data.get("merchant_order_id", "")
+                )
 
             # Parse user_id from merchant_order_id: robovai_{user_id}_{plan}_{timestamp}
             order_id_str = merchant_order_id
@@ -619,12 +688,22 @@ class PaymentGateway:
                 tokens = plan_info.get("tokens", 0)
                 await db_client.execute(
                     "UPDATE users SET subscription_tier=?, subscription_expires=? WHERE id=? OR email=?",
-                    (plan, (datetime.now() + timedelta(days=30)).isoformat(), user_id, user_id),
+                    (
+                        plan,
+                        (datetime.now() + timedelta(days=30)).isoformat(),
+                        user_id,
+                        user_id,
+                    ),
                 )
                 if tokens > 0:
                     await db_client.add_tokens(user_id, tokens)
                 logger.info(f"Paymob: {plan} for user {user_id}, +{tokens} tokens")
-                return {"success": True, "user_id": user_id, "plan": plan, "tokens": tokens}
+                return {
+                    "success": True,
+                    "user_id": user_id,
+                    "plan": plan,
+                    "tokens": tokens,
+                }
 
             return {"success": False, "error": "Could not extract user_id"}
 
@@ -637,10 +716,19 @@ class PaymentGateway:
             custom = request_data.get("meta", {}).get("custom_data", {})
             user_id = custom.get("user_id")
 
-            if event_name in ("subscription_created", "subscription_updated") and user_id:
-                variant_id = str(request_data.get("data", {}).get("attributes", {}).get("variant_id", ""))
+            if (
+                event_name in ("subscription_created", "subscription_updated")
+                and user_id
+            ):
+                variant_id = str(
+                    request_data.get("data", {})
+                    .get("attributes", {})
+                    .get("variant_id", "")
+                )
                 plan = "pro" if variant_id == LEMON_PRO_VARIANT else "enterprise"
-                ends_at = request_data.get("data", {}).get("attributes", {}).get("ends_at")
+                ends_at = (
+                    request_data.get("data", {}).get("attributes", {}).get("ends_at")
+                )
                 plan_info = PLANS.get(plan, {})
                 tokens = plan_info.get("tokens", 0)
                 await db_client.execute(

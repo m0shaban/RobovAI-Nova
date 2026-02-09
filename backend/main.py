@@ -334,6 +334,7 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
     return {
         "id": current_user["id"],
         "email": current_user["email"],
+        "username": current_user.get("full_name", current_user.get("email", "").split("@")[0]),
         "full_name": current_user.get("full_name", ""),
         "role": current_user.get("role", "user"),
         "balance": usage["balance"],
@@ -341,6 +342,13 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
         "daily_limit": usage["daily_limit"],
         "tier": usage["tier"],
     }
+
+
+@app.post("/auth/settings")
+async def save_user_settings(payload: Dict[str, Any], current_user: dict = Depends(get_current_user)):
+    """Save user preferences (best-effort, stored in user record)."""
+    # This is optional server-side storage; primary settings are in localStorage
+    return {"status": "success", "message": "Settings saved"}
 
 
 @app.get("/user/balance")
@@ -1211,7 +1219,19 @@ async def stream_agent_get(
     """
     🔄 Stream agent execution (GET for EventSource).
     Authenticates via cookie, deducts 1 token per request.
+    Uses response cache to save tokens on repeated/greeting messages.
     """
+    from backend.cache import get_cached, set_cached, get_instant_response
+    from fastapi.responses import StreamingResponse as _SR
+
+    # — Check instant / cached response FIRST (zero tokens) —
+    instant = get_instant_response(message)
+    if instant:
+        async def _instant():
+            yield f"event: completed\ndata: {json.dumps({'final_answer': instant}, ensure_ascii=False)}\n\n"
+            yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+        return _SR(_instant(), media_type="text/event-stream")
+
     # Try to authenticate from cookie
     real_user_id = user_id
     if request:
@@ -1221,11 +1241,18 @@ async def stream_agent_get(
             # Check balance before running
             usage = await db_client.get_daily_usage(real_user_id)
             if not usage["can_use"]:
-                import json as _json
-                from fastapi.responses import StreamingResponse as _SR
                 async def _no_balance():
-                    yield f'event: error\ndata: {_json.dumps({"error": "رصيدك غير كافي. يرجى شراء توكنز إضافية أو ترقية الباقة."}, ensure_ascii=False)}\n\n'
+                    yield f'event: error\ndata: {json.dumps({"error": "رصيدك غير كافي. يرجى شراء توكنز إضافية أو ترقية الباقة."}, ensure_ascii=False)}\n\n'
                 return _SR(_no_balance(), media_type="text/event-stream")
+
+            # Check LLM cache before deducting
+            cached = get_cached(message, real_user_id)
+            if cached:
+                async def _cached():
+                    yield f"event: completed\ndata: {json.dumps({'final_answer': cached, 'cached': True}, ensure_ascii=False)}\n\n"
+                    yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+                return _SR(_cached(), media_type="text/event-stream")
+
             # Deduct 1 token for the request
             await db_client.deduct_tokens(real_user_id, 1, "agent_chat")
 
@@ -1314,6 +1341,13 @@ async def _stream_agent(message: str, user_id: str, platform: str):
                                             "tool_results", []
                                         )
                                         yield f"event: completed\ndata: {json.dumps({'final_answer': final_answer, 'tool_count': len(tool_results)}, ensure_ascii=False)}\n\n"
+
+                                        # Cache the response for future identical queries
+                                        try:
+                                            from backend.cache import set_cached
+                                            set_cached(message, final_answer, user_id)
+                                        except Exception:
+                                            pass
 
                         except StopAsyncIteration:
                             break

@@ -1,7 +1,7 @@
 # Paymob iFrames — Snippets جاهزة (Copy/Paste)
 
 > الهدف: تحط أكواد بسيطة “حقيقية” في حقول **Html Content** و **Javascript Content** و **CSS Content** داخل Paymob iFrames.
-> 
+>
 > ملاحظة: Paymob أحيانًا بيقبل أي محتوى بسيط (حتى لو مش بيظهر للعميل). المهم يكون **غير فاضي** لو لوحة التحكم بتعتبره Required.
 
 ---
@@ -46,8 +46,12 @@
 
 ```css
 /* Minimal safe CSS (no visual changes intended) */
-:root { --robovai-paymob: 1; }
-#robovai-paymob-brand { display: none; }
+:root {
+  --robovai-paymob: 1;
+}
+#robovai-paymob-brand {
+  display: none;
+}
 ```
 
 ---

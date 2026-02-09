@@ -15,7 +15,10 @@ import os, secrets, re
 
 # ─── Independent JWT Secret ───────────────────────────────────
 # Priority: env var → auto-generated (persisted in .jwt_secret)
-_SECRET_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".jwt_secret")
+_SECRET_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".jwt_secret"
+)
+
 
 def _load_or_create_secret() -> str:
     """Load or generate a persistent JWT secret — NEVER uses Supabase key."""
@@ -34,6 +37,7 @@ def _load_or_create_secret() -> str:
     except Exception:
         pass
     return new_secret
+
 
 SECRET_KEY = _load_or_create_secret()
 ALGORITHM = "HS256"
@@ -67,7 +71,9 @@ def create_access_token(
     data: Dict[str, Any], expires_delta: Optional[timedelta] = None
 ) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 

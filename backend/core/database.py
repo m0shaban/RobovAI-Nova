@@ -174,6 +174,23 @@ class Database:
             ]:
                 c.execute(idx)
 
+            # ── Custom Bots Table ──
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS custom_bots (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT DEFAULT '',
+                    system_prompt TEXT NOT NULL,
+                    avatar_emoji TEXT DEFAULT '🤖',
+                    tools TEXT DEFAULT '[]',
+                    greeting TEXT DEFAULT 'مرحباً!',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """
+            )
+
             conn.commit()
             logger.info("✅ Database initialized with roles, indexes, and billing")
 

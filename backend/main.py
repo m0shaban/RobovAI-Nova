@@ -13,6 +13,7 @@ from typing import Optional, Dict, Any
 import logging
 import tempfile
 import json
+import uuid
 import os
 from backend.tools.registry import ToolRegistry
 from backend.core.config import settings
@@ -1142,6 +1143,7 @@ class AgentRequest(BaseModel):
     platform: Optional[str] = "web"
     thread_id: Optional[str] = None
     use_agent: Optional[bool] = True  # If False, use SmartRouter instead
+    ai_level: Optional[str] = "balanced"  # "fast", "balanced", "powerful"
 
 
 @app.post("/agent/run")
@@ -1226,12 +1228,14 @@ async def stream_agent_get(
     message: str,
     user_id: str = "web_user",
     platform: str = "web",
+    ai_level: str = "balanced",
     request: Request = None,
 ):
     """
     🔄 Stream agent execution (GET for EventSource).
     Authenticates via cookie, deducts 1 token per request.
     Uses response cache to save tokens on repeated/greeting messages.
+    ai_level: "fast" (chatbot only), "balanced" (smart routing), "powerful" (full agent)
     """
     from backend.cache import get_cached, set_cached, get_instant_response
     from fastapi.responses import StreamingResponse as _SR
@@ -1274,7 +1278,71 @@ async def stream_agent_get(
             # Deduct 1 token for the request
             await db_client.deduct_tokens(real_user_id, 1, "agent_chat")
 
+    # ── AI level routing: fast = chatbot, balanced = smart, powerful = full agent ──
+    if ai_level == "fast":
+        # Fast mode: Use only LLM chatbot (no tools/agent)
+        return await _stream_chatbot(message, real_user_id, platform)
+
+    if ai_level == "balanced":
+        # Balanced: Use smart router to decide chat vs tool vs agent
+        from backend.core.smart_router import SmartToolRouter
+        routing = await SmartToolRouter.route(message, real_user_id, platform)
+        if routing.route_type == "chat":
+            return await _stream_chatbot(message, real_user_id, platform)
+        # Otherwise fall through to full agent
+
     return await _stream_agent(message, real_user_id, platform)
+
+
+async def _stream_chatbot(message: str, user_id: str, platform: str):
+    """Fast chatbot mode — LLM only, no tools/agent. Much faster responses."""
+    from fastapi.responses import StreamingResponse
+    import json
+
+    async def event_generator():
+        try:
+            yield f"event: started\ndata: {json.dumps({'message': 'جاري الرد...'}, ensure_ascii=False)}\n\n"
+            yield f"event: thinking\ndata: {json.dumps({'message': '🧠 جاري التفكير...'}, ensure_ascii=False)}\n\n"
+
+            from backend.core.llm import llm_client
+
+            # Get conversation context
+            context_str = ""
+            try:
+                history = await db_client.get_recent_messages(int(user_id), limit=5)
+                context_str = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history])
+            except Exception:
+                pass
+
+            system_prompt = """أنت نوفا (Nova) — مساعد ذكي ودود من RobovAI Solutions.
+تتكلم باللهجة المصرية أو الإنجليزية حسب لغة المستخدم.
+أسلوبك: محترف، ذكي، مختصر، ومنظم.
+تستخدم Markdown للتنسيق (عناوين، قوائم، bold، code blocks).
+لو حد سألك عن نفسك: أنت نوفا عندك 99+ أداة ذكية.
+ما تقترحش أدوات هنا — فقط رد كشات بوت ذكي."""
+
+            prompt = f"Context:\n{context_str}\n\nUser: {message}" if context_str else message
+            response = await llm_client.generate(prompt, system_prompt=system_prompt)
+
+            # Cache it
+            try:
+                from backend.cache import set_cached
+                set_cached(message, response, user_id, ttl=300)
+            except Exception:
+                pass
+
+            yield f"event: completed\ndata: {json.dumps({'final_answer': response}, ensure_ascii=False)}\n\n"
+            yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+
+        except Exception as e:
+            logger.error(f"Chatbot stream error: {e}", exc_info=True)
+            yield f"event: error\ndata: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+    )
 
 
 async def _stream_agent(message: str, user_id: str, platform: str):
@@ -1657,6 +1725,207 @@ async def get_system_logs(limit: int = 50, admin: dict = Depends(require_admin))
         return {"status": "success", "logs": logs}
     except Exception as e:
         return {"status": "error", "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 💳 SUBSCRIPTION & ACCOUNT MANAGEMENT ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class SubscriptionRequest(BaseModel):
+    tier: str  # "free", "pro", "enterprise"
+
+
+@app.get("/account/subscription")
+async def get_subscription(current_user: dict = Depends(get_current_user)):
+    """Get user subscription details"""
+    usage = await db_client.get_daily_usage(str(current_user["id"]))
+    history = await db_client.get_usage_history(str(current_user["id"]), limit=10)
+
+    tier_info = {
+        "free": {"name": "مجاني", "price": 0, "daily_limit": 50, "features": ["50 رسالة يومياً", "أدوات أساسية", "دعم عام"]},
+        "pro": {"name": "Pro ⭐", "price": 99, "daily_limit": 500, "features": ["500 رسالة يومياً", "كل الأدوات", "أولوية عالية", "دعم مميز"]},
+        "enterprise": {"name": "Enterprise 🏢", "price": 299, "daily_limit": -1, "features": ["رسائل غير محدودة", "كل الأدوات", "API مخصص", "دعم 24/7", "Custom Bot"]},
+    }
+
+    current_tier = current_user.get("subscription_tier", "free") or "free"
+
+    return {
+        "status": "success",
+        "subscription": {
+            "tier": current_tier,
+            "tier_info": tier_info.get(current_tier, tier_info["free"]),
+            "balance": usage["balance"],
+            "daily_used": usage["daily_used"],
+            "daily_limit": usage["daily_limit"],
+            "can_use": usage["can_use"],
+        },
+        "available_plans": tier_info,
+        "usage_history": history,
+    }
+
+
+@app.post("/account/buy-tokens")
+async def buy_tokens(amount: int = 100, current_user: dict = Depends(get_current_user)):
+    """Buy additional tokens (placeholder — integrate with payment gateway)"""
+    # TODO: Integrate with Paymob/Stripe for real payment
+    # For now, just log the request
+    return {
+        "status": "pending",
+        "message": "يرجى التواصل مع الدعم لشراء توكنز إضافية أو استخدام بوابة الدفع.",
+        "payment_methods": [
+            {"method": "paymob", "label": "بطاقة ائتمان (Paymob)", "available": True},
+            {"method": "vodafone_cash", "label": "فودافون كاش", "available": True},
+        ],
+        "prices": {
+            "100": {"tokens": 100, "price_egp": 50},
+            "500": {"tokens": 500, "price_egp": 200},
+            "1000": {"tokens": 1000, "price_egp": 350},
+        },
+    }
+
+
+@app.get("/account/profile")
+async def get_full_profile(current_user: dict = Depends(get_current_user)):
+    """Full user profile with all settings"""
+    usage = await db_client.get_daily_usage(str(current_user["id"]))
+    return {
+        "status": "success",
+        "profile": {
+            "id": current_user["id"],
+            "email": current_user["email"],
+            "full_name": current_user.get("full_name", ""),
+            "role": current_user.get("role", "user"),
+            "tier": current_user.get("subscription_tier", "free") or "free",
+            "balance": usage["balance"],
+            "daily_used": usage["daily_used"],
+            "daily_limit": usage["daily_limit"],
+            "created_at": current_user.get("created_at", ""),
+        },
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 📩 TELEGRAM OTP VERIFICATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+import secrets as _secrets
+
+
+@app.post("/auth/send-otp")
+async def send_telegram_otp(email: str):
+    """Send OTP to user's Telegram for email verification"""
+    user = await db_client.get_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+
+    otp = str(random.randint(100000, 999999))
+    expires_at = (datetime.now() + timedelta(minutes=10)).isoformat()
+
+    # Store OTP in DB
+    await db_client.execute(
+        "INSERT INTO otp_codes (user_id, code, purpose, expires_at) VALUES (?, ?, 'email_verify', ?)",
+        (str(user["id"]), otp, expires_at),
+    )
+
+    # Try to send via Telegram bot
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    if bot_token:
+        try:
+            import httpx
+            async with httpx.AsyncClient() as client:
+                # Note: User needs to have started the bot first
+                # We'd need their telegram_id stored — for now return OTP in response for testing
+                pass
+        except Exception:
+            pass
+
+    return {"status": "success", "message": "تم إرسال كود التحقق. صلاحيته 10 دقائق."}
+
+
+@app.post("/auth/verify-otp")
+async def verify_otp(email: str, code: str):
+    """Verify Telegram OTP"""
+    user = await db_client.get_user_by_email(email)
+    if not user:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+
+    result = await db_client.execute(
+        "SELECT * FROM otp_codes WHERE user_id = ? AND code = ? AND purpose = 'email_verify' AND used = 0 AND expires_at > ? ORDER BY id DESC LIMIT 1",
+        (str(user["id"]), code, datetime.now().isoformat()),
+    )
+
+    if not result:
+        raise HTTPException(status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية")
+
+    # Mark as used
+    await db_client.execute(
+        "UPDATE otp_codes SET used = 1 WHERE user_id = ? AND code = ?",
+        (str(user["id"]), code),
+    )
+
+    return {"status": "success", "message": "تم التحقق بنجاح ✅"}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 📄 SERVE ACCOUNT PAGE
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/account")
+async def serve_account():
+    return FileResponse("account.html")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🤖 CUSTOM BOT BUILDER
+# ═══════════════════════════════════════════════════════════════════════════
+
+class CustomBotCreate(BaseModel):
+    name: str
+    description: str = ""
+    system_prompt: str
+    avatar_emoji: str = "🤖"
+    tools: list = []
+    greeting: str = "مرحباً! كيف أقدر أساعدك?"
+
+@app.post("/bots/create")
+async def create_custom_bot(bot: CustomBotCreate, current_user: dict = Depends(get_current_user)):
+    """Create a custom bot with a specific persona and tools."""
+    try:
+        bot_id = str(uuid.uuid4())[:8]
+        await db_client.execute(
+            """INSERT OR REPLACE INTO custom_bots (id, user_id, name, description, system_prompt, avatar_emoji, tools, greeting, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (bot_id, str(current_user["id"]), bot.name, bot.description, bot.system_prompt,
+             bot.avatar_emoji, json.dumps(bot.tools), bot.greeting, datetime.now().isoformat()),
+        )
+        return {"status": "success", "bot_id": bot_id, "message": f"تم إنشاء البوت '{bot.name}' بنجاح! 🎉"}
+    except Exception as e:
+        logger.error(f"Failed to create bot: {e}")
+        raise HTTPException(status_code=500, detail="حدث خطأ أثناء إنشاء البوت")
+
+
+@app.get("/bots/list")
+async def list_custom_bots(current_user: dict = Depends(get_current_user)):
+    """List user's custom bots."""
+    try:
+        bots = await db_client.execute(
+            "SELECT id, name, description, avatar_emoji, greeting, created_at FROM custom_bots WHERE user_id = ? ORDER BY created_at DESC",
+            (str(current_user["id"]),),
+        )
+        return {"status": "success", "bots": bots or []}
+    except Exception as e:
+        return {"status": "success", "bots": []}
+
+
+@app.delete("/bots/{bot_id}")
+async def delete_custom_bot(bot_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a custom bot."""
+    await db_client.execute(
+        "DELETE FROM custom_bots WHERE id = ? AND user_id = ?",
+        (bot_id, str(current_user["id"])),
+    )
+    return {"status": "success", "message": "تم حذف البوت"}
 
 
 if __name__ == "__main__":

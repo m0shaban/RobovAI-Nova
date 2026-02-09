@@ -823,6 +823,136 @@
         font-style: italic;
       }
 
+      /* ═══ Markdown Tables ═══ */
+      .chat-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 0.9em;
+        direction: ltr;
+      }
+      .chat-table th, .chat-table td {
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        text-align: left;
+      }
+      .chat-table th {
+        background: rgba(0, 240, 255, 0.1);
+        color: var(--primary);
+        font-weight: 700;
+      }
+      .chat-table tr:nth-child(even) {
+        background: rgba(255,255,255,0.03);
+      }
+
+      /* ═══ Image Lightbox ═══ */
+      .lightbox-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.92);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: zoom-out;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .lightbox-overlay.active { opacity: 1; }
+      .lightbox-img {
+        max-width: 95vw;
+        max-height: 90vh;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      }
+      .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255,255,255,0.15);
+        border: none;
+        color: white;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        font-size: 24px;
+        cursor: pointer;
+      }
+      .lightbox-download {
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        color: black;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      /* ═══ AI Level Selector ═══ */
+      .ai-level-bar {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .ai-level-btn {
+        padding: 6px 16px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text-muted);
+        font-family: inherit;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .ai-level-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+      .ai-level-btn.active {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #000;
+        border-color: transparent;
+        font-weight: 700;
+      }
+
+      /* ═══ Quick Replies ═══ */
+      .quick-replies {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 6px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s;
+      }
+      .quick-replies.show { max-height: 200px; }
+      .quick-reply-btn {
+        padding: 5px 12px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(0,0,0,0.3);
+        color: var(--text-muted);
+        font-family: inherit;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .quick-reply-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(0,240,255,0.1);
+      }
+
       /* Input Dock */
       .input-dock {
         position: absolute;
@@ -1408,6 +1538,21 @@
 
         <!-- Input Dock -->
         <div class="input-dock">
+          <!-- AI Level Selector -->
+          <div class="ai-level-bar">
+            <button class="ai-level-btn" data-level="fast" onclick="setAiLevel('fast')" title="سريع جداً بدون أدوات">⚡ سريع</button>
+            <button class="ai-level-btn active" data-level="balanced" onclick="setAiLevel('balanced')" title="يختار تلقائياً">⚖️ متوازن</button>
+            <button class="ai-level-btn" data-level="powerful" onclick="setAiLevel('powerful')" title="يستخدم كل الأدوات">🧠 قوي</button>
+          </div>
+          <!-- Quick Replies -->
+          <div class="quick-replies show" id="quickReplies">
+            <button class="quick-reply-btn" onclick="quickSend('اكتب لي مقال احترافي')">📝 مقال</button>
+            <button class="quick-reply-btn" onclick="quickSend('ارسم لي صورة')">🎨 صورة</button>
+            <button class="quick-reply-btn" onclick="quickSend('ترجم لي من العربي للانجليزي')">🌍 ترجمة</button>
+            <button class="quick-reply-btn" onclick="quickSend('حل المعادلة التالية:')">🔢 حساب</button>
+            <button class="quick-reply-btn" onclick="quickSend('اعطيني نصيحة عن')">💡 نصيحة</button>
+            <button class="quick-reply-btn" onclick="quickSend('ابحث لي عن')">🔍 بحث</button>
+          </div>
           <div class="input-container">
             <div class="input-actions">
               <button
@@ -1467,6 +1612,34 @@
       let chatActive = false;
       let mediaRecorder = null;
       let audioChunks = [];
+      let currentAiLevel = localStorage.getItem('ai_level') || 'balanced';
+
+      // Apply saved AI level on load
+      document.querySelectorAll('.ai-level-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.level === currentAiLevel);
+      });
+
+      function setAiLevel(level) {
+        currentAiLevel = level;
+        localStorage.setItem('ai_level', level);
+        document.querySelectorAll('.ai-level-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.level === level);
+        });
+      }
+
+      // Lightbox
+      function openLightbox(src, alt) {
+        const overlay = document.createElement('div');
+        overlay.className = 'lightbox-overlay';
+        overlay.innerHTML = `
+          <button class="lightbox-close" onclick="this.parentElement.remove()">✕</button>
+          <img class="lightbox-img" src="${src}" alt="${alt || ''}">
+          <a class="lightbox-download" href="${src}" download target="_blank">⬇ تحميل</a>
+        `;
+        overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('active'));
+      }
 
       // ═══════════════════════════════════════════════════════════════
       // 🌌 COSMIC EFFECTS
@@ -1793,6 +1966,7 @@
           message: text,
           user_id: String(currentUser.id),
           platform: 'web',
+          ai_level: currentAiLevel,
         });
         // Attach user settings if available
         if (window.novaModelPref) params.set('model', window.novaModelPref);
@@ -2102,39 +2276,67 @@
           '<code class="inline-code">$1</code>',
         );
 
-        // 3) Images ![alt](url) — handle with proper styling
+        // 3) Tables: | col | col |\n|---|---|\n| data | data |
+        html = html.replace(/((?:^\|.+\|[ \t]*\n)+)/gm, (tableBlock) => {
+          const rows = tableBlock.trim().split('\n').filter(r => r.trim());
+          if (rows.length < 2) return tableBlock;
+          // Skip separator row
+          const isSep = r => /^\|[\s:-]+\|$/.test(r.replace(/[^|:-\s]/g, ''));
+          let headerRow = rows[0];
+          let dataRows = rows.slice(isSep(rows[1]) ? 2 : 1);
+          const parseCells = r => r.split('|').slice(1, -1).map(c => c.trim());
+          const headers = parseCells(headerRow);
+          let tableHtml = '<table class="chat-table"><thead><tr>' +
+            headers.map(h => `<th>${h}</th>`).join('') +
+            '</tr></thead><tbody>';
+          dataRows.forEach(r => {
+            const cells = parseCells(r);
+            tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+          });
+          tableHtml += '</tbody></table>';
+          return tableHtml;
+        });
+
+        // 4) Images ![alt](url) — with lightbox support
         html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => {
-          // Fix relative URLs - prepend API base if needed
           const src = url.startsWith('http')
             ? url
             : url.startsWith('/')
               ? API + url
               : url;
-          return `<div class="chat-image-wrap"><img src="${src}" alt="${alt}" class="chat-image" onclick="window.open('${src}','_blank')" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="img-error" style="display:none">🖼️ <a href="${src}" target="_blank">${alt || 'Open Image'}</a></span></div>`;
+          return `<div class="chat-image-wrap"><img src="${src}" alt="${alt}" class="chat-image" onclick="openLightbox('${src}','${(alt||'').replace(/'/g,"\\'")}');" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="img-error" style="display:none">🖼️ <a href="${src}" target="_blank">${alt || 'Open Image'}</a></span></div>`;
         });
 
-        // 4) Links [text](url)
+        // 5) Links [text](url) — with domain badge
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => {
           const href = url.startsWith('http')
             ? url
             : url.startsWith('/')
               ? API + url
               : url;
-          return `<a href="${href}" target="_blank" class="chat-link">${text} ↗</a>`;
+          let domain = '';
+          try { domain = new URL(href).hostname.replace('www.',''); } catch(e){}
+          const badge = domain ? `<span style="opacity:0.5;font-size:0.8em;margin-right:4px">[${domain}]</span>` : '';
+          return `<a href="${href}" target="_blank" class="chat-link">${badge}${text} ↗</a>`;
         });
 
-        // 5) Bare URLs (not already in tags)
+        // 6) Bare URLs (not already in tags)
         html = html.replace(
           /(?<!["'=])(https?:\/\/[^\s<]+)/g,
-          '<a href="$1" target="_blank" class="chat-link">$1 ↗</a>',
+          (url) => {
+            let domain = '';
+            try { domain = new URL(url).hostname.replace('www.',''); } catch(e){}
+            const label = domain || url;
+            return `<a href="${url}" target="_blank" class="chat-link">🔗 ${label} ↗</a>`;
+          }
         );
 
-        // 6) Headers
+        // 7) Headers
         html = html.replace(/^### (.+)$/gm, '<h3 class="chat-heading">$1</h3>');
         html = html.replace(/^## (.+)$/gm, '<h2 class="chat-heading">$1</h2>');
         html = html.replace(/^# (.+)$/gm, '<h1 class="chat-heading">$1</h1>');
 
-        // 7) Bold & italic
+        // 8) Bold & italic
         html = html.replace(
           /\*\*\*(.+?)\*\*\*/g,
           '<strong><em>$1</em></strong>',
@@ -2142,35 +2344,35 @@
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
 
-        // 8) Unordered list items
+        // 9) Unordered list items
         html = html.replace(/^\s*[-•]\s+(.+)$/gm, '<li>$1</li>');
         html = html.replace(
           /(<li>.*<\/li>)/gs,
           '<ul class="chat-list">$1</ul>',
         );
 
-        // 9) Ordered list items
+        // 10) Ordered list items
         html = html.replace(/^\s*\d+\.\s+(.+)$/gm, '<li>$1</li>');
 
-        // 10) Horizontal rule
+        // 11) Horizontal rule
         html = html.replace(/^---+$/gm, '<hr class="chat-hr">');
 
-        // 11) Blockquote
+        // 12) Blockquote
         html = html.replace(
           /^>\s+(.+)$/gm,
           '<blockquote class="chat-quote">$1</blockquote>',
         );
 
-        // 12) Line breaks (but not inside pre/code)
+        // 13) Line breaks (but not inside pre/code)
         html = html.replace(/\n/g, '<br>');
 
         // Clean up extra <br> around block elements
         html = html.replace(
-          /<br>\s*(<(?:pre|h[1-3]|ul|li|hr|blockquote|div))/g,
+          /<br>\s*(<(?:pre|h[1-3]|ul|li|hr|blockquote|div|table))/g,
           '$1',
         );
         html = html.replace(
-          /(<\/(?:pre|h[1-3]|ul|li|hr|blockquote|div)>)\s*<br>/g,
+          /(<\/(?:pre|h[1-3]|ul|li|hr|blockquote|div|table)>)\s*<br>/g,
           '$1',
         );
 

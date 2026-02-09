@@ -694,6 +694,7 @@
       <div class="nav-section">
         <div class="nav-title">روابط سريعة</div>
         <a href="/admin" class="nav-item"> <span>📊</span> لوحة التحكم </a>
+        <a href="/account" class="nav-item"> <span>💳</span> الحساب والاشتراكات </a>
         <a href="/developers" class="nav-item"> <span>📚</span> التوثيق </a>
       </div>
 
@@ -758,6 +759,34 @@
                 <div class="model-icon">⚡</div>
                 <div class="model-name">Auto (Smart)</div>
                 <div class="model-desc">اختيار تلقائي ذكي</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agent Parameters -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🎯</div>
+              <div>
+                <div class="card-title">مستوى الذكاء</div>
+                <div class="card-subtitle">اختار مستوى المعالجة المناسب</div>
+              </div>
+            </div>
+            <div class="model-grid">
+              <div class="model-option" data-ai-level="fast" onclick="selectAiLevel(this, 'fast')" style="border-color:rgba(34,197,94,0.3)">
+                <div class="model-icon">⚡</div>
+                <div class="model-name">سريع</div>
+                <div class="model-desc">رد فوري بدون أدوات</div>
+              </div>
+              <div class="model-option selected" data-ai-level="balanced" onclick="selectAiLevel(this, 'balanced')" style="border-color:rgba(0,240,255,0.3)">
+                <div class="model-icon">⚖️</div>
+                <div class="model-name">متوازن</div>
+                <div class="model-desc">يقرر تلقائياً (مُوصى)</div>
+              </div>
+              <div class="model-option" data-ai-level="powerful" onclick="selectAiLevel(this, 'powerful')" style="border-color:rgba(139,92,246,0.3)">
+                <div class="model-icon">🧠</div>
+                <div class="model-name">قوي</div>
+                <div class="model-desc">يستخدم كل الأدوات والتحليل</div>
               </div>
             </div>
           </div>
@@ -1204,10 +1233,20 @@
       // Model Selection
       function selectModel(el, model) {
         document
-          .querySelectorAll('.model-option')
+          .querySelectorAll('.model-option[data-model]')
           .forEach((o) => o.classList.remove('selected'));
         el.classList.add('selected');
         currentSettings.model = model;
+        markChanged();
+      }
+
+      // AI Level Selection
+      function selectAiLevel(el, level) {
+        document
+          .querySelectorAll('.model-option[data-ai-level]')
+          .forEach((o) => o.classList.remove('selected'));
+        el.classList.add('selected');
+        localStorage.setItem('ai_level', level);
         markChanged();
       }
 
@@ -1371,6 +1410,12 @@
 
       // Load settings
       function loadSettings() {
+        // Load AI Level
+        const aiLevel = localStorage.getItem('ai_level') || 'balanced';
+        document.querySelectorAll('[data-ai-level]').forEach(el => {
+          el.classList.toggle('selected', el.dataset.aiLevel === aiLevel);
+        });
+
         const saved = localStorage.getItem('novaSettings');
         if (saved) {
           currentSettings = JSON.parse(saved);

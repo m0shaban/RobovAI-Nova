@@ -145,6 +145,16 @@ from backend.tools.advanced import (
     YouTubeTool,
 )
 
+# 🆕 Generators & Creators (NEW!)
+from backend.tools.generators import (
+    LandingPageTool,
+    EmailComposerTool,
+    DocumentWriterTool,
+    CodeGeneratorTool,
+    StudyPlanTool,
+    CVBuilderTool,
+)
+
 
 def register_all_tools():
     """
@@ -291,6 +301,13 @@ def register_all_tools():
         FileCreatorTool,  # /create_file - إنشاء ملفات
         WebScraperTool,  # /scrape_url - استخراج محتوى الويب
         YouTubeTool,  # /youtube_transcript - تفريغ فيديو يوتيوب
+        # 🆕 Generators & Creators (NEW!)
+        LandingPageTool,  # /landing_page - إنشاء صفحات هبوط HTML
+        EmailComposerTool,  # /compose_email - كتابة إيميلات احترافية
+        DocumentWriterTool,  # /write_document - كتابة مستندات منظمة
+        CodeGeneratorTool,  # /generate_code - توليد أكواد برمجية
+        StudyPlanTool,  # /study_plan - خطط دراسية مخصصة
+        CVBuilderTool,  # /cv_builder - إنشاء سيرة ذاتية
     ]
 
     count = 0

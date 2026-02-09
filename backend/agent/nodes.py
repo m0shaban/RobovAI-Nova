@@ -465,8 +465,19 @@ async def act_node(state: AgentState) -> Dict[str, Any]:
     request_lower = (current_step + " " + state.get("original_request", "")).lower()
 
     # Priority tools always included
-    ALWAYS_INCLUDE = {"create_file", "generate_image", "math", "weather", "translate_egy",
-                      "wiki", "wikipedia", "chart", "presentation", "run_code", "scrape_url"}
+    ALWAYS_INCLUDE = {
+        "create_file",
+        "generate_image",
+        "math",
+        "weather",
+        "translate_egy",
+        "wiki",
+        "wikipedia",
+        "chart",
+        "presentation",
+        "run_code",
+        "scrape_url",
+    }
 
     # Score tools by keyword relevance
     def tool_relevance(t):
@@ -487,7 +498,9 @@ async def act_node(state: AgentState) -> Dict[str, Any]:
     scored = sorted(all_tools, key=tool_relevance, reverse=True)
     MAX_TOOLS = 25  # Keep under Groq's 12K TPM limit
     tools = scored[:MAX_TOOLS]
-    logger.info(f"🔧 Selected {len(tools)}/{len(all_tools)} relevant tools for: {current_step[:50]}")
+    logger.info(
+        f"🔧 Selected {len(tools)}/{len(all_tools)} relevant tools for: {current_step[:50]}"
+    )
 
     # Bind tools to LLM
     try:
@@ -818,11 +831,15 @@ async def reflect_node(state: AgentState) -> Dict[str, Any]:
 
     # If we have errors and exhausted retries → give up gracefully
     if errors and retry_count >= max_retries:
-        logger.warning(f"❌ Max retries ({max_retries}) exhausted. Generating fallback answer...")
+        logger.warning(
+            f"❌ Max retries ({max_retries}) exhausted. Generating fallback answer..."
+        )
         error_summary = "; ".join(str(e)[:100] for e in errors[-2:])
         # Check if we have any accumulated outputs regardless
         if results_summary:
-            fallback = "⚠️ واجهت بعض المشاكل لكن هذه النتائج المتاحة:\n\n" + "\n".join(results_summary[:5])
+            fallback = "⚠️ واجهت بعض المشاكل لكن هذه النتائج المتاحة:\n\n" + "\n".join(
+                results_summary[:5]
+            )
         else:
             fallback = f"❌ لم أتمكن من تنفيذ الطلب بالكامل. السبب: {error_summary}\n\nجرب مرة تانية أو غيّر صياغة الطلب."
         return {
@@ -854,37 +871,46 @@ async def reflect_node(state: AgentState) -> Dict[str, Any]:
 
     # First, check if we have successful tool results - if so, build answer from them
     all_tool_results = state.get("tool_results", [])
-    successful_tools = [r for r in all_tool_results if isinstance(r, dict) and r.get("success")]
-    
+    successful_tools = [
+        r for r in all_tool_results if isinstance(r, dict) and r.get("success")
+    ]
+
     if successful_tools:
         # We have actual successful tool results - build answer directly
         final = "✅ تم تنفيذ المهمة بنجاح!\n\n"
         links = []
         tool_summaries = []
-        
+
         for result in successful_tools:
             output = result.get("output", "")
             tool_name = result.get("tool_name", "")
-            
+
             # Try to parse JSON output from the adapter
             try:
                 import json as _json_mod
-                parsed = _json_mod.loads(output) if isinstance(output, str) and output.startswith("{") else None
+
+                parsed = (
+                    _json_mod.loads(output)
+                    if isinstance(output, str) and output.startswith("{")
+                    else None
+                )
                 if parsed:
                     if "url" in parsed:
                         links.append(f"[📁 تحميل الملف]({parsed['url']})")
                     if "text" in parsed:
-                        tool_summaries.append(f"- **{tool_name}**: {parsed['text'][:300]}")
+                        tool_summaries.append(
+                            f"- **{tool_name}**: {parsed['text'][:300]}"
+                        )
                 else:
                     tool_summaries.append(f"- **{tool_name}**: {str(output)[:300]}")
             except:
                 tool_summaries.append(f"- **{tool_name}**: {str(output)[:300]}")
-        
+
         if links:
             final += "### 📎 الملفات والروابط:\n" + "\n".join(links) + "\n\n"
         if tool_summaries:
             final += "### 📋 النتائج:\n" + "\n".join(tool_summaries[:10])
-        
+
         return {
             "phase": AgentPhase.COMPLETED.value,
             "final_answer": final,
@@ -942,12 +968,14 @@ async def reflect_node(state: AgentState) -> Dict[str, Any]:
                         # Check if it contains URL patterns
                         if "/uploads/" in output:
                             import re
+
                             urls = re.findall(r"/uploads/[^\s\n\"']+", output)
                             for url in urls:
                                 links.append(f"[📁 تحميل الملف]({url})")
                         # Check for external URLs
                         if "http" in output:
                             import re
+
                             ext_urls = re.findall(r"https?://[^\s\n\"']+", output)
                             for url in ext_urls:
                                 if "localhost" not in url:

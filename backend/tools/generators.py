@@ -1,6 +1,7 @@
 """
 HTML Landing Page Generator & Document Creator Tools
 """
+
 from typing import Dict, Any
 from .base import BaseTool
 from backend.core.llm import llm_client
@@ -42,12 +43,14 @@ class LandingPageTool(BaseTool):
         output = await llm_client.generate(prompt, provider="auto", max_tokens=8000)
 
         # Extract HTML from response
-        html_match = re.search(r'(<!DOCTYPE html>[\s\S]*?</html>)', output, re.IGNORECASE)
+        html_match = re.search(
+            r"(<!DOCTYPE html>[\s\S]*?</html>)", output, re.IGNORECASE
+        )
         if html_match:
             html_content = html_match.group(1)
         else:
             # Try extracting from code blocks
-            code_match = re.search(r'```(?:html)?\s*([\s\S]*?)```', output)
+            code_match = re.search(r"```(?:html)?\s*([\s\S]*?)```", output)
             html_content = code_match.group(1).strip() if code_match else output
 
         # Save the file

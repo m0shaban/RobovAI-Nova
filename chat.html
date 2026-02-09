@@ -831,7 +831,8 @@
         font-size: 0.9em;
         direction: ltr;
       }
-      .chat-table th, .chat-table td {
+      .chat-table th,
+      .chat-table td {
         padding: 10px 14px;
         border: 1px solid var(--border);
         text-align: left;
@@ -842,14 +843,14 @@
         font-weight: 700;
       }
       .chat-table tr:nth-child(even) {
-        background: rgba(255,255,255,0.03);
+        background: rgba(255, 255, 255, 0.03);
       }
 
       /* ═══ Image Lightbox ═══ */
       .lightbox-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.92);
+        background: rgba(0, 0, 0, 0.92);
         z-index: 9999;
         display: flex;
         align-items: center;
@@ -858,18 +859,20 @@
         opacity: 0;
         transition: opacity 0.3s;
       }
-      .lightbox-overlay.active { opacity: 1; }
+      .lightbox-overlay.active {
+        opacity: 1;
+      }
       .lightbox-img {
         max-width: 95vw;
         max-height: 90vh;
         border-radius: 12px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
       }
       .lightbox-close {
         position: absolute;
         top: 20px;
         right: 20px;
-        background: rgba(255,255,255,0.15);
+        background: rgba(255, 255, 255, 0.15);
         border: none;
         color: white;
         width: 44px;
@@ -935,12 +938,14 @@
         overflow: hidden;
         transition: max-height 0.3s;
       }
-      .quick-replies.show { max-height: 200px; }
+      .quick-replies.show {
+        max-height: 200px;
+      }
       .quick-reply-btn {
         padding: 5px 12px;
         border-radius: 16px;
         border: 1px solid var(--border);
-        background: rgba(0,0,0,0.3);
+        background: rgba(0, 0, 0, 0.3);
         color: var(--text-muted);
         font-family: inherit;
         font-size: 11px;
@@ -950,7 +955,7 @@
       .quick-reply-btn:hover {
         border-color: var(--primary);
         color: var(--primary);
-        background: rgba(0,240,255,0.1);
+        background: rgba(0, 240, 255, 0.1);
       }
 
       /* Input Dock */
@@ -1540,18 +1545,63 @@
         <div class="input-dock">
           <!-- AI Level Selector -->
           <div class="ai-level-bar">
-            <button class="ai-level-btn" data-level="fast" onclick="setAiLevel('fast')" title="سريع جداً بدون أدوات">⚡ سريع</button>
-            <button class="ai-level-btn active" data-level="balanced" onclick="setAiLevel('balanced')" title="يختار تلقائياً">⚖️ متوازن</button>
-            <button class="ai-level-btn" data-level="powerful" onclick="setAiLevel('powerful')" title="يستخدم كل الأدوات">🧠 قوي</button>
+            <button
+              class="ai-level-btn"
+              data-level="fast"
+              onclick="setAiLevel('fast')"
+              title="سريع جداً بدون أدوات"
+            >
+              ⚡ سريع
+            </button>
+            <button
+              class="ai-level-btn active"
+              data-level="balanced"
+              onclick="setAiLevel('balanced')"
+              title="يختار تلقائياً"
+            >
+              ⚖️ متوازن
+            </button>
+            <button
+              class="ai-level-btn"
+              data-level="powerful"
+              onclick="setAiLevel('powerful')"
+              title="يستخدم كل الأدوات"
+            >
+              🧠 قوي
+            </button>
           </div>
           <!-- Quick Replies -->
           <div class="quick-replies show" id="quickReplies">
-            <button class="quick-reply-btn" onclick="quickSend('اكتب لي مقال احترافي')">📝 مقال</button>
-            <button class="quick-reply-btn" onclick="quickSend('ارسم لي صورة')">🎨 صورة</button>
-            <button class="quick-reply-btn" onclick="quickSend('ترجم لي من العربي للانجليزي')">🌍 ترجمة</button>
-            <button class="quick-reply-btn" onclick="quickSend('حل المعادلة التالية:')">🔢 حساب</button>
-            <button class="quick-reply-btn" onclick="quickSend('اعطيني نصيحة عن')">💡 نصيحة</button>
-            <button class="quick-reply-btn" onclick="quickSend('ابحث لي عن')">🔍 بحث</button>
+            <button
+              class="quick-reply-btn"
+              onclick="quickSend('اكتب لي مقال احترافي')"
+            >
+              📝 مقال
+            </button>
+            <button class="quick-reply-btn" onclick="quickSend('ارسم لي صورة')">
+              🎨 صورة
+            </button>
+            <button
+              class="quick-reply-btn"
+              onclick="quickSend('ترجم لي من العربي للانجليزي')"
+            >
+              🌍 ترجمة
+            </button>
+            <button
+              class="quick-reply-btn"
+              onclick="quickSend('حل المعادلة التالية:')"
+            >
+              🔢 حساب
+            </button>
+            <button
+              class="quick-reply-btn"
+              onclick="quickSend('اعطيني نصيحة عن')"
+            >
+              💡 نصيحة
+            </button>
+            <button class="quick-reply-btn" onclick="quickSend('ابحث لي عن')">
+              🔍 بحث
+            </button>
           </div>
           <div class="input-container">
             <div class="input-actions">
@@ -1615,14 +1665,14 @@
       let currentAiLevel = localStorage.getItem('ai_level') || 'balanced';
 
       // Apply saved AI level on load
-      document.querySelectorAll('.ai-level-btn').forEach(btn => {
+      document.querySelectorAll('.ai-level-btn').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.level === currentAiLevel);
       });
 
       function setAiLevel(level) {
         currentAiLevel = level;
         localStorage.setItem('ai_level', level);
-        document.querySelectorAll('.ai-level-btn').forEach(btn => {
+        document.querySelectorAll('.ai-level-btn').forEach((btn) => {
           btn.classList.toggle('active', btn.dataset.level === level);
         });
       }
@@ -1636,7 +1686,9 @@
           <img class="lightbox-img" src="${src}" alt="${alt || ''}">
           <a class="lightbox-download" href="${src}" download target="_blank">⬇ تحميل</a>
         `;
-        overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) overlay.remove();
+        });
         document.body.appendChild(overlay);
         requestAnimationFrame(() => overlay.classList.add('active'));
       }
@@ -2278,20 +2330,29 @@
 
         // 3) Tables: | col | col |\n|---|---|\n| data | data |
         html = html.replace(/((?:^\|.+\|[ \t]*\n)+)/gm, (tableBlock) => {
-          const rows = tableBlock.trim().split('\n').filter(r => r.trim());
+          const rows = tableBlock
+            .trim()
+            .split('\n')
+            .filter((r) => r.trim());
           if (rows.length < 2) return tableBlock;
           // Skip separator row
-          const isSep = r => /^\|[\s:-]+\|$/.test(r.replace(/[^|:-\s]/g, ''));
+          const isSep = (r) => /^\|[\s:-]+\|$/.test(r.replace(/[^|:-\s]/g, ''));
           let headerRow = rows[0];
           let dataRows = rows.slice(isSep(rows[1]) ? 2 : 1);
-          const parseCells = r => r.split('|').slice(1, -1).map(c => c.trim());
+          const parseCells = (r) =>
+            r
+              .split('|')
+              .slice(1, -1)
+              .map((c) => c.trim());
           const headers = parseCells(headerRow);
-          let tableHtml = '<table class="chat-table"><thead><tr>' +
-            headers.map(h => `<th>${h}</th>`).join('') +
+          let tableHtml =
+            '<table class="chat-table"><thead><tr>' +
+            headers.map((h) => `<th>${h}</th>`).join('') +
             '</tr></thead><tbody>';
-          dataRows.forEach(r => {
+          dataRows.forEach((r) => {
             const cells = parseCells(r);
-            tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+            tableHtml +=
+              '<tr>' + cells.map((c) => `<td>${c}</td>`).join('') + '</tr>';
           });
           tableHtml += '</tbody></table>';
           return tableHtml;
@@ -2304,7 +2365,7 @@
             : url.startsWith('/')
               ? API + url
               : url;
-          return `<div class="chat-image-wrap"><img src="${src}" alt="${alt}" class="chat-image" onclick="openLightbox('${src}','${(alt||'').replace(/'/g,"\\'")}');" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="img-error" style="display:none">🖼️ <a href="${src}" target="_blank">${alt || 'Open Image'}</a></span></div>`;
+          return `<div class="chat-image-wrap"><img src="${src}" alt="${alt}" class="chat-image" onclick="openLightbox('${src}','${(alt || '').replace(/'/g, "\\'")}');" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span class="img-error" style="display:none">🖼️ <a href="${src}" target="_blank">${alt || 'Open Image'}</a></span></div>`;
         });
 
         // 5) Links [text](url) — with domain badge
@@ -2315,21 +2376,24 @@
               ? API + url
               : url;
           let domain = '';
-          try { domain = new URL(href).hostname.replace('www.',''); } catch(e){}
-          const badge = domain ? `<span style="opacity:0.5;font-size:0.8em;margin-right:4px">[${domain}]</span>` : '';
+          try {
+            domain = new URL(href).hostname.replace('www.', '');
+          } catch (e) {}
+          const badge = domain
+            ? `<span style="opacity:0.5;font-size:0.8em;margin-right:4px">[${domain}]</span>`
+            : '';
           return `<a href="${href}" target="_blank" class="chat-link">${badge}${text} ↗</a>`;
         });
 
         // 6) Bare URLs (not already in tags)
-        html = html.replace(
-          /(?<!["'=])(https?:\/\/[^\s<]+)/g,
-          (url) => {
-            let domain = '';
-            try { domain = new URL(url).hostname.replace('www.',''); } catch(e){}
-            const label = domain || url;
-            return `<a href="${url}" target="_blank" class="chat-link">🔗 ${label} ↗</a>`;
-          }
-        );
+        html = html.replace(/(?<!["'=])(https?:\/\/[^\s<]+)/g, (url) => {
+          let domain = '';
+          try {
+            domain = new URL(url).hostname.replace('www.', '');
+          } catch (e) {}
+          const label = domain || url;
+          return `<a href="${url}" target="_blank" class="chat-link">🔗 ${label} ↗</a>`;
+        });
 
         // 7) Headers
         html = html.replace(/^### (.+)$/gm, '<h3 class="chat-heading">$1</h3>');

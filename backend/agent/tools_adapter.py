@@ -19,12 +19,13 @@ logger = logging.getLogger("robovai.agent.tools")
 
 class GenericToolInput(BaseModel):
     """Generic input schema that accepts any arguments from the LLM.
-    
+
     The 'query' field provides backward compatibility with tools expecting a string.
     'model_config extra=allow' lets LLMs pass structured kwargs (filename, content, etc.)
     """
+
     query: str = Field(default="", description="Input query or command")
-    
+
     model_config = {"extra": "allow"}
 
 
@@ -119,7 +120,9 @@ class ToolsAdapter:
 
                 query = args[0] if args else kwargs.get("query")
                 # Separate structured kwargs from "query"
-                other_kwargs = {k: v for k, v in kwargs.items() if k not in ("query", "kwargs")}
+                other_kwargs = {
+                    k: v for k, v in kwargs.items() if k not in ("query", "kwargs")
+                }
                 # Some LLMs nest args inside a "kwargs" key
                 if "kwargs" in kwargs and isinstance(kwargs["kwargs"], dict):
                     other_kwargs.update(kwargs["kwargs"])
@@ -131,10 +134,15 @@ class ToolsAdapter:
                     # Priority: execute_kwargs > structured kwargs > query string > empty
 
                     if hasattr(tool_instance, "execute_kwargs"):
-                        _debug(f"  ROUTE: execute_kwargs")
-                        result = await tool_instance.execute_kwargs(uid, **{**other_kwargs, **({"query": query} if query else {})})
+                        logger.debug(f"  ROUTE: execute_kwargs")
+                        result = await tool_instance.execute_kwargs(
+                            uid,
+                            **{**other_kwargs, **({"query": query} if query else {})},
+                        )
 
-                    elif tool_name == "create_file" and ("filename" in other_kwargs or "content" in other_kwargs):
+                    elif tool_name == "create_file" and (
+                        "filename" in other_kwargs or "content" in other_kwargs
+                    ):
                         # create_file expects "filename | content"
                         fn = other_kwargs.get("filename", "output.html")
                         ct = other_kwargs.get("content", query or "")
@@ -142,7 +150,9 @@ class ToolsAdapter:
                         if "." not in fn:
                             if "<html" in ct.lower() or "<!doctype" in ct.lower():
                                 fn += ".html"
-                            elif ct.strip().startswith("{") or ct.strip().startswith("["):
+                            elif ct.strip().startswith("{") or ct.strip().startswith(
+                                "["
+                            ):
                                 fn += ".json"
                             else:
                                 fn += ".html"
@@ -161,13 +171,22 @@ class ToolsAdapter:
                         result = await tool_instance.execute("", uid)
 
                     # --- Check result success (support both "success" and "status" keys) ---
-                    is_success = result.get("success", False) or result.get("status") == "success"
+                    is_success = (
+                        result.get("success", False)
+                        or result.get("status") == "success"
+                    )
                     if is_success:
                         # Return rich output as JSON so downstream nodes can extract URLs/paths
                         output = result.get("output", "")
                         # Include metadata if available
                         rich = {"text": str(output)}
-                        for key in ("url", "filepath", "filename", "image_url", "download_url"):
+                        for key in (
+                            "url",
+                            "filepath",
+                            "filename",
+                            "image_url",
+                            "download_url",
+                        ):
                             if key in result:
                                 rich[key] = result[key]
 

@@ -1,874 +1,1700 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="RobovAI Nova - منصة الذكاء الاصطناعي للأعمال | 100+ أداة لتحليل البيانات، معالجة المستندات، وأتمتة المهام">
-    <meta name="keywords" content="AI, chatbot, RobovAI, Nova, Egyptian, Arabic, assistant, tools">
-    <meta name="author" content="RobovAI Solutions">
-    <title>RobovAI Nova ✦ منصة الذكاء الاصطناعي للأعمال</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="manifest" href="site.webmanifest">
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="RobovAI Nova — منصة ذكاء اصطناعي متكاملة للأعمال | 124+ حل ذكي لأتمتة المهام وزيادة الإنتاجية"
+    />
+    <title>RobovAI Nova — شريكك الذكي في الأعمال</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        /* ═══════════════════════════════════════════════════════════════
-           🌌 RobovAI Nova - Premium Landing Page
-           Design: Cosmic Cyber Egyptian Theme
-        ═══════════════════════════════════════════════════════════════ */
-        
-        :root {
-            --bg-void: #000000;
-            --bg-deep: #030308;
-            --bg-space: #0a0a1a;
-            --glass: rgba(10, 10, 30, 0.6);
-            --glass-light: rgba(255, 255, 255, 0.03);
-            --primary: #00f0ff;
-            --primary-glow: rgba(0, 240, 255, 0.4);
-            --secondary: #8b5cf6;
-            --secondary-glow: rgba(139, 92, 246, 0.4);
-            --accent: #ff00aa;
-            --accent-glow: rgba(255, 0, 170, 0.3);
-            --gold: #ffd700;
-            --success: #00ff88;
-            --text: #ffffff;
-            --text-muted: #8b949e;
-            --border: rgba(255, 255, 255, 0.08);
-        }
+      :root {
+        --bg: #050510;
+        --surface: rgba(12, 12, 35, 0.7);
+        --surface-2: rgba(20, 20, 50, 0.5);
+        --glass: rgba(255, 255, 255, 0.03);
+        --primary: #00d4ff;
+        --primary-dim: rgba(0, 212, 255, 0.15);
+        --secondary: #a855f7;
+        --secondary-dim: rgba(168, 85, 247, 0.15);
+        --accent: #f43f5e;
+        --gold: #facc15;
+        --gold-dim: rgba(250, 204, 21, 0.12);
+        --green: #22c55e;
+        --text: #f0f0f5;
+        --muted: #7b7f9e;
+        --border: rgba(255, 255, 255, 0.06);
+        --border-hover: rgba(0, 212, 255, 0.25);
+        --radius: 18px;
+        --radius-sm: 12px;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        font-size: 16px;
+      }
+      body {
+        font-family: 'Cairo', 'Inter', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        overflow-x: hidden;
+        line-height: 1.75;
+      }
+      ::selection {
+        background: var(--primary);
+        color: #000;
+      }
+      img {
+        max-width: 100%;
+        display: block;
+      }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        html {
-            scroll-behavior: smooth;
-        }
-        
-        body {
-            font-family: 'Cairo', 'Tajawal', 'Inter', sans-serif;
-            background: var(--bg-void);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-            line-height: 1.7;
-        }
+      /* ═════════════ COSMIC CANVAS ═════════════ */
+      .cosmos {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        overflow: hidden;
+      }
+      .cosmos canvas {
+        width: 100%;
+        height: 100%;
+      }
+      .cosmos-grad {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background:
+          radial-gradient(
+            ellipse 60% 50% at 25% 15%,
+            rgba(168, 85, 247, 0.12),
+            transparent
+          ),
+          radial-gradient(
+            ellipse 55% 45% at 75% 80%,
+            rgba(0, 212, 255, 0.1),
+            transparent
+          ),
+          radial-gradient(
+            ellipse 40% 30% at 50% 50%,
+            rgba(244, 63, 94, 0.04),
+            transparent
+          );
+      }
 
-        /* ═══════════════════════════════════════════════════════════════
-           🌌 ANIMATED BACKGROUND
-        ═══════════════════════════════════════════════════════════════ */
-        
-        .cosmic-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-        
-        .cosmic-bg::before {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: 
-                radial-gradient(ellipse at 20% 20%, var(--secondary-glow) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, var(--primary-glow) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, var(--accent-glow) 0%, transparent 40%);
-            animation: cosmic-drift 30s ease-in-out infinite;
-        }
-        
-        @keyframes cosmic-drift {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(5%, -5%) rotate(5deg); }
-            50% { transform: translate(-5%, 5%) rotate(-5deg); }
-            75% { transform: translate(3%, 3%) rotate(3deg); }
-        }
-        
-        .stars {
-            position: absolute;
-            width: 100%; height: 100%;
-            background-image: 
-                radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.8), transparent),
-                radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.6), transparent),
-                radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.4), transparent),
-                radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.7), transparent);
-            background-size: 200px 200px;
-            animation: stars-twinkle 4s ease-in-out infinite;
-        }
-        
-        @keyframes stars-twinkle {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
+      /* ═════════════ NAVBAR ═════════════ */
+      .nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 999;
+        padding: 12px 24px;
+        transition: all 0.4s;
+      }
+      .nav.stuck {
+        background: rgba(5, 5, 16, 0.92);
+        backdrop-filter: blur(24px) saturate(1.4);
+        box-shadow: 0 1px 40px rgba(0, 0, 0, 0.4);
+      }
+      .nav-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .brand-dot {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        box-shadow: 0 0 20px var(--primary-dim);
+      }
+      .brand-name {
+        font-size: 1.25rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .nav-menu {
+        display: flex;
+        gap: 24px;
+        list-style: none;
+        align-items: center;
+      }
+      .nav-menu a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.88rem;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+      .nav-menu a:hover {
+        color: var(--primary);
+      }
+      .nav-cta {
+        padding: 8px 22px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        border-radius: 50px;
+        color: #000;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .nav-cta:hover {
+        box-shadow: 0 8px 24px var(--primary-dim);
+        transform: translateY(-2px);
+      }
+      .burger {
+        display: none;
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 1.2rem;
+        padding: 6px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
 
-        /* ═══════════════════════════════════════════════════════════════
-           📍 NAVIGATION
-        ═══════════════════════════════════════════════════════════════ */
-        
-        .navbar {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            z-index: 1000;
-            padding: 1rem 2rem;
-            transition: all 0.4s ease;
+      /* Mobile Overlay */
+      .mob-menu {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 5, 16, 0.97);
+        backdrop-filter: blur(20px);
+        z-index: 2000;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+      }
+      .mob-menu.open {
+        display: flex;
+      }
+      .mob-menu a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 1.15rem;
+        font-weight: 600;
+        transition: color 0.3s;
+      }
+      .mob-menu a:hover {
+        color: var(--primary);
+      }
+      .mob-close {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: none;
+        border: none;
+        color: var(--text);
+        font-size: 1.8rem;
+        cursor: pointer;
+      }
+
+      /* ═════════════ HERO ═════════════ */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 24px 80px;
+        position: relative;
+      }
+      .hero-content {
+        max-width: 880px;
+        text-align: center;
+      }
+      .hero-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        font-size: 0.82rem;
+        color: var(--primary);
+        margin-bottom: 24px;
+      }
+      .hero-chip .dot {
+        width: 7px;
+        height: 7px;
+        background: var(--green);
+        border-radius: 50%;
+        animation: blink 2s infinite;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
         }
-        
-        .navbar.scrolled {
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        50% {
+          opacity: 0.35;
         }
-        
-        .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+      }
+      .hero h1 {
+        font-size: clamp(2.4rem, 6vw, 4.2rem);
+        font-weight: 900;
+        line-height: 1.15;
+        margin-bottom: 18px;
+      }
+      .hero h1 .grad {
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--secondary),
+          var(--accent)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 200% auto;
+        animation: shiftGrad 6s linear infinite;
+      }
+      @keyframes shiftGrad {
+        to {
+          background-position: 200% center;
         }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
+      }
+      .hero-sub {
+        font-size: 1.12rem;
+        color: var(--muted);
+        max-width: 620px;
+        margin: 0 auto 32px;
+      }
+      .hero-actions {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 48px;
+      }
+      .btn-hero {
+        padding: 14px 34px;
+        border-radius: 50px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.35s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: inherit;
+      }
+      .btn-glow {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #000;
+        border: none;
+      }
+      .btn-glow:hover {
+        box-shadow: 0 12px 40px var(--primary-dim);
+        transform: translateY(-4px);
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 2px solid var(--border);
+        color: var(--text);
+      }
+      .btn-ghost:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-3px);
+      }
+
+      /* Live Counter Row */
+      .counters {
+        display: flex;
+        gap: 40px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .counter {
+        text-align: center;
+      }
+      .counter-val {
+        font-size: 2.8rem;
+        font-weight: 900;
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, var(--primary), var(--gold));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .counter-label {
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin-top: -4px;
+      }
+
+      /* ═════════════ AGENT ARCHITECTURE ═════════════ */
+      .arch-section {
+        padding: 80px 24px;
+      }
+      .arch-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .sec-badge {
+        display: inline-block;
+        padding: 5px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        font-size: 0.78rem;
+        color: var(--primary);
+        margin-bottom: 12px;
+      }
+      .sec-title {
+        font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+        font-weight: 800;
+        margin-bottom: 10px;
+      }
+      .sec-desc {
+        color: var(--muted);
+        max-width: 560px;
+        margin: 0 auto 48px;
+        text-align: center;
+      }
+      .sec-center {
+        text-align: center;
+      }
+
+      /* ReAct Cycle Timeline */
+      .react-flow {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        position: relative;
+      }
+      .react-flow::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 5%;
+        right: 5%;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          var(--primary),
+          var(--secondary),
+          var(--accent),
+          var(--gold)
+        );
+        border-radius: 2px;
+        transform: translateY(-50%);
+        z-index: 0;
+        opacity: 0.3;
+      }
+      .react-step {
+        position: relative;
+        z-index: 1;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 28px 18px;
+        text-align: center;
+        transition: all 0.4s;
+      }
+      .react-step:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-6px);
+        box-shadow: 0 12px 40px rgba(0, 212, 255, 0.08);
+      }
+      .react-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        margin: 0 auto 14px;
+        display: grid;
+        place-items: center;
+        font-size: 26px;
+      }
+      .react-icon.think {
+        background: var(--primary-dim);
+      }
+      .react-icon.act {
+        background: var(--secondary-dim);
+      }
+      .react-icon.observe {
+        background: rgba(34, 197, 94, 0.15);
+      }
+      .react-icon.reflect {
+        background: var(--gold-dim);
+      }
+      .react-name {
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin-bottom: 6px;
+      }
+      .react-desc {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.7;
+      }
+
+      /* ═════════════ TOOL CATEGORIES ═════════════ */
+      .tools-section {
+        padding: 80px 24px;
+      }
+      .tools-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+      .tools-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      .tool-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        transition: all 0.35s;
+        cursor: default;
+      }
+      .tool-card:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 212, 255, 0.06);
+      }
+      .tool-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .tool-emoji {
+        font-size: 1.8rem;
+      }
+      .tool-cat-name {
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+      .tool-count {
+        font-size: 0.7rem;
+        padding: 3px 10px;
+        background: var(--primary-dim);
+        color: var(--primary);
+        border-radius: 50px;
+        font-weight: 600;
+      }
+      .tool-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .tool-tag {
+        padding: 3px 10px;
+        background: var(--glass);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-family: 'JetBrains Mono', monospace;
+        transition: all 0.2s;
+      }
+      .tool-card:hover .tool-tag {
+        border-color: rgba(255, 255, 255, 0.1);
+        color: var(--text);
+      }
+
+      /* ═════════════ AGENT FEATURES ═════════════ */
+      .feats-section {
+        padding: 80px 24px;
+      }
+      .feats-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .feats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .feat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 28px;
+        transition: all 0.35s;
+        position: relative;
+        overflow: hidden;
+      }
+      .feat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .feat-card:hover {
+        border-color: var(--border-hover);
+        transform: translateY(-5px);
+      }
+      .feat-card:hover::before {
+        opacity: 1;
+      }
+      .feat-icon {
+        font-size: 2.2rem;
+        margin-bottom: 14px;
+      }
+      .feat-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+      }
+      .feat-desc {
+        color: var(--muted);
+        font-size: 0.88rem;
+        line-height: 1.8;
+      }
+
+      /* ═════════════ LIVE DEMO ═════════════ */
+      .demo-section {
+        padding: 80px 24px;
+      }
+      .demo-inner {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .demo-terminal {
+        background: rgba(8, 8, 20, 0.95);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      }
+      .demo-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 18px;
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid var(--border);
+      }
+      .demo-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+      }
+      .demo-dot.r {
+        background: #ff5f57;
+      }
+      .demo-dot.y {
+        background: #febc2e;
+      }
+      .demo-dot.g {
+        background: #28c840;
+      }
+      .demo-bar-title {
+        margin-right: auto;
+        font-size: 0.78rem;
+        color: var(--muted);
+        font-family: 'JetBrains Mono', monospace;
+      }
+      .demo-body {
+        padding: 24px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.82rem;
+        line-height: 2;
+        min-height: 280px;
+        direction: ltr;
+        text-align: left;
+      }
+      .demo-body .prompt {
+        color: var(--green);
+      }
+      .demo-body .cmd {
+        color: var(--primary);
+      }
+      .demo-body .out {
+        color: var(--muted);
+      }
+      .demo-body .tool {
+        color: var(--secondary);
+      }
+      .demo-body .success {
+        color: var(--gold);
+      }
+      .demo-body .typing {
+        display: inline-block;
+        width: 8px;
+        height: 16px;
+        background: var(--primary);
+        animation: cursorBlink 1s infinite;
+      }
+      @keyframes cursorBlink {
+        0%,
+        100% {
+          opacity: 1;
         }
-        
-        .logo-icon {
-            width: 50px; height: 50px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            box-shadow: 0 0 30px var(--primary-glow);
-            animation: logo-pulse 3s ease-in-out infinite;
+        50% {
+          opacity: 0;
         }
-        
-        @keyframes logo-pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 30px var(--primary-glow); }
-            50% { transform: scale(1.05); box-shadow: 0 0 50px var(--primary-glow); }
+      }
+
+      /* ═════════════ PLATFORMS ═════════════ */
+      .plat-section {
+        padding: 80px 24px;
+      }
+      .plat-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .plat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
+      }
+      .plat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 24px 16px;
+        text-align: center;
+        transition: all 0.3s;
+      }
+      .plat-card:hover {
+        border-color: var(--border-hover);
+        transform: scale(1.04);
+      }
+      .plat-icon {
+        font-size: 2.6rem;
+        margin-bottom: 10px;
+      }
+      .plat-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+      }
+      .plat-status {
+        font-size: 0.72rem;
+        color: var(--green);
+      }
+
+      /* ═════════════ PRICING ═════════════ */
+      .price-section {
+        padding: 80px 24px;
+      }
+      .price-inner {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+      .price-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .price-card {
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 36px 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.4s;
+      }
+      .price-card:hover {
+        transform: translateY(-6px);
+        border-color: var(--border-hover);
+      }
+      .price-card.pop {
+        border-color: var(--gold);
+        box-shadow: 0 0 40px var(--gold-dim);
+      }
+      .price-badge {
+        position: absolute;
+        top: -1px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--gold);
+        color: #000;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 4px 18px;
+        border-radius: 0 0 10px 10px;
+      }
+      .price-emoji {
+        font-size: 2.2rem;
+        margin-bottom: 8px;
+      }
+      .price-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .price-amount {
+        font-size: 2.6rem;
+        font-weight: 900;
+        margin: 8px 0;
+      }
+      .price-amount span {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .price-list {
+        list-style: none;
+        text-align: right;
+        margin: 16px 0 24px;
+        flex: 1;
+      }
+      .price-list li {
+        padding: 5px 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      }
+      .price-list li::before {
+        content: '\2713  ';
+        color: var(--green);
+      }
+      .price-btn {
+        padding: 12px 24px;
+        border-radius: 50px;
+        border: none;
+        font-family: inherit;
+        font-weight: 700;
+        font-size: 0.92rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: 100%;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+      }
+      .price-btn-gold {
+        background: linear-gradient(135deg, var(--gold), #f59e0b);
+        color: #000;
+      }
+      .price-btn-gold:hover {
+        box-shadow: 0 8px 30px var(--gold-dim);
+        transform: translateY(-2px);
+      }
+      .price-btn-fill {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #000;
+      }
+      .price-btn-fill:hover {
+        box-shadow: 0 8px 30px var(--primary-dim);
+        transform: translateY(-2px);
+      }
+      .price-btn-line {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .price-btn-line:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      /* ═════════════ CTA ═════════════ */
+      .cta-section {
+        padding: 80px 24px;
+      }
+      .cta-box {
+        max-width: 800px;
+        margin: 0 auto;
+        text-align: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 60px 40px;
+        position: relative;
+        overflow: hidden;
+      }
+      .cta-box::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          ellipse at center,
+          var(--primary-dim),
+          transparent 60%
+        );
+        opacity: 0.4;
+        animation: ctaPulse 8s ease-in-out infinite;
+      }
+      @keyframes ctaPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.3;
         }
-        
-        .logo-text {
-            font-size: 1.6rem;
-            font-weight: 800;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+        50% {
+          transform: scale(1.1);
+          opacity: 0.5;
         }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-        
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-            position: relative;
-        }
-        
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            right: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transition: width 0.3s;
-        }
-        
-        .nav-links a:hover {
-            color: var(--primary);
-        }
-        
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-        
+      }
+      .cta-title {
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        font-weight: 800;
+        margin-bottom: 14px;
+        position: relative;
+        z-index: 1;
+      }
+      .cta-desc {
+        color: var(--muted);
+        margin-bottom: 28px;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* ═════════════ FOOTER ═════════════ */
+      .footer {
+        padding: 40px 24px;
+        border-top: 1px solid var(--border);
+        text-align: center;
+      }
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .footer-links a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.3s;
+      }
+      .footer-links a:hover {
+        color: var(--primary);
+      }
+      .footer small {
+        color: rgba(255, 255, 255, 0.25);
+        font-size: 0.78rem;
+      }
+
+      /* ═════════════ RESPONSIVE ═════════════ */
+      @media (max-width: 900px) {
+        .nav-menu,
         .nav-cta {
-            padding: 0.8rem 2rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border: none;
-            border-radius: 50px;
-            color: #000;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
+          display: none;
         }
-        
-        .nav-cta:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 40px var(--primary-glow);
+        .burger {
+          display: block;
         }
-
-        /* ═══════════════════════════════════════════════════════════════
-           🦸 HERO SECTION
-        ═══════════════════════════════════════════════════════════════ */
-        
+        .react-flow {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .feats-grid {
+          grid-template-columns: 1fr;
+        }
+        .price-grid {
+          grid-template-columns: 1fr;
+        }
+        .plat-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .counters {
+          gap: 20px;
+        }
+        .counter-val {
+          font-size: 2rem;
+        }
+      }
+      @media (max-width: 600px) {
+        html {
+          font-size: 15px;
+        }
         .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 120px 2rem 80px;
-            text-align: center;
-            position: relative;
+          padding: 100px 16px 60px;
         }
-        
-        .hero-content {
-            max-width: 900px;
+        .hero-actions {
+          flex-direction: column;
+          align-items: center;
         }
-        
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0.5rem 1.5rem;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 50px;
-            font-size: 0.9rem;
-            color: var(--primary);
-            margin-bottom: 2rem;
-            animation: fade-in-up 0.8s ease;
+        .btn-hero {
+          width: 100%;
+          max-width: 300px;
+          justify-content: center;
         }
-        
-        .hero-badge .pulse {
-            width: 10px; height: 10px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse-dot 2s infinite;
+        .react-flow {
+          grid-template-columns: 1fr 1fr;
         }
-        
-        @keyframes pulse-dot {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.5; }
+        .tools-grid {
+          grid-template-columns: 1fr;
         }
-        
-        .hero-title {
-            font-size: clamp(2.5rem, 6vw, 4.5rem);
-            font-weight: 900;
-            line-height: 1.2;
-            margin-bottom: 1.5rem;
-            animation: fade-in-up 0.8s ease 0.2s both;
+        .plat-grid {
+          grid-template-columns: repeat(2, 1fr);
         }
-        
-        .hero-title .gradient {
-            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-size: 200% auto;
-            animation: gradient-shift 5s linear infinite;
+        .cta-box {
+          padding: 40px 20px;
         }
-        
-        @keyframes gradient-shift {
-            to { background-position: 200% center; }
+        .demo-body {
+          font-size: 0.72rem;
+          padding: 16px;
         }
-        
-        .hero-subtitle {
-            font-size: 1.3rem;
-            color: var(--text-muted);
-            margin-bottom: 2.5rem;
-            max-width: 700px;
-            margin-inline: auto;
-            animation: fade-in-up 0.8s ease 0.4s both;
-        }
-        
-        .hero-buttons {
-            display: flex;
-            gap: 1.5rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 4rem;
-            animation: fade-in-up 0.8s ease 0.6s both;
-        }
-        
-        .btn-primary {
-            padding: 1.2rem 3rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border: none;
-            border-radius: 60px;
-            color: #000;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 20px 50px var(--primary-glow);
-        }
-        
-        .btn-secondary {
-            padding: 1.2rem 3rem;
-            background: transparent;
-            border: 2px solid var(--border);
-            border-radius: 60px;
-            color: var(--text);
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .btn-secondary:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            transform: translateY(-3px);
-        }
-        
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Stats */
-        .hero-stats {
-            display: flex;
-            justify-content: center;
-            gap: 4rem;
-            flex-wrap: wrap;
-            animation: fade-in-up 0.8s ease 0.8s both;
-        }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 3rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--primary), var(--gold));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        /* ═══════════════════════════════════════════════════════════════
-           🛠️ FEATURES SECTION
-        ═══════════════════════════════════════════════════════════════ */
-        
-        .section {
-            padding: 100px 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .section-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-        
-        .section-badge {
-            display: inline-block;
-            padding: 0.5rem 1.5rem;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(0, 240, 255, 0.2));
-            border: 1px solid var(--border);
-            border-radius: 50px;
-            font-size: 0.85rem;
-            color: var(--primary);
-            margin-bottom: 1rem;
-        }
-        
-        .section-title {
-            font-size: clamp(2rem, 4vw, 3rem);
-            font-weight: 800;
-            margin-bottom: 1rem;
-        }
-        
-        .section-desc {
-            color: var(--text-muted);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        /* Feature Grid */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-        }
-        
-        .feature-card {
-            padding: 2.5rem;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(135deg, var(--primary-glow), transparent);
-            opacity: 0;
-            transition: opacity 0.4s;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 60px rgba(0, 240, 255, 0.15);
-        }
-        
-        .feature-card:hover::before {
-            opacity: 0.1;
-        }
-        
-        .feature-icon {
-            width: 70px; height: 70px;
-            border-radius: 20px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 10px 30px var(--primary-glow);
-        }
-        
-        .feature-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 0.8rem;
-        }
-        
-        .feature-desc {
-            color: var(--text-muted);
-            line-height: 1.8;
-        }
-
-        /* ═══════════════════════════════════════════════════════════════
-           🔌 INTEGRATIONS SECTION
-        ═══════════════════════════════════════════════════════════════ */
-        
-        .integrations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 3rem;
-        }
-        
-        .integration-card {
-            padding: 2rem;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        
-        .integration-card:hover {
-            transform: scale(1.05);
-            border-color: var(--primary);
-        }
-        
-        .integration-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .integration-name {
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-        }
-        
-        .integration-status {
-            font-size: 0.8rem;
-            color: var(--success);
-        }
-
-        /* ═══════════════════════════════════════════════════════════════
-           📜 FOOTER
-        ═══════════════════════════════════════════════════════════════ */
-        
-        .footer {
-            padding: 4rem 2rem;
-            border-top: 1px solid var(--border);
-            text-align: center;
-        }
-        
-        .footer-brand {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 1.5rem;
-        }
-        
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        
-        .footer-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        
-        .footer-links a:hover {
-            color: var(--primary);
-        }
-        
-        .footer-copy {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        /* ═══════════════════════════════════════════════════════════════
-           📱 RESPONSIVE
-        ═══════════════════════════════════════════════════════════════ */
-        
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        
-        @media (max-width: 900px) {
-            .nav-links, .nav-cta {
-                display: none;
-            }
-            
-            .mobile-menu-btn {
-                display: block;
-            }
-            
-            .hero-stats {
-                gap: 2rem;
-            }
-            
-            .stat-value {
-                font-size: 2.5rem;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        @media (max-width: 600px) {
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .btn-primary, .btn-secondary {
-                width: 100%;
-                max-width: 300px;
-                justify-content: center;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <div class="cosmos"><canvas id="starCanvas"></canvas></div>
+    <div class="cosmos-grad"></div>
 
-    <!-- 🌌 Cosmic Background -->
-    <div class="cosmic-bg">
-        <div class="stars"></div>
+    <!-- Mobile Overlay -->
+    <div class="mob-menu" id="mobMenu">
+      <button class="mob-close" onclick="closeMob()">&#10005;</button>
+      <a href="#architecture" onclick="closeMob()">كيف يعمل</a>
+      <a href="#tools" onclick="closeMob()">الحلول</a>
+      <a href="#features" onclick="closeMob()">لماذا Nova</a>
+      <a href="#pricing" onclick="closeMob()">الأسعار</a>
+      <a href="/account" onclick="closeMob()">حسابي</a>
+      <a
+        href="/chat"
+        class="btn-hero btn-glow"
+        style="margin-top: 10px"
+        onclick="closeMob()"
+        >جرب الآن</a
+      >
     </div>
 
-    <!-- 📍 Navigation -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
-            <a href="#" class="logo">
-                <div class="logo-icon"><img src="public/assets/logo.png" alt="Logo" style="width: 70%; height: 70%; object-fit: contain;"></div>
-                <span class="logo-text">RobovAI Nova</span>
-            </a>
-            
-            <ul class="nav-links">
-                <li><a href="#features">المميزات</a></li>
-                <li><a href="#tools">الأدوات</a></li>
-                <li><a href="#integrations">التكاملات</a></li>
-                <li><a href="#developers">للمطورين</a></li>
-            </ul>
-            
-            <a href="chat.html" class="nav-cta">جرب الآن ✨</a>
-            
-            <button class="mobile-menu-btn">☰</button>
-        </div>
+    <!-- NAVBAR -->
+    <nav class="nav" id="nav">
+      <div class="nav-inner">
+        <a href="#" class="brand">
+          <div class="brand-dot">&#129302;</div>
+          <span class="brand-name">RobovAI Nova</span>
+        </a>
+        <ul class="nav-menu">
+          <li><a href="#architecture">كيف يعمل</a></li>
+          <li><a href="#tools">الحلول</a></li>
+          <li><a href="#features">لماذا Nova</a></li>
+          <li><a href="#pricing">الأسعار</a></li>
+          <li><a href="/account">حسابي</a></li>
+        </ul>
+        <a href="/chat" class="nav-cta">&#128640; جرب Nova</a>
+        <button class="burger" onclick="openMob()">&#9776;</button>
+      </div>
     </nav>
 
-    <!-- 🦸 Hero Section -->
+    <!-- HERO -->
     <section class="hero">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <span class="pulse"></span>
-                <span>✨ منصة الذكاء الاصطناعي للأعمال</span>
-            </div>
-            
-            <h1 class="hero-title">
-                <span class="gradient">RobovAI Nova</span><br>
-                حلول ذكية للإنتاجية والأعمال
-            </h1>
-            
-            <p class="hero-subtitle">
-                منصة متكاملة للذكاء الاصطناعي تجمع بين تحليل البيانات،
-                معالجة المستندات، وأتمتة المهام في حل واحد قوي.
-            </p>
-            
-            <div class="hero-buttons">
-                <a href="/chat" class="btn-primary">
-                    ابدأ مجاناً ✨
-                </a>
-                <a href="/developers" class="btn-secondary">
-                    📖 توثيق API
-                </a>
-            </div>
-            
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <div class="stat-value">100+</div>
-                    <div class="stat-label">أداة ذكية</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">5</div>
-                    <div class="stat-label">منصات</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">API</div>
-                    <div class="stat-label">جاهز للتكامل</div>
-                </div>
-            </div>
+      <div class="hero-content">
+        <div class="hero-chip">
+          <span class="dot"></span>
+          يفهم &larr; يخطط &larr; ينفذ &larr; يسل&#769;م
         </div>
-    </section>
-
-    <!-- 🛠️ Features Section -->
-    <section class="section" id="features">
-        <div class="section-header">
-            <span class="section-badge">✨ الحلول</span>
-            <h2 class="section-title">قدرات متقدمة للأعمال</h2>
-            <p class="section-desc">أدوات ذكية مصممة لتعزيز إنتاجية فريقك</p>
-        </div>
-        
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">🎤</div>
-                <h3 class="feature-title">تفريغ صوتي متقدم</h3>
-                <p class="feature-desc">تحويل الاجتماعات والملاحظات الصوتية إلى نص بدقة عالية باستخدام Whisper AI.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">📄</div>
-                <h3 class="feature-title">تحليل المستندات</h3>
-                <p class="feature-desc">استخراج البيانات من PDF وExcel وWord مع تلخيص ذكي للمحتوى.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3 class="feature-title">تقارير بصرية</h3>
-                <p class="feature-desc">إنشاء رسوم بيانية وتقارير مرئية احترافية من بياناتك بشكل فوري.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">💻</div>
-                <h3 class="feature-title">مساعد تقني</h3>
-                <p class="feature-desc">مراجعة وإصلاح الأكواد، بناء استعلامات SQL، وأتمتة المهام البرمجية.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">🧠</div>
-                <h3 class="feature-title">توجيه ذكي</h3>
-                <p class="feature-desc">نظام Smart Router يفهم احتياجاتك تلقائياً ويختار الأداة المناسبة.</p>
-            </div>
-            
-            <div class="feature-card">
-                <div class="feature-icon">🔌</div>
-                <h3 class="feature-title">تكامل متعدد</h3>
-                <p class="feature-desc">تكامل سلس مع Telegram, WhatsApp, Discord وأي منصة عبر REST API.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- 🔌 Integrations Section -->
-    <section class="section" id="integrations">
-        <div class="section-header">
-            <span class="section-badge">🔌 التكاملات</span>
-            <h2 class="section-title">تكامل سلس مع منصاتك</h2>
-            <p class="section-desc">وصّل Nova بأدواتك المفضلة في دقائق</p>
-        </div>
-        
-        <div class="integrations-grid">
-            <div class="integration-card">
-                <div class="integration-icon">📱</div>
-                <div class="integration-name">Telegram</div>
-                <div class="integration-status">✅ متاح</div>
-            </div>
-            
-            <div class="integration-card">
-                <div class="integration-icon">💬</div>
-                <div class="integration-name">WhatsApp</div>
-                <div class="integration-status">✅ متاح</div>
-            </div>
-            
-            <div class="integration-card">
-                <div class="integration-icon">📘</div>
-                <div class="integration-name">Messenger</div>
-                <div class="integration-status">✅ متاح</div>
-            </div>
-            
-            <div class="integration-card">
-                <div class="integration-icon">🎮</div>
-                <div class="integration-name">Discord</div>
-                <div class="integration-status">✅ متاح</div>
-            </div>
-            
-            <div class="integration-card">
-                <div class="integration-icon">🌐</div>
-                <div class="integration-name">Web Widget</div>
-                <div class="integration-status">✅ متاح</div>
-            </div>
-            
-            <div class="integration-card">
-                <div class="integration-icon">⚡</div>
-                <div class="integration-name">REST API</div>
-                <div class="integration-status">✅ متاح</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 👨‍💻 Developers Section -->
-    <section class="section" id="developers">
-        <div class="section-header">
-            <span class="section-badge">⚡ للمطورين</span>
-            <h2 class="section-title">API قوي وسهل التكامل</h2>
-            <p class="section-desc">ابدأ التكامل في دقائق مع توثيق شامل</p>
-        </div>
-        
-        <div class="features-grid">
-            <div class="feature-card">
-                <h3 class="feature-title">🔗 REST API</h3>
-                <p class="feature-desc">
-                    <code class="code-inline">POST /webhook</code><br><br>
-                    واجهة برمجية بسيطة وموثقة. أرسل طلبك واحصل على الرد فوراً.
-                </p>
-            </div>
-            
-            <div class="feature-card">
-                <h3 class="feature-title">📦 Webhook Integration</h3>
-                <p class="feature-desc">
-                    دعم كامل لـ Telegram و WhatsApp و Discord.<br>
-                    أو أي منصة عبر Custom Webhook.
-                </p>
-            </div>
-            
-            <div class="feature-card">
-                <h3 class="feature-title">📚 SDKs</h3>
-                <p class="feature-desc">
-                    مكتبات جاهزة للتكامل:<br>
-                    Python • Node.js • PHP
-                </p>
-            </div>
-        </div>
-        
-        <div style="text-align: center; margin-top: 2rem;">
-            <a href="/developers.html" class="btn-primary">📖 التوثيق الكامل</a>
-        </div>
-    </section>
-
-    <!-- 📜 Footer -->
-    <footer class="footer">
-        <div class="footer-brand">
-            <span style="font-size: 2rem;">🤖</span>
-            <span style="font-size: 1.4rem; font-weight: 700;">RobovAI Nova</span>
-        </div>
-        
-        <div class="footer-links">
-            <a href="chat.html">جرب الآن</a>
-            <a href="#features">المميزات</a>
-            <a href="#developers">للمطورين</a>
-            <a href="#">الدعم</a>
-            <a href="#">الخصوصية</a>
-        </div>
-        
-        <p class="footer-copy">
-            © 2026 RobovAI Solutions. صنع بـ ❤️ في مصر 🇪🇬
+        <h1>
+          <span class="grad">RobovAI Nova</span><br />
+          شريكك الذكي في إنجاز الأعمال
+        </h1>
+        <p class="hero-sub">
+          منصة ذكاء اصطناعي متكاملة تحو&#769;ل طلباتك إلى نتائج فورية. تحلل احتياجك، تضع خطة عمل، تنفذ المهام تلقائيا&#769;، وتسل&#769;مك النتيجة جاهزة &mdash; كل ذلك في ثوان&#1613;.
         </p>
+        <div class="hero-actions">
+          <a href="/chat" class="btn-hero btn-glow"
+            >&#128640; جرب مجانا&#769; الآن</a
+          >
+          <a href="#architecture" class="btn-hero btn-ghost"
+            >&#129504; اكتشف كيف يعمل</a
+          >
+        </div>
+        <div class="counters">
+          <div class="counter">
+            <div class="counter-val" data-target="124">0</div>
+            <div class="counter-label">أداة ذكية</div>
+          </div>
+          <div class="counter">
+            <div class="counter-val" data-target="14">0</div>
+            <div class="counter-label">تخصص مختلف</div>
+          </div>
+          <div class="counter">
+            <div class="counter-val" data-target="6">0</div>
+            <div class="counter-label">منصة متصلة</div>
+          </div>
+          <div class="counter">
+            <div class="counter-val" data-target="99">0</div>
+            <div class="counter-label">% وقت تشغيل</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENT ARCHITECTURE -->
+    <section class="arch-section" id="architecture">
+      <div class="arch-inner sec-center">
+        <span class="sec-badge">&#129504; كيف يعمل Nova</span>
+        <h2 class="sec-title">من الطلب إلى النتيجة في 4 خطوات</h2>
+        <p class="sec-desc">
+          Nova يعمل بدورة ذكية مؤتمتة &mdash; يفهم طلبك، يخطط، ينفذ، ويتحقق من الجودة. كل ذلك يحدث تلقائيا&#769; في ثوان&#1613;.
+        </p>
+        <div class="react-flow">
+          <div class="react-step">
+            <div class="react-icon think">&#129504;</div>
+            <div class="react-name">يفهم</div>
+            <div class="react-desc">
+              يحلل طلبك ويفهم المطلوب بدقة &mdash; يحدد أفضل طريقة لتنفيذ المهمة
+            </div>
+          </div>
+          <div class="react-step">
+            <div class="react-icon act">&#9889;</div>
+            <div class="react-name">ينفذ</div>
+            <div class="react-desc">
+              يشغ&#769;ل الأدوات المناسبة بالتوازي &mdash; بحث، تحليل، إنشاء محتوى
+            </div>
+          </div>
+          <div class="react-step">
+            <div class="react-icon observe">&#128065;&#65039;</div>
+            <div class="react-name">يراجع</div>
+            <div class="react-desc">
+              يتحقق من جودة النتائج &mdash; صور، تقارير، ملفات جاهزة
+            </div>
+          </div>
+          <div class="react-step">
+            <div class="react-icon reflect">&#128260;</div>
+            <div class="react-name">يسل&#769;م</div>
+            <div class="react-desc">
+              إذا النتيجة مثالية يسل&#769;مها فورا&#769;، وإلا يحسنها تلقائيا&#769; حتى ترضيك
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOOLS GRID -->
+    <section class="tools-section" id="tools">
+      <div class="tools-inner sec-center">
+        <span class="sec-badge">&#128736; 124+ حل ذكي</span>
+        <h2 class="sec-title">حلول جاهزة لكل تحدي في عملك</h2>
+        <p class="sec-desc">
+          14 تخصص مختلف &mdash; Nova يختار الحل المناسب تلقائيا&#769; بناءً على طلبك
+        </p>
+        <div class="tools-grid">
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#128640;</span>
+              <span class="tool-cat-name">أدوات متقدمة</span>
+              <span class="tool-count">6 أدوات</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/deep_research</span>
+              <span class="tool-tag">/presentation</span>
+              <span class="tool-tag">/run_code</span>
+              <span class="tool-tag">/create_file</span>
+              <span class="tool-tag">/scrape_url</span>
+              <span class="tool-tag">/youtube_transcript</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#127381;</span>
+              <span class="tool-cat-name">مولدات ومنشئون</span>
+              <span class="tool-count">6 أدوات</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/landing_page</span>
+              <span class="tool-tag">/cv_builder</span>
+              <span class="tool-tag">/generate_code</span>
+              <span class="tool-tag">/write_document</span>
+              <span class="tool-tag">/compose_email</span>
+              <span class="tool-tag">/study_plan</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#127912;</span>
+              <span class="tool-cat-name">صور و AI Art</span>
+              <span class="tool-count">5 أدوات</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/generate_image</span>
+              <span class="tool-tag">/unsplash</span>
+              <span class="tool-tag">/pexels</span>
+              <span class="tool-tag">/openrouter_image</span>
+              <span class="tool-tag">/imgbb</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#128065;&#65039;</span>
+              <span class="tool-cat-name">رؤية وتحليل مستندات</span>
+              <span class="tool-count">6 أدوات</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/scan_receipt</span>
+              <span class="tool-tag">/analyze_id</span>
+              <span class="tool-tag">/ask_pdf</span>
+              <span class="tool-tag">/chart_insights</span>
+              <span class="tool-tag">/video_summary</span>
+              <span class="tool-tag">/meme_explain</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#127908;</span>
+              <span class="tool-cat-name">صوت وتفريغ</span>
+              <span class="tool-count">5 أدوات</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/voice_note</span>
+              <span class="tool-tag">/tts_custom</span>
+              <span class="tool-tag">/meeting_notes</span>
+              <span class="tool-tag">/clean_audio</span>
+              <span class="tool-tag">/translate_voice</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#128187;</span>
+              <span class="tool-cat-name">للمطورين</span>
+              <span class="tool-count">12 أداة</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/code_fix</span>
+              <span class="tool-tag">/sql</span>
+              <span class="tool-tag">/regex</span>
+              <span class="tool-tag">/explain_code</span>
+              <span class="tool-tag">/arduino</span>
+              <span class="tool-tag">/github</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#128202;</span>
+              <span class="tool-cat-name">رسوم بيانية</span>
+              <span class="tool-count">5 أدوات</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/chart</span>
+              <span class="tool-tag">/diagram</span>
+              <span class="tool-tag">/quickchart</span>
+              <span class="tool-tag">/math</span>
+              <span class="tool-tag">/calc_advanced</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#128218;</span>
+              <span class="tool-cat-name">محتوى وتعليم</span>
+              <span class="tool-count">12 أداة</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/social</span>
+              <span class="tool-tag">/script</span>
+              <span class="tool-tag">/quiz</span>
+              <span class="tool-tag">/eli5</span>
+              <span class="tool-tag">/translate_egy</span>
+              <span class="tool-tag">/grammar</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#127758;</span>
+              <span class="tool-cat-name">حياة ومعلومات</span>
+              <span class="tool-count">12 أداة</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/weather</span>
+              <span class="tool-tag">/travel_plan</span>
+              <span class="tool-tag">/meal_plan</span>
+              <span class="tool-tag">/movie_rec</span>
+              <span class="tool-tag">/workout</span>
+              <span class="tool-tag">/wiki</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#128736;</span>
+              <span class="tool-cat-name">أدوات عامة</span>
+              <span class="tool-count">16 أداة</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/qr</span>
+              <span class="tool-tag">/password</span>
+              <span class="tool-tag">/crypto</span>
+              <span class="tool-tag">/currency</span>
+              <span class="tool-tag">/shorten</span>
+              <span class="tool-tag">/email_check</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#127881;</span>
+              <span class="tool-cat-name">ترفيه وفايرال</span>
+              <span class="tool-count">14 أداة</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/roast</span>
+              <span class="tool-tag">/rizz</span>
+              <span class="tool-tag">/dream</span>
+              <span class="tool-tag">/horoscope</span>
+              <span class="tool-tag">/fight</span>
+              <span class="tool-tag">/meme</span>
+            </div>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-head">
+              <span class="tool-emoji">&#128737;</span>
+              <span class="tool-cat-name">أعمال وأمان</span>
+              <span class="tool-count">6 أدوات</span>
+            </div>
+            <div class="tool-tags">
+              <span class="tool-tag">/legal_summary</span>
+              <span class="tool-tag">/check_content</span>
+              <span class="tool-tag">/compare_offers</span>
+              <span class="tool-tag">/dish_recipe</span>
+              <span class="tool-tag">/outfit_rate</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENT FEATURES -->
+    <section class="feats-section" id="features">
+      <div class="feats-inner sec-center">
+        <span class="sec-badge">&#9889; لماذا Nova</span>
+        <h2 class="sec-title">ميزات تنافسية حقيقية</h2>
+        <p class="sec-desc">
+          ليس مجرد أداة محادثة &mdash; منصة متكاملة مصممة لتحقيق نتائج أعمال فعلية
+        </p>
+        <div class="feats-grid">
+          <div class="feat-card">
+            <div class="feat-icon">&#129504;</div>
+            <div class="feat-title">فرق عمل ذكية متخصصة</div>
+            <div class="feat-desc">
+              نظام متعدد التخصصات يعمل كفريق كامل &mdash; باحث، مبدع، منفذ، ومراجع. كل مهمة يتولاها المتخصص المناسب.
+            </div>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon">&#9889;</div>
+            <div class="feat-title">تنفيذ متوازي فائق السرعة</div>
+            <div class="feat-desc">
+              ينفذ عدة مهام في وقت واحد بدلا&#769; من الانتظار &mdash; أسرع حتى 4 أضعاف. وقتك أغلى من أن يضيع في الانتظار.
+            </div>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon">&#128260;</div>
+            <div class="feat-title">تصحيح تلقائي مستمر</div>
+            <div class="feat-desc">
+              إذا واجه مشكلة يعيد المحاولة بطريقة مختلفة تلقائيا&#769; &mdash; أنظمة احتياطية متعددة تضمن استمرارية الخدمة دائما&#769;.
+            </div>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon">&#129513;</div>
+            <div class="feat-title">فهم ذكي لاحتياجاتك</div>
+            <div class="feat-desc">
+              اكتب بالعربي أو بالإنجليزي بشكل طبيعي &mdash; Nova يفهم المقصود ويختار الحل الأنسب تلقائيا&#769; بدقة عالية.
+            </div>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon">&#128190;</div>
+            <div class="feat-title">يتذكرك ويتعلم منك</div>
+            <div class="feat-desc">
+              يحفظ تفضيلاتك وأسلوبك &mdash; كل محادثة تجعله أذكى وأكثر فهما&#769; لاحتياجاتك. تجربة شخصية تتحسن باستمرار.
+            </div>
+          </div>
+          <div class="feat-card">
+            <div class="feat-icon">&#128994;</div>
+            <div class="feat-title">متاح 24/7 بدون توقف</div>
+            <div class="feat-desc">
+              بنية تحتية مرنة مع أنظمة احتياطية متعددة &mdash; خدمة مستمرة على مدار الساعة بمعدل تشغيل 99%+.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE DEMO TERMINAL -->
+    <section class="demo-section" id="demo">
+      <div class="demo-inner sec-center">
+        <span class="sec-badge">&#128187; تجربة حية</span>
+        <h2 class="sec-title">شاهد Nova وهو يعمل</h2>
+        <p class="sec-desc" style="margin-bottom: 32px">
+          هكذا يحو&#769;ل Nova طلبك إلى نتيجة جاهزة في ثوان&#1613;
+        </p>
+        <div class="demo-terminal">
+          <div class="demo-bar">
+            <span class="demo-dot r"></span>
+            <span class="demo-dot y"></span>
+            <span class="demo-dot g"></span>
+            <span class="demo-bar-title">nova-agent &mdash; session</span>
+          </div>
+          <div class="demo-body" id="demoBody"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLATFORMS -->
+    <section class="plat-section" id="platforms">
+      <div class="plat-inner sec-center">
+        <span class="sec-badge">&#128268; أينما كنت</span>
+        <h2 class="sec-title">استخدم Nova من أي منصة تفضلها</h2>
+        <p class="sec-desc">
+          تكامل سلس مع أدوات عملك اليومية &mdash; ابدأ من أي مكان
+        </p>
+        <div class="plat-grid">
+          <div class="plat-card">
+            <div class="plat-icon">&#127760;</div>
+            <div class="plat-name">Web App</div>
+            <div class="plat-status">&#10004; متاح</div>
+          </div>
+          <div class="plat-card">
+            <div class="plat-icon">&#128241;</div>
+            <div class="plat-name">Telegram</div>
+            <div class="plat-status">&#10004; متاح</div>
+          </div>
+          <div class="plat-card">
+            <div class="plat-icon">&#128172;</div>
+            <div class="plat-name">WhatsApp</div>
+            <div class="plat-status">&#10004; متاح</div>
+          </div>
+          <div class="plat-card">
+            <div class="plat-icon">&#128216;</div>
+            <div class="plat-name">Messenger</div>
+            <div class="plat-status">&#10004; متاح</div>
+          </div>
+          <div class="plat-card">
+            <div class="plat-icon">&#127918;</div>
+            <div class="plat-name">Discord</div>
+            <div class="plat-status">&#10004; متاح</div>
+          </div>
+          <div class="plat-card">
+            <div class="plat-icon">&#9889;</div>
+            <div class="plat-name">REST API</div>
+            <div class="plat-status">&#10004; متاح</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="price-section" id="pricing">
+      <div class="price-inner sec-center">
+        <span class="sec-badge">&#128179; الباقات</span>
+        <h2 class="sec-title">ابدأ مجانا&#769; &mdash; ارتقِ لاحقا&#769;</h2>
+        <p class="sec-desc">
+          الدفع الآمن عبر Paymob &mdash; بطاقات، محافظ إلكترونية
+        </p>
+        <div class="price-grid">
+          <div class="price-card">
+            <div class="price-emoji">&#127381;</div>
+            <div class="price-name">مجاني</div>
+            <div class="price-amount">0 <span>ج.م / شهر</span></div>
+            <ul class="price-list">
+              <li>50 رسالة يوميا&#769;</li>
+              <li>100 توكن مبدئي</li>
+              <li>أدوات أساسية</li>
+              <li>Web + Telegram</li>
+            </ul>
+            <a href="/signup" class="price-btn price-btn-line"
+              >ابدأ مجانا&#769;</a
+            >
+          </div>
+          <div class="price-card pop" style="position: relative">
+            <div class="price-badge">&#11088; الأكثر شعبية</div>
+            <div class="price-emoji" style="margin-top: 18px">&#11088;</div>
+            <div class="price-name">Pro</div>
+            <div class="price-amount">299 <span>ج.م / شهر</span></div>
+            <ul class="price-list">
+              <li>500 رسالة يوميا&#769;</li>
+              <li>2,000 توكن/شهر</li>
+              <li>كل الحلول الـ 124+</li>
+              <li>أولوية في الاستجابة</li>
+              <li>تنفيذ متوازي سريع</li>
+              <li>بدون إعلانات</li>
+            </ul>
+            <a href="/account" class="price-btn price-btn-gold"
+              >اشترك الآن &#11088;</a
+            >
+          </div>
+          <div class="price-card">
+            <div class="price-emoji">&#127970;</div>
+            <div class="price-name">Enterprise</div>
+            <div class="price-amount">1,499 <span>ج.م / شهر</span></div>
+            <ul class="price-list">
+              <li>رسائل غير محدودة</li>
+              <li>توكنز غير محدودة</li>
+              <li>API مخصص</li>
+              <li>Custom Bot خاص</li>
+              <li>دعم 24/7</li>
+              <li>Whitelabel</li>
+            </ul>
+            <a href="/account" class="price-btn price-btn-fill"
+              >تواصل معنا &#127970;</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+      <div class="cta-box">
+        <h2 class="cta-title">جاهز تنجز أكثر في وقت أقل؟</h2>
+        <p class="cta-desc">
+          ابدأ مجانا&#769; &mdash; لا حاجة لبطاقة ائتمان. اكتب ما تحتاجه وخل&#769;
+          Nova ينجزه لك.
+        </p>
+        <a href="/chat" class="btn-hero btn-glow" style="display: inline-flex"
+          >&#128640; جرب Nova الآن</a
+        >
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-links">
+        <a href="/chat">المحادثة</a>
+        <a href="#architecture">كيف يعمل</a>
+        <a href="#tools">الحلول</a>
+        <a href="#pricing">الأسعار</a>
+        <a href="/account">حسابي</a>
+        <a href="/developers">API للمطورين</a>
+      </div>
+      <small
+        >&copy; 2026 RobovAI Solutions &mdash; Built with
+        &#10084; in Egypt</small
+      >
     </footer>
 
     <script>
-        // Navbar scroll effect
-        window.addEventListener('scroll', () => {
-            const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
-        
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+      /* ===== STARS CANVAS ===== */
+      (function () {
+        var c = document.getElementById('starCanvas'),
+          x = c.getContext('2d');
+        var W,
+          H,
+          stars = [];
+        function resize() {
+          W = c.width = innerWidth;
+          H = c.height = innerHeight;
+          stars = [];
+          for (var i = 0; i < 140; i++)
+            stars.push({
+              x: Math.random() * W,
+              y: Math.random() * H,
+              r: Math.random() * 1.2 + 0.3,
+              a: Math.random(),
+              s: Math.random() * 0.0008 + 0.0003,
             });
-        });
-        
-        // Animate on scroll (simple implementation)
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-        
-        document.querySelectorAll('.feature-card, .integration-card').forEach(card => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'all 0.6s ease';
-            observer.observe(card);
-        });
-    </script>
+        }
+        function draw() {
+          x.clearRect(0, 0, W, H);
+          for (var i = 0; i < stars.length; i++) {
+            var s = stars[i];
+            s.a += s.s;
+            var o = 0.3 + Math.abs(Math.sin(s.a)) * 0.7;
+            x.beginPath();
+            x.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            x.fillStyle = 'rgba(180,200,255,' + o + ')';
+            x.fill();
+          }
+          requestAnimationFrame(draw);
+        }
+        resize();
+        draw();
+        window.addEventListener('resize', resize);
+      })();
 
-</body>
+      /* ===== NAV SCROLL ===== */
+      window.addEventListener('scroll', function () {
+        document
+          .getElementById('nav')
+          .classList.toggle('stuck', window.scrollY > 60);
+      });
+
+      /* ===== MOBILE MENU ===== */
+      function openMob() {
+        document.getElementById('mobMenu').classList.add('open');
+      }
+      function closeMob() {
+        document.getElementById('mobMenu').classList.remove('open');
+      }
+
+      /* ===== SMOOTH SCROLL ===== */
+      document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          var t = document.querySelector(a.getAttribute('href'));
+          if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      /* ===== COUNTER ANIMATION ===== */
+      var cObserver = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              var el = e.target,
+                target = parseInt(el.dataset.target);
+              var cur = 0;
+              var step = Math.max(1, Math.ceil(target / 50));
+              var id = setInterval(function () {
+                cur += step;
+                if (cur >= target) {
+                  cur = target;
+                  clearInterval(id);
+                }
+                el.textContent = cur + '+';
+              }, 30);
+              cObserver.unobserve(el);
+            }
+          });
+        },
+        { threshold: 0.5 },
+      );
+      document.querySelectorAll('.counter-val').forEach(function (el) {
+        cObserver.observe(el);
+      });
+
+      /* ===== SCROLL REVEAL ===== */
+      var rObserver = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) {
+              e.target.style.opacity = '1';
+              e.target.style.transform = 'translateY(0)';
+            }
+          });
+        },
+        { threshold: 0.08, rootMargin: '0px 0px -30px 0px' },
+      );
+      document
+        .querySelectorAll(
+          '.react-step,.tool-card,.feat-card,.plat-card,.price-card',
+        )
+        .forEach(function (el) {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(28px)';
+          el.style.transition = 'all .5s cubic-bezier(.22,1,.36,1)';
+          rObserver.observe(el);
+        });
+
+      /* ===== TERMINAL DEMO ===== */
+      (function () {
+        var lines = [
+          { t: 'prompt', d: 'user@nova:~$' },
+          { t: 'cmd', d: ' "اعمل لي عرض تقديمي عن الذكاء الاصطناعي في مصر"' },
+          { t: '', d: '' },
+          { t: 'out', d: '\uD83E\uDDE0 [Nova] Analyzing your request...' },
+          { t: 'out', d: '   \u251C\u2500 Task: Create presentation' },
+          { t: 'out', d: '   \u251C\u2500 Priority: High' },
+          {
+            t: 'out',
+            d: '   \u2514\u2500 Plan: research \u2192 generate \u2192 review',
+          },
+          { t: '', d: '' },
+          {
+            t: 'tool',
+            d: '\u26A1 [Nova] Researching "AI in Egypt 2026"...',
+          },
+          { t: 'out', d: '   \u2713 Found 12 sources, 8 key statistics' },
+          {
+            t: 'tool',
+            d: '\u26A1 [Nova] Building presentation slides...',
+          },
+          { t: 'out', d: '   \u2713 Generated 8-slide deck with charts' },
+          {
+            t: 'tool',
+            d: '\u26A1 [Nova] Creating cover image...',
+          },
+          { t: 'out', d: '   \u2713 Cover image generated (1024x1024)' },
+          { t: '', d: '' },
+          { t: 'out', d: '\uD83D\uDC41\uFE0F [Nova] Reviewing quality...' },
+          { t: 'out', d: '   \u251C\u2500 Research: \u2705 comprehensive' },
+          { t: 'out', d: '   \u251C\u2500 Slides: \u2705 8 slides ready' },
+          { t: 'out', d: '   \u2514\u2500 Image: \u2705 generated' },
+          { t: '', d: '' },
+          {
+            t: 'success',
+            d: '\u2705 [Nova] All done! 3 tasks completed successfully.',
+          },
+          { t: 'success', d: '\uD83D\uDCE6 Presentation ready for download.' },
+        ];
+        var body = document.getElementById('demoBody');
+        var idx = 0,
+          started = false;
+        function typeLine() {
+          if (idx >= lines.length) {
+            setTimeout(function () {
+              body.innerHTML = '';
+              idx = 0;
+              typeLine();
+            }, 4000);
+            return;
+          }
+          var line = lines[idx];
+          var el = document.createElement('div');
+          if (line.t) el.className = line.t;
+          body.appendChild(el);
+          var ci = 0;
+          function typeChar() {
+            if (ci < line.d.length) {
+              el.textContent += line.d[ci];
+              ci++;
+              body.scrollTop = body.scrollHeight;
+              setTimeout(typeChar, line.t === 'cmd' ? 35 : 12);
+            } else {
+              idx++;
+              setTimeout(
+                typeLine,
+                line.d === '' ? 100 : line.t === 'success' ? 800 : 300,
+              );
+            }
+          }
+          typeChar();
+        }
+        var dObserver = new IntersectionObserver(
+          function (entries) {
+            if (entries[0].isIntersecting && !started) {
+              started = true;
+              typeLine();
+            }
+          },
+          { threshold: 0.3 },
+        );
+        dObserver.observe(body);
+      })();
+    </script>
+  </body>
 </html>

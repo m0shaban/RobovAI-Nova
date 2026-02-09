@@ -1096,6 +1096,64 @@ async def legacy_webhook(request: Request):
         return await payment_webhook("paymob", request)
 
 
+@app.get("/api/acceptance/post_pay")
+async def paymob_post_pay_get(request: Request):
+    """Paymob Transaction response callback (GET redirect after payment)."""
+    params = dict(request.query_params)
+    success = params.get("success", "false").lower() == "true"
+    order_id = params.get("order", params.get("merchant_order_id", ""))
+    txn_id = params.get("id", "")
+    amount = params.get("amount_cents", "0")
+
+    # Process payment if successful
+    if success:
+        hmac_val = params.get("hmac", "")
+        if hmac_val:
+            result = await PaymentGateway.handle_webhook(
+                "paymob", params, b"", dict(request.headers), db_client
+            )
+            if result.get("success"):
+                logger.info(
+                    f"💰 Paymob post_pay success: order={order_id}, txn={txn_id}"
+                )
+        return RedirectResponse(url="/account?payment=success", status_code=303)
+    else:
+        logger.warning(f"⚠️ Paymob post_pay failed: order={order_id}")
+        return RedirectResponse(url="/account?payment=failed", status_code=303)
+
+
+@app.post("/api/acceptance/post_pay")
+async def paymob_post_pay_post(request: Request):
+    """Paymob Transaction response callback (POST)."""
+    raw_body = await request.body()
+    data: Dict[str, Any] = {}
+    try:
+        data = json.loads(raw_body) if raw_body else {}
+    except Exception:
+        try:
+            form = await request.form()
+            data = dict(form)
+        except Exception:
+            pass
+
+    qp = dict(request.query_params)
+    if qp:
+        data = {**qp, **data}
+
+    success = str(data.get("success", "false")).lower() == "true"
+
+    if success:
+        result = await PaymentGateway.handle_webhook(
+            "paymob", data, raw_body, dict(request.headers), db_client
+        )
+        if result.get("success"):
+            logger.info(f"💰 Paymob post_pay POST success: {result}")
+
+    return RedirectResponse(
+        url=f"/account?payment={'success' if success else 'failed'}", status_code=303
+    )
+
+
 @app.get("/payments/pricing")
 async def get_pricing():
     """Get pricing tiers + available providers."""
@@ -1286,6 +1344,7 @@ async def stream_agent_get(
     if ai_level == "balanced":
         # Balanced: Use smart router to decide chat vs tool vs agent
         from backend.core.smart_router import SmartToolRouter
+
         routing = await SmartToolRouter.route(message, real_user_id, platform)
         if routing.route_type == "chat":
             return await _stream_chatbot(message, real_user_id, platform)
@@ -1310,7 +1369,9 @@ async def _stream_chatbot(message: str, user_id: str, platform: str):
             context_str = ""
             try:
                 history = await db_client.get_recent_messages(int(user_id), limit=5)
-                context_str = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history])
+                context_str = "\n".join(
+                    [f"{msg['role']}: {msg['content']}" for msg in history]
+                )
             except Exception:
                 pass
 
@@ -1321,12 +1382,17 @@ async def _stream_chatbot(message: str, user_id: str, platform: str):
 لو حد سألك عن نفسك: أنت نوفا عندك 99+ أداة ذكية.
 ما تقترحش أدوات هنا — فقط رد كشات بوت ذكي."""
 
-            prompt = f"Context:\n{context_str}\n\nUser: {message}" if context_str else message
+            prompt = (
+                f"Context:\n{context_str}\n\nUser: {message}"
+                if context_str
+                else message
+            )
             response = await llm_client.generate(prompt, system_prompt=system_prompt)
 
             # Cache it
             try:
                 from backend.cache import set_cached
+
                 set_cached(message, response, user_id, ttl=300)
             except Exception:
                 pass
@@ -1341,7 +1407,11 @@ async def _stream_chatbot(message: str, user_id: str, platform: str):
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 
@@ -1743,9 +1813,30 @@ async def get_subscription(current_user: dict = Depends(get_current_user)):
     history = await db_client.get_usage_history(str(current_user["id"]), limit=10)
 
     tier_info = {
-        "free": {"name": "مجاني", "price": 0, "daily_limit": 50, "features": ["50 رسالة يومياً", "أدوات أساسية", "دعم عام"]},
-        "pro": {"name": "Pro ⭐", "price": 99, "daily_limit": 500, "features": ["500 رسالة يومياً", "كل الأدوات", "أولوية عالية", "دعم مميز"]},
-        "enterprise": {"name": "Enterprise 🏢", "price": 299, "daily_limit": -1, "features": ["رسائل غير محدودة", "كل الأدوات", "API مخصص", "دعم 24/7", "Custom Bot"]},
+        "free": {
+            "name": "مجاني",
+            "price": 0,
+            "daily_limit": 50,
+            "features": ["50 رسالة يومياً", "أدوات أساسية", "دعم عام"],
+        },
+        "pro": {
+            "name": "Pro ⭐",
+            "price": 99,
+            "daily_limit": 500,
+            "features": ["500 رسالة يومياً", "كل الأدوات", "أولوية عالية", "دعم مميز"],
+        },
+        "enterprise": {
+            "name": "Enterprise 🏢",
+            "price": 299,
+            "daily_limit": -1,
+            "features": [
+                "رسائل غير محدودة",
+                "كل الأدوات",
+                "API مخصص",
+                "دعم 24/7",
+                "Custom Bot",
+            ],
+        },
     }
 
     current_tier = current_user.get("subscription_tier", "free") or "free"
@@ -1766,23 +1857,76 @@ async def get_subscription(current_user: dict = Depends(get_current_user)):
 
 
 @app.post("/account/buy-tokens")
-async def buy_tokens(amount: int = 100, current_user: dict = Depends(get_current_user)):
-    """Buy additional tokens (placeholder — integrate with payment gateway)"""
-    # TODO: Integrate with Paymob/Stripe for real payment
-    # For now, just log the request
-    return {
-        "status": "pending",
-        "message": "يرجى التواصل مع الدعم لشراء توكنز إضافية أو استخدام بوابة الدفع.",
-        "payment_methods": [
-            {"method": "paymob", "label": "بطاقة ائتمان (Paymob)", "available": True},
-            {"method": "vodafone_cash", "label": "فودافون كاش", "available": True},
-        ],
-        "prices": {
-            "100": {"tokens": 100, "price_egp": 50},
-            "500": {"tokens": 500, "price_egp": 200},
-            "1000": {"tokens": 1000, "price_egp": 350},
-        },
-    }
+async def account_buy_tokens(
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Buy additional tokens via Paymob."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    package_id = body.get("package_id", "tokens_500")
+    method = body.get("method", "card")
+
+    if package_id not in TOKEN_PACKAGES:
+        raise HTTPException(status_code=400, detail="الباكج غير متاح")
+
+    result = await PaymentGateway.create_checkout(
+        user_id=str(current_user.get("id")),
+        user_email=current_user.get("email"),
+        user_name=current_user.get("full_name", ""),
+        provider="paymob",
+        method=method,
+        is_token_package=True,
+        package_id=package_id,
+    )
+
+    if not result.get("checkout_url"):
+        raise HTTPException(
+            status_code=503, detail=result.get("error", "خدمة الدفع غير متاحة حالياً")
+        )
+
+    return {"status": "success", **result}
+
+
+@app.post("/account/subscribe")
+async def account_subscribe(
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Subscribe to a plan via Paymob."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    plan = body.get("plan", "pro")
+    method = body.get("method", "card")  # "card" or "wallet"
+
+    if plan not in ["pro", "enterprise"]:
+        raise HTTPException(status_code=400, detail="الباقة غير متاحة")
+
+    current_tier = current_user.get("subscription_tier", "free") or "free"
+    if current_tier == plan:
+        raise HTTPException(status_code=400, detail="أنت مشترك بالفعل في هذه الباقة")
+
+    result = await PaymentGateway.create_checkout(
+        user_id=str(current_user.get("id")),
+        user_email=current_user.get("email"),
+        user_name=current_user.get("full_name", ""),
+        plan=plan,
+        provider="paymob",
+        method=method,
+    )
+
+    if not result.get("checkout_url"):
+        raise HTTPException(
+            status_code=503, detail=result.get("error", "خدمة الدفع غير متاحة حالياً")
+        )
+
+    return {"status": "success", **result}
 
 
 @app.get("/account/profile")
@@ -1833,6 +1977,7 @@ async def send_telegram_otp(email: str):
     if bot_token:
         try:
             import httpx
+
             async with httpx.AsyncClient() as client:
                 # Note: User needs to have started the bot first
                 # We'd need their telegram_id stored — for now return OTP in response for testing
@@ -1856,7 +2001,9 @@ async def verify_otp(email: str, code: str):
     )
 
     if not result:
-        raise HTTPException(status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية")
+        raise HTTPException(
+            status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية"
+        )
 
     # Mark as used
     await db_client.execute(
@@ -1871,6 +2018,7 @@ async def verify_otp(email: str, code: str):
 # 📄 SERVE ACCOUNT PAGE
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 @app.get("/account")
 async def serve_account():
     return FileResponse("account.html")
@@ -1880,6 +2028,7 @@ async def serve_account():
 # 🤖 CUSTOM BOT BUILDER
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class CustomBotCreate(BaseModel):
     name: str
     description: str = ""
@@ -1888,18 +2037,34 @@ class CustomBotCreate(BaseModel):
     tools: list = []
     greeting: str = "مرحباً! كيف أقدر أساعدك?"
 
+
 @app.post("/bots/create")
-async def create_custom_bot(bot: CustomBotCreate, current_user: dict = Depends(get_current_user)):
+async def create_custom_bot(
+    bot: CustomBotCreate, current_user: dict = Depends(get_current_user)
+):
     """Create a custom bot with a specific persona and tools."""
     try:
         bot_id = str(uuid.uuid4())[:8]
         await db_client.execute(
             """INSERT OR REPLACE INTO custom_bots (id, user_id, name, description, system_prompt, avatar_emoji, tools, greeting, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (bot_id, str(current_user["id"]), bot.name, bot.description, bot.system_prompt,
-             bot.avatar_emoji, json.dumps(bot.tools), bot.greeting, datetime.now().isoformat()),
+            (
+                bot_id,
+                str(current_user["id"]),
+                bot.name,
+                bot.description,
+                bot.system_prompt,
+                bot.avatar_emoji,
+                json.dumps(bot.tools),
+                bot.greeting,
+                datetime.now().isoformat(),
+            ),
         )
-        return {"status": "success", "bot_id": bot_id, "message": f"تم إنشاء البوت '{bot.name}' بنجاح! 🎉"}
+        return {
+            "status": "success",
+            "bot_id": bot_id,
+            "message": f"تم إنشاء البوت '{bot.name}' بنجاح! 🎉",
+        }
     except Exception as e:
         logger.error(f"Failed to create bot: {e}")
         raise HTTPException(status_code=500, detail="حدث خطأ أثناء إنشاء البوت")
@@ -1919,7 +2084,9 @@ async def list_custom_bots(current_user: dict = Depends(get_current_user)):
 
 
 @app.delete("/bots/{bot_id}")
-async def delete_custom_bot(bot_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_custom_bot(
+    bot_id: str, current_user: dict = Depends(get_current_user)
+):
     """Delete a custom bot."""
     await db_client.execute(
         "DELETE FROM custom_bots WHERE id = ? AND user_id = ?",

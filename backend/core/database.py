@@ -14,10 +14,14 @@ import os
 import logging
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-from .security import get_password_hash, verify_password
+from .security import get_password_hash, verify_password_and_update
 
 DB_PATH = os.getenv("DATABASE_PATH", "users.db")
 logger = logging.getLogger("robovai.database")
+
+
+def _normalize_email(email: str) -> str:
+    return (email or "").strip().lower()
 
 
 class Database:
@@ -181,6 +185,7 @@ class Database:
         self, email: str, password: str, full_name: str, role: str = "user"
     ) -> Optional[Dict[str, Any]]:
         try:
+            email = _normalize_email(email)
             password_hash = get_password_hash(password)
             today = datetime.now().strftime("%Y-%m-%d")
             with self._get_conn() as conn:
@@ -210,10 +215,32 @@ class Database:
         with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
-            c.execute("SELECT * FROM users WHERE email = ?", (email,))
+            # Case-insensitive email match to avoid login failures due to casing.
+            c.execute(
+                "SELECT * FROM users WHERE lower(email) = lower(?)",
+                (_normalize_email(email),),
+            )
             user = c.fetchone()
-            if user and verify_password(password, user["password_hash"]):
-                return dict(user)
+            if not user:
+                return None
+
+            ok, new_hash = verify_password_and_update(password, user["password_hash"])
+            if not ok:
+                return None
+
+            # Opportunistically upgrade legacy hashes.
+            if new_hash:
+                try:
+                    c.execute(
+                        "UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                        (new_hash, user["id"]),
+                    )
+                    conn.commit()
+                except Exception:
+                    # Best-effort upgrade; don't block login.
+                    pass
+
+            return dict(user)
         return None
 
     async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
@@ -221,8 +248,8 @@ class Database:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute(
-                "SELECT id, email, full_name, role, balance, daily_used, subscription_tier FROM users WHERE email = ?",
-                (email,),
+                "SELECT id, email, full_name, role, balance, daily_used, subscription_tier FROM users WHERE lower(email) = lower(?)",
+                (_normalize_email(email),),
             )
             user = c.fetchone()
             return dict(user) if user else None
@@ -266,8 +293,8 @@ class Database:
         with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
-                "SELECT balance FROM users WHERE email = ? OR id = ?",
-                (user_id, user_id),
+                "SELECT balance FROM users WHERE lower(email) = lower(?) OR id = ?",
+                (_normalize_email(user_id), user_id),
             )
             result = c.fetchone()
         return result[0] if result else 0
@@ -281,8 +308,8 @@ class Database:
             # Atomic: only deduct if balance >= amount
             c.execute(
                 """UPDATE users SET balance = balance - ?, daily_used = daily_used + ?
-                   WHERE (email = ? OR id = ?) AND balance >= ?""",
-                (amount, amount, user_id, user_id, amount),
+                   WHERE (lower(email) = lower(?) OR id = ?) AND balance >= ?""",
+                (amount, amount, _normalize_email(user_id), user_id, amount),
             )
             if c.rowcount == 0:
                 return False
@@ -301,8 +328,8 @@ class Database:
         with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
-                "UPDATE users SET balance = balance + ? WHERE email = ? OR id = ?",
-                (amount, user_id, user_id),
+                "UPDATE users SET balance = balance + ? WHERE lower(email) = lower(?) OR id = ?",
+                (amount, _normalize_email(user_id), user_id),
             )
             conn.commit()
             return c.rowcount > 0
@@ -313,8 +340,8 @@ class Database:
         with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
-                "UPDATE users SET daily_used = 0, daily_reset_date = ? WHERE (email = ? OR id = ?) AND (daily_reset_date IS NULL OR daily_reset_date != ?)",
-                (today, user_id, user_id, today),
+                "UPDATE users SET daily_used = 0, daily_reset_date = ? WHERE (lower(email) = lower(?) OR id = ?) AND (daily_reset_date IS NULL OR daily_reset_date != ?)",
+                (today, _normalize_email(user_id), user_id, today),
             )
             conn.commit()
 
@@ -325,8 +352,8 @@ class Database:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute(
-                "SELECT balance, daily_used, subscription_tier FROM users WHERE email = ? OR id = ?",
-                (user_id, user_id),
+                "SELECT balance, daily_used, subscription_tier FROM users WHERE lower(email) = lower(?) OR id = ?",
+                (_normalize_email(user_id), user_id),
             )
             row = c.fetchone()
             if row:

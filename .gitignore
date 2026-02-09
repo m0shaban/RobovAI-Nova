@@ -1,6 +1,10 @@
 .env
 .jwt_secret
 users.db
+users.db-wal
+users.db-shm
+*.db-wal
+*.db-shm
 __pycache__/
 *.pyc
 *.pyo

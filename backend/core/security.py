@@ -44,11 +44,31 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
 # ─── Password Hashing ─────────────────────────────────────────
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+# Support legacy hashes (bcrypt) + current default (pbkdf2_sha256).
+# This prevents older accounts from breaking after hashing changes.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
+
+def verify_password_and_update(
+    plain_password: str, hashed_password: str
+) -> tuple[bool, str | None]:
+    """Verify password and optionally return an upgraded hash.
+
+    Returns:
+        (ok, new_hash)
+        - ok: True if verification succeeded
+        - new_hash: new hash string if the existing one should be upgraded
+    """
+    try:
+        ok, new_hash = pwd_context.verify_and_update(plain_password, hashed_password)
+        return bool(ok), new_hash
+    except Exception:
+        # If the stored hash is malformed or from an unknown scheme, fail closed.
+        return False, None
 
 
 def get_password_hash(password: str) -> str:

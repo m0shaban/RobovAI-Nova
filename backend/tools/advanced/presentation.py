@@ -9,9 +9,9 @@
 """
 
 from backend.tools.base import BaseTool
-from typing import Dict, Any, List, Optional, Type, Union
+from typing import Dict, Any, List, Optional, Type, Union, Tuple
 from pydantic import BaseModel, Field, field_validator
-import os, json, ast, logging
+import os, json, ast, logging, re
 from datetime import datetime
 
 logger = logging.getLogger("robovai.tools.presentation")
@@ -79,7 +79,18 @@ THEME_NAMES = list(THEMES.keys())
 class PresentationSchema(BaseModel):
     title: str = Field(..., description="Presentation title")
     slides: Union[List[str], str] = Field(
-        ..., description="List of slide contents: ['Title: Content', ...]"
+        default_factory=list,
+        description="Optional list of slide contents: ['Title: Content', ...]. If empty, slides will be auto-generated.",
+    )
+    slides_count: int = Field(
+        6,
+        ge=3,
+        le=20,
+        description="Auto slide count when slides are not provided (3-20)",
+    )
+    language: str = Field(
+        "ar",
+        description="Presentation language: ar | en",
     )
     theme: str = Field(
         "modern",
@@ -241,17 +252,34 @@ class PresentationTool(BaseTool):
         self,
         user_id: str,
         title: str,
-        slides: List[str],
+        slides: Optional[List[str]] = None,
+        slides_count: int = 6,
+        language: str = "ar",
         theme: str = "modern",
         image_source: str = "auto",
     ) -> Dict[str, Any]:
-        parsed = []
+        slides = slides or []
+
+        parsed: List[Dict[str, str]] = []
         for s in slides:
+            s = str(s or "").strip()
+            if not s:
+                continue
             if ":" in s:
                 t, c = s.split(":", 1)
                 parsed.append({"title": t.strip(), "content": c.strip()})
             else:
                 parsed.append({"title": s, "content": ""})
+
+        # If no slides provided, auto-generate.
+        if not parsed:
+            parsed = await self._auto_slides(title, slides_count=slides_count, language=language)
+
+        # If slides exist but some contents are empty, fill them.
+        parsed = await self._fill_missing_slide_content(title, parsed, language=language)
+
+        # Sanitize (remove emojis / noisy markers)
+        parsed = [{"title": self._sanitize_text(s.get("title", "")), "content": self._sanitize_text(s.get("content", ""))} for s in parsed]
         return await self._create_presentation(title, parsed, theme, image_source, user_id)
 
     # ───────── execute (string) ─────────────────────────────────
@@ -315,7 +343,7 @@ class PresentationTool(BaseTool):
             if not topic:
                 return {"status": "error", "output": "❌ يرجى تحديد موضوع العرض", "tokens_deducted": 0}
 
-            slides = self._auto_slides(topic)
+            slides = await self._auto_slides(topic, slides_count=6, language="ar")
             return await self._create_presentation(topic, slides, theme, image_source, user_id)
 
         except Exception as e:
@@ -337,6 +365,35 @@ class PresentationTool(BaseTool):
         if not slides:
             return {"status": "error", "output": "❌ No slides provided.", "tokens_deducted": 0}
 
+        # De-duplication: if an identical presentation was generated very recently,
+        # return the existing file instead of creating another copy.
+        existing = self._find_recent_duplicate(user_id, topic, slides, theme, image_source)
+        if existing:
+            html_path, html_url, pdf_url = existing
+            out_lines = [
+                "✅ تم إنشاء العرض التقديمي بنجاح!",
+                "",
+                f"📊 الموضوع: **{topic}**",
+                f"📄 عدد الشرائح: {len(slides)}",
+                f"🎨 الثيم: {theme}",
+                f"🖼️ مصدر الصور: {image_source}",
+                f"🔗 رابط HTML: {html_url}",
+            ]
+            if pdf_url:
+                out_lines.append(f"📑 رابط PDF: {pdf_url}")
+            else:
+                out_lines.append("💡 للتحويل إلى PDF: افتح العرض ← اضغط زر PDF في الأعلى")
+            return {
+                "status": "success",
+                "output": "\n".join(out_lines),
+                "tokens_deducted": 0,
+                "filepath": html_path,
+                "url": html_url,
+                "pdf_url": pdf_url,
+                "slides_count": len(slides),
+                "deduped": True,
+            }
+
         theme = theme if theme in THEMES else "modern"
 
         # ── fetch images ──
@@ -348,7 +405,7 @@ class PresentationTool(BaseTool):
             images = []
 
         # ── generate HTML ──
-        html = self._build_html(topic, slides, theme, images)
+        html = self._build_html(topic, slides, theme, images, user_id=user_id, image_source=image_source)
 
         # ── save file ──
         os.makedirs("uploads/presentations", exist_ok=True)
@@ -367,7 +424,6 @@ class PresentationTool(BaseTool):
             pdf_url = f"/uploads/presentations/{os.path.basename(pdf_path)}"
 
         # ── response ──
-        theme_info = THEMES[theme]
         out_lines = [
             f"✅ تم إنشاء العرض التقديمي بنجاح!",
             f"",
@@ -401,6 +457,8 @@ class PresentationTool(BaseTool):
         slides: List[Dict[str, str]],
         theme_name: str,
         images: List[Dict[str, str]],
+        user_id: str,
+        image_source: str,
     ) -> str:
         theme = THEMES.get(theme_name, THEMES["modern"])
 
@@ -424,6 +482,15 @@ class PresentationTool(BaseTool):
         # end slide
         slides_html += self._html_end(total)
 
+        meta = {
+            "user_id": user_id,
+            "topic": topic,
+            "slides_count": len(slides),
+            "theme": theme_name,
+            "image_source": image_source,
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
+        }
+
         return f"""<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -438,8 +505,9 @@ class PresentationTool(BaseTool):
 </style>
 </head>
 <body>
+<!--ROBOVAI_META {json.dumps(meta, ensure_ascii=False)} -->
 <div class="pb"><div class="pf" id="pf"></div></div>
-<button class="xpdf" onclick="window.print()">📄 Save PDF</button>
+<button class="xpdf" onclick="window.print()">PDF</button>
 <div class="sw" id="sw">{slides_html}</div>
 <div class="nb">
   <button id="nxt" onclick="nav(1)">التالي ◀</button>
@@ -462,7 +530,7 @@ class PresentationTool(BaseTool):
   <div class="ov"></div>
   <div class="inner">
     <h1>{topic}</h1>
-    <p class="tag">Powered by RobovAI Nova 🤖</p>
+        <p class="tag">RobovAI Nova</p>
     <p class="meta">{now}</p>
   </div>
 </section>"""
@@ -506,8 +574,8 @@ class PresentationTool(BaseTool):
     def _html_end(self, total: int) -> str:
         return f"""
 <section class="slide es">
-  <h2>شكراً لكم! 🙏</h2>
-  <p>تم الإنشاء بواسطة RobovAI Nova</p>
+    <h2>شكراً لكم</h2>
+    <p>RobovAI Nova</p>
   <p style="font-size:.8em;opacity:.6">{total} / {total}</p>
 </section>"""
 
@@ -527,13 +595,13 @@ class PresentationTool(BaseTool):
                     parts.append("</ul>")
                     in_list = False
                 continue
-            is_bullet = line.startswith(("• ", "- ", "* ", "✅ ", "🔹 ", "✓ "))
+            is_bullet = line.startswith(("• ", "- ", "* ", "✓ "))
             is_num = len(line) > 2 and line[0].isdigit() and line[1] in ".)-"
             if is_bullet or is_num:
                 if not in_list:
                     parts.append("<ul>")
                     in_list = True
-                content = line.lstrip("•-*✅🔹✓0123456789.)- ")
+                content = line.lstrip("•-*✓0123456789.)- ")
                 parts.append(f"<li>{content}</li>")
             else:
                 if in_list:
@@ -580,64 +648,224 @@ class PresentationTool(BaseTool):
     # ═══════════════════════════════════════════════════════════════
     #  AUTO SLIDE GENERATION  (fallback when agent sends no content)
     # ═══════════════════════════════════════════════════════════════
-    def _auto_slides(self, topic: str) -> List[Dict[str, str]]:
-        """Generate 6 generic slides for any topic."""
-        return [
-            {
-                "title": f"📌 مقدمة عن {topic}",
-                "content": (
-                    f"نظرة عامة شاملة على {topic} وأهميته.\n\n"
-                    f"• ما هو {topic}؟\n"
-                    f"• لماذا يعتبر مهماً؟\n"
-                    f"• كيف يؤثر في حياتنا اليومية؟"
-                ),
-            },
-            {
-                "title": "📊 حقائق وأرقام مهمة",
-                "content": (
-                    f"أهم الحقائق والإحصائيات المتعلقة بـ {topic}:\n\n"
-                    "• حقيقة أولى بارزة\n"
-                    "• إحصائية مهمة ثانية\n"
-                    "• رقم لافت ثالث\n"
-                    "• معلومة رابعة مفيدة"
-                ),
-            },
-            {
-                "title": "🎯 الأنواع والتصنيفات",
-                "content": (
-                    f"التصنيفات الرئيسية لـ {topic}:\n\n"
-                    "• النوع / التصنيف الأول\n"
-                    "• النوع / التصنيف الثاني\n"
-                    "• النوع / التصنيف الثالث\n"
-                    "• النوع / التصنيف الرابع"
-                ),
-            },
-            {
-                "title": "💡 الفوائد والمميزات",
-                "content": (
-                    f"أهم فوائد {topic}:\n\n"
-                    "• تحسين الصحة والرفاهية\n"
-                    "• تطوير المهارات الشخصية\n"
-                    "• تعزيز الإنتاجية والإبداع\n"
-                    "• بناء العلاقات والتواصل"
-                ),
-            },
-            {
-                "title": "⚠️ التحديات والنصائح",
-                "content": (
-                    f"تحديات شائعة ونصائح عملية حول {topic}:\n\n"
-                    "• التحدي الأول — والحل المقترح\n"
-                    "• التحدي الثاني — والحل المقترح\n"
-                    "• التحدي الثالث — والحل المقترح"
-                ),
-            },
-            {
-                "title": "🔮 المستقبل والخلاصة",
-                "content": (
-                    f"التوقعات المستقبلية لـ {topic}:\n\n"
-                    "• الاتجاهات الحديثة والتطورات\n"
-                    "• الفرص الجديدة والابتكارات\n"
-                    "• خلاصة: أهم ما يجب تذكره"
-                ),
-            },
-        ]
+    async def _auto_slides(self, topic: str, slides_count: int = 6, language: str = "ar") -> List[Dict[str, str]]:
+        """Generate a reasonable, topic-related slide outline with real content (no placeholders)."""
+        slides_count = max(3, min(int(slides_count or 6), 20))
+
+        # Try a lightweight Wikipedia summary to anchor content.
+        summary = await self._wiki_summary(topic, language=language)
+
+        if language == "en":
+            base = [
+                {"title": f"Introduction to {topic}", "content": summary or f"A brief overview of {topic}."},
+                {"title": "Key facts", "content": self._generic_facts_en(topic)},
+                {"title": "Uses and applications", "content": self._generic_uses_en(topic)},
+            ]
+        else:
+            base = [
+                {"title": f"مقدمة عن {topic}", "content": summary or f"نظرة عامة موجزة عن {topic}."},
+                {"title": "معلومات أساسية", "content": self._generic_facts_ar(topic)},
+                {"title": "الاستخدامات", "content": self._generic_uses_ar(topic)},
+            ]
+
+        # Add additional slides if requested
+        while len(base) < slides_count:
+            if language == "en":
+                base.append({"title": "Tips", "content": self._generic_tips_en(topic)})
+            else:
+                base.append({"title": "نصائح عملية", "content": self._generic_tips_ar(topic)})
+
+        return base[:slides_count]
+
+    async def _fill_missing_slide_content(self, topic: str, slides: List[Dict[str, str]], language: str = "ar") -> List[Dict[str, str]]:
+        """If the caller provided only titles (or empty content), fill with meaningful text."""
+        if not slides:
+            return slides
+
+        # If many slides are empty, fetch a single summary to anchor.
+        needs = sum(1 for s in slides if not (s.get("content") or "").strip())
+        summary = await self._wiki_summary(topic, language=language) if needs else ""
+
+        filled: List[Dict[str, str]] = []
+        for s in slides:
+            title = (s.get("title") or "").strip() or topic
+            content = (s.get("content") or "").strip()
+            if not content:
+                # Heuristic by title keywords.
+                t = title.lower()
+                if language == "en":
+                    if "intro" in t or "overview" in t:
+                        content = summary or f"A concise overview of {topic}."
+                    elif "use" in t or "application" in t:
+                        content = self._generic_uses_en(topic)
+                    elif "tip" in t or "how" in t:
+                        content = self._generic_tips_en(topic)
+                    else:
+                        content = self._generic_facts_en(topic)
+                else:
+                    if "مقدم" in title or "تعريف" in title:
+                        content = summary or f"نظرة عامة موجزة عن {topic}."
+                    elif "استخدام" in title:
+                        content = self._generic_uses_ar(topic)
+                    elif "نصيح" in title or "تخزين" in title or "اختيار" in title:
+                        content = self._generic_tips_ar(topic)
+                    else:
+                        content = self._generic_facts_ar(topic)
+
+            filled.append({"title": title, "content": content})
+        return filled
+
+    @staticmethod
+    def _sanitize_text(text: str) -> str:
+        if not text:
+            return ""
+        # Remove common emoji ranges + extra markers in titles.
+        cleaned = re.sub(r"[\U00010000-\U0010ffff]", "", text)
+        cleaned = cleaned.replace("🤖", "").replace("🙏", "")
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        return cleaned
+
+    def _find_recent_duplicate(
+        self,
+        user_id: str,
+        topic: str,
+        slides: List[Dict[str, str]],
+        theme: str,
+        image_source: str,
+        window_seconds: int = 120,
+    ) -> Optional[Tuple[str, str, Optional[str]]]:
+        """Reuse the latest matching HTML generated recently to avoid double-creation."""
+        try:
+            folder = os.path.join("uploads", "presentations")
+            if not os.path.isdir(folder):
+                return None
+
+            # Compare by a lightweight signature
+            sig = {
+                "user_id": str(user_id),
+                "topic": topic,
+                "slides_count": len(slides),
+                "theme": theme,
+                "image_source": image_source,
+            }
+
+            now = datetime.now().timestamp()
+            candidates = [
+                f
+                for f in os.listdir(folder)
+                if f.startswith("presentation_") and f.endswith(".html")
+            ]
+            candidates.sort(reverse=True)
+
+            for name in candidates[:40]:
+                path = os.path.join(folder, name)
+                try:
+                    mtime = os.path.getmtime(path)
+                    if (now - mtime) > window_seconds:
+                        continue
+                    with open(path, "r", encoding="utf-8", errors="ignore") as fh:
+                        head = fh.read(4096)
+                    m = re.search(r"<!--ROBOVAI_META (\{.*?\}) -->", head)
+                    if not m:
+                        continue
+                    meta = json.loads(m.group(1))
+                    same = all(str(meta.get(k)) == str(sig.get(k)) for k in sig.keys())
+                    if same:
+                        html_url = f"/uploads/presentations/{name}"
+                        pdf_name = name.replace(".html", ".pdf")
+                        pdf_path = os.path.join(folder, pdf_name)
+                        pdf_url = f"/uploads/presentations/{pdf_name}" if os.path.exists(pdf_path) else None
+                        return (path, html_url, pdf_url)
+                except Exception:
+                    continue
+        except Exception:
+            return None
+        return None
+
+    async def _wiki_summary(self, topic: str, language: str = "ar") -> str:
+        """Fetch a short summary from Wikipedia REST API (best-effort)."""
+        try:
+            import httpx
+
+            lang = "ar" if language != "en" else "en"
+            # Wikipedia REST expects URL-encoded title.
+            safe = httpx.URL("https://example.com/" + topic).path.lstrip("/")
+            url = f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{safe}"
+            async with httpx.AsyncClient(timeout=6) as client:
+                r = await client.get(url, headers={"User-Agent": "RobovAI-Nova/1.0"})
+                if r.status_code != 200:
+                    return ""
+                data = r.json()
+                extract = (data.get("extract") or "").strip()
+                # Keep it short for slides.
+                if extract and len(extract) > 380:
+                    extract = extract[:380].rsplit(" ", 1)[0] + "..."
+                return extract
+        except Exception:
+            return ""
+
+    @staticmethod
+    def _generic_facts_ar(topic: str) -> str:
+        return (
+            f"أبرز النقاط حول {topic}:\n\n"
+            "• التعريف: ما هو؟\n"
+            "• الخصائص: الشكل والطعم والرائحة\n"
+            "• القيمة الغذائية: عناصر مفيدة ومضادات أكسدة\n"
+            "• موسم التوفر: يختلف حسب البلد\n"
+            "• الاستخدام الشائع: طازج أو عصائر أو حلويات"
+        )
+
+    @staticmethod
+    def _generic_uses_ar(topic: str) -> str:
+        return (
+            f"طرق استخدام {topic}:\n\n"
+            "• تناوله طازجاً بعد الغسل والتجهيز\n"
+            "• عصير أو سموذي\n"
+            "• مربى أو صوص\n"
+            "• إضافته للسلطات والحلويات\n"
+            "• استخدامه في وصفات منزلية حسب الذوق"
+        )
+
+    @staticmethod
+    def _generic_tips_ar(topic: str) -> str:
+        return (
+            f"نصائح سريعة عند التعامل مع {topic}:\n\n"
+            "• اختر الثمرة ذات الرائحة الواضحة والملمس المناسب\n"
+            "• خزّنها في درجة حرارة مناسبة حسب درجة النضج\n"
+            "• قطّعها قبل التقديم مباشرة للحفاظ على القوام\n"
+            "• إذا كانت للاستخدام في العصير، اختر الثمرة الناضجة\n"
+            "• احفظ البقايا في وعاء محكم داخل الثلاجة"
+        )
+
+    @staticmethod
+    def _generic_facts_en(topic: str) -> str:
+        return (
+            f"Key points about {topic}:\n\n"
+            "• Definition and overview\n"
+            "• Notable characteristics\n"
+            "• Nutritional highlights\n"
+            "• Availability/seasonality\n"
+            "• Common uses"
+        )
+
+    @staticmethod
+    def _generic_uses_en(topic: str) -> str:
+        return (
+            f"Common uses of {topic}:\n\n"
+            "• Fresh consumption\n"
+            "• Juices and smoothies\n"
+            "• Jams and sauces\n"
+            "• Desserts and salads\n"
+            "• Home recipes"
+        )
+
+    @staticmethod
+    def _generic_tips_en(topic: str) -> str:
+        return (
+            f"Practical tips for {topic}:\n\n"
+            "• Choose based on aroma and firmness\n"
+            "• Store according to ripeness\n"
+            "• Prepare close to serving\n"
+            "• Use ripe fruit for blending\n"
+            "• Refrigerate leftovers in an airtight container"
+        )

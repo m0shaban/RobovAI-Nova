@@ -137,7 +137,7 @@ class MathSolverTool(BaseTool):
     @property
     def name(self): return "/math"
     @property
-    def description(self): return "حل معادلات رياضية (جذور، لوغاريتمات، مثلثات)"
+    def description(self): return "Solve math expressions. Pass the expression in 'query', e.g. query='5+5' or query='sqrt(144)'"
     @property
     def cost(self): return 1
     

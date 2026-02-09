@@ -13,7 +13,7 @@ from .state import AgentState, AgentPhase, ToolCall, ToolResult
 from .tools_adapter import ToolsAdapter, get_langgraph_tools
 from backend.core.config import settings
 from langchain_groq import ChatGroq
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 import json
@@ -425,33 +425,16 @@ async def act_node(state: AgentState) -> Dict[str, Any]:
     complexity = state.get("task_complexity", "medium")
     llm = get_llm(complexity)
 
-    tools = get_langgraph_tools(state.get("user_id", "agent"))
+    all_tools = get_langgraph_tools(state.get("user_id", "agent"))
 
-    if not tools:
+    if not all_tools:
         logger.warning("⚠️ No tools available")
         return {
             "phase": AgentPhase.OBSERVING.value,
             "tool_results": [],
         }
 
-    # Bind tools to LLM
-    try:
-        llm_with_tools = llm.bind_tools(tools)
-    except (NotImplementedError, AttributeError):
-        # Fallback for LLMs that don't implement bind_tools (like limited ChatOpenAI)
-        # We manually bind 'tools' argument which works for OpenAI-compatible endpoints
-        try:
-            from langchain_core.utils.function_calling import convert_to_openai_tool
-
-            formatted_tools = [convert_to_openai_tool(t) for t in tools]
-            llm_with_tools = llm.bind(tools=formatted_tools)
-        except Exception as e:
-            logger.error(f"❌ Failed to bind tools manually: {e}")
-            llm_with_tools = (
-                llm  # Proceed without tools (will likely fail act step but safe)
-            )
-
-    # Get current step
+    # ── Smart tool selection: send only relevant tools to avoid token overflow ──
     current_step = ""
     if state.get("plan_steps") and state["current_step_index"] < len(
         state["plan_steps"]
@@ -460,14 +443,62 @@ async def act_node(state: AgentState) -> Dict[str, Any]:
     else:
         current_step = state["original_request"]
 
+    request_lower = (current_step + " " + state.get("original_request", "")).lower()
+
+    # Priority tools always included
+    ALWAYS_INCLUDE = {"create_file", "generate_image", "math", "weather", "translate_egy",
+                      "wiki", "wikipedia", "chart", "presentation", "run_code", "scrape_url"}
+
+    # Score tools by keyword relevance
+    def tool_relevance(t):
+        name = t.name.lower()
+        desc = (t.description or "").lower()
+        score = 0
+        if name in ALWAYS_INCLUDE:
+            score += 100
+        # Check if tool name or keywords appear in the request
+        for word in name.replace("_", " ").split():
+            if word in request_lower:
+                score += 50
+        for word in request_lower.split():
+            if len(word) > 3 and word in desc:
+                score += 10
+        return score
+
+    scored = sorted(all_tools, key=tool_relevance, reverse=True)
+    MAX_TOOLS = 25  # Keep under Groq's 12K TPM limit
+    tools = scored[:MAX_TOOLS]
+    logger.info(f"🔧 Selected {len(tools)}/{len(all_tools)} relevant tools for: {current_step[:50]}")
+
+    # Bind tools to LLM
+    try:
+        llm_with_tools = llm.bind_tools(tools)
+    except (NotImplementedError, AttributeError):
+        try:
+            from langchain_core.utils.function_calling import convert_to_openai_tool
+
+            formatted_tools = [convert_to_openai_tool(t) for t in tools]
+            llm_with_tools = llm.bind(tools=formatted_tools)
+        except Exception as e:
+            logger.error(f"❌ Failed to bind tools manually: {e}")
+            llm_with_tools = llm
+
     # Build execution prompt
+    original_request = state.get("original_request", "")
     system_msg = f"""
 {NOVA_PERSONA}
 
-المهمة الحالية: {current_step}
+## Original User Request
+{original_request}
 
-استخدم الأدوات المتاحة لتنفيذ هذه المهمة.
-إذا لم تحتاج أدوات، أجب مباشرة.
+## Current Step
+{current_step}
+
+## Instructions
+- Use the available tools to execute this step.
+- When creating files, use the EXACT content requested by the user. Do NOT use placeholder or example content.
+- If the user requested specific text, HTML, or code, include ALL of it in the tool call.
+- If you don't need tools, answer directly.
 """
 
     try:
@@ -495,11 +526,9 @@ async def act_node(state: AgentState) -> Dict[str, Any]:
                     )
                     if tool:
                         # Execute async
-                        # Proper input handling for StructuredTool vs Legacy Tool
                         if isinstance(tool, StructuredTool):
                             input_val = tool_args
                         else:
-                            # Legacy: Prefer 'query' but stringify if complex
                             input_val = tool_args.get("query", str(tool_args))
 
                         result = await tool.ainvoke(input_val)
@@ -768,7 +797,22 @@ async def reflect_node(state: AgentState) -> Dict[str, Any]:
     retry_count = state.get("retry_count", 0)
     max_retries = state.get("max_retries", 3)
 
-    # Simple decision logic
+    # If we have errors and exhausted retries → give up gracefully
+    if errors and retry_count >= max_retries:
+        logger.warning(f"❌ Max retries ({max_retries}) exhausted. Generating fallback answer...")
+        error_summary = "; ".join(str(e)[:100] for e in errors[-2:])
+        # Check if we have any accumulated outputs regardless
+        if results_summary:
+            fallback = "⚠️ واجهت بعض المشاكل لكن هذه النتائج المتاحة:\n\n" + "\n".join(results_summary[:5])
+        else:
+            fallback = f"❌ لم أتمكن من تنفيذ الطلب بالكامل. السبب: {error_summary}\n\nجرب مرة تانية أو غيّر صياغة الطلب."
+        return {
+            "phase": AgentPhase.COMPLETED.value,
+            "final_answer": fallback,
+            "should_end": True,
+        }
+
+    # Simple decision logic — retry if errors and retries remain
     if errors and retry_count < max_retries:
         logger.info(f"🔄 Retrying... ({retry_count + 1}/{max_retries})")
         return {
@@ -788,6 +832,47 @@ async def reflect_node(state: AgentState) -> Dict[str, Any]:
 
     # All done - generate final answer
     logger.info("✅ Task completed, generating final answer...")
+
+    # First, check if we have successful tool results - if so, build answer from them
+    all_tool_results = state.get("tool_results", [])
+    successful_tools = [r for r in all_tool_results if isinstance(r, dict) and r.get("success")]
+    
+    if successful_tools:
+        # We have actual successful tool results - build answer directly
+        final = "✅ تم تنفيذ المهمة بنجاح!\n\n"
+        links = []
+        tool_summaries = []
+        
+        for result in successful_tools:
+            output = result.get("output", "")
+            tool_name = result.get("tool_name", "")
+            
+            # Try to parse JSON output from the adapter
+            try:
+                import json as _json_mod
+                parsed = _json_mod.loads(output) if isinstance(output, str) and output.startswith("{") else None
+                if parsed:
+                    if "url" in parsed:
+                        links.append(f"[📁 تحميل الملف]({parsed['url']})")
+                    if "text" in parsed:
+                        tool_summaries.append(f"- **{tool_name}**: {parsed['text'][:300]}")
+                else:
+                    tool_summaries.append(f"- **{tool_name}**: {str(output)[:300]}")
+            except:
+                tool_summaries.append(f"- **{tool_name}**: {str(output)[:300]}")
+        
+        if links:
+            final += "### 📎 الملفات والروابط:\n" + "\n".join(links) + "\n\n"
+        if tool_summaries:
+            final += "### 📋 النتائج:\n" + "\n".join(tool_summaries[:10])
+        
+        return {
+            "phase": AgentPhase.COMPLETED.value,
+            "final_answer": final,
+            "should_end": True,
+        }
+
+    # No successful tool results — ask LLM to summarize
 
     prompt = REFLECTION_PROMPT.format(
         original_request=state["original_request"],

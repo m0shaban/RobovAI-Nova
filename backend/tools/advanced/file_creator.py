@@ -3,9 +3,17 @@
 """
 
 from backend.tools.base import BaseTool
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Type
+from pydantic import BaseModel, Field
 import os
 from datetime import datetime
+
+
+class FileCreatorInput(BaseModel):
+    """Input schema for file creation"""
+    filename: str = Field(description="File name with extension, e.g. 'page.html', 'style.css', 'data.json'")
+    content: str = Field(description="The full file content to write")
+    query: Optional[str] = Field(default=None, description="Optional description (not used)")
 
 
 class FileCreatorTool(BaseTool):
@@ -19,7 +27,11 @@ class FileCreatorTool(BaseTool):
     
     @property
     def description(self) -> str:
-        return "إنشاء وحفظ ملفات (HTML, CSS, TXT, JSON, MD) مع المحتوى المطلوب"
+        return "Create and save files. Pass 'filename' (e.g. page.html) and 'content' (the full file content)."
+    
+    @property
+    def args_schema(self) -> Type[BaseModel]:
+        return FileCreatorInput
     
     @property
     def cost(self) -> int:

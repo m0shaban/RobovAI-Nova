@@ -62,7 +62,7 @@ class Database:
                 ("daily_reset_date", "TEXT"),
                 ("subscription_tier", "TEXT DEFAULT 'free'"),
                 ("subscription_expires", "TEXT"),
-                ("updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+                ("updated_at", "TIMESTAMP"),
             ]:
                 try:
                     c.execute(f"ALTER TABLE users ADD COLUMN {col} {defn}")
@@ -242,7 +242,7 @@ class Database:
         with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
-                "UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                "UPDATE users SET role = ? WHERE id = ?",
                 (role, user_id),
             )
             conn.commit()
@@ -280,7 +280,7 @@ class Database:
             c = conn.cursor()
             # Atomic: only deduct if balance >= amount
             c.execute(
-                """UPDATE users SET balance = balance - ?, daily_used = daily_used + ?, updated_at = CURRENT_TIMESTAMP
+                """UPDATE users SET balance = balance - ?, daily_used = daily_used + ?
                    WHERE (email = ? OR id = ?) AND balance >= ?""",
                 (amount, amount, user_id, user_id, amount),
             )
@@ -301,7 +301,7 @@ class Database:
         with self._get_conn() as conn:
             c = conn.cursor()
             c.execute(
-                "UPDATE users SET balance = balance + ?, updated_at = CURRENT_TIMESTAMP WHERE email = ? OR id = ?",
+                "UPDATE users SET balance = balance + ? WHERE email = ? OR id = ?",
                 (amount, user_id, user_id),
             )
             conn.commit()

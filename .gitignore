@@ -20,3 +20,6 @@ ENV/
 *.log
 .gemini/
 .agent/
+uploads/files/
+data/
+logs/

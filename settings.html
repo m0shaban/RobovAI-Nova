@@ -1,1185 +1,1535 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>الإعدادات - RobovAI Nova 2.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        :root {
-            --bg-void: #000000;
-            --bg-space: #050510;
-            --glass: rgba(10, 10, 20, 0.8);
-            --glass-light: rgba(255, 255, 255, 0.03);
-            --primary: #00f0ff;
-            --secondary: #8b5cf6;
-            --accent: #ff00aa;
-            --gold: #ffd700;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --text: #ffffff;
-            --text-muted: #6b7280;
-            --border: rgba(255, 255, 255, 0.08);
-            --glow-cyan: rgba(0, 240, 255, 0.4);
-        }
+      :root {
+        --bg-void: #000000;
+        --bg-space: #050510;
+        --glass: rgba(10, 10, 20, 0.8);
+        --glass-light: rgba(255, 255, 255, 0.03);
+        --primary: #00f0ff;
+        --secondary: #8b5cf6;
+        --accent: #ff00aa;
+        --gold: #ffd700;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --error: #ef4444;
+        --text: #ffffff;
+        --text-muted: #6b7280;
+        --border: rgba(255, 255, 255, 0.08);
+        --glow-cyan: rgba(0, 240, 255, 0.4);
+      }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Cairo', 'Tajawal', sans-serif;
+        background: var(--bg-void);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+      }
+
+      /* 🌌 Background Effect */
+      .cosmic-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: radial-gradient(circle at top right, #0a0a20, #000);
+      }
+
+      .cosmic-bg::before {
+        content: '';
+        position: absolute;
+        top: -20%;
+        right: -20%;
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(
+          circle,
+          rgba(139, 92, 246, 0.15),
+          transparent 70%
+        );
+        border-radius: 50%;
+        filter: blur(80px);
+        animation: float 20s infinite;
+      }
+
+      .cosmic-bg::after {
+        content: '';
+        position: absolute;
+        bottom: -20%;
+        left: -20%;
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(
+          circle,
+          rgba(0, 240, 255, 0.1),
+          transparent 70%
+        );
+        border-radius: 50%;
+        filter: blur(80px);
+        animation: float 20s infinite reverse;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(30px, 30px);
+        }
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 280px;
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        border-left: 1px solid var(--border);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 20px;
+        text-decoration: none;
+        color: white;
+      }
+
+      .brand-icon {
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .brand-icon img {
+        width: 80%;
+        height: 80%;
+        object-fit: contain;
+      }
+
+      .brand-name {
+        font-weight: 800;
+        font-size: 1.2rem;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .nav-section {
+        margin-bottom: 1.5rem;
+      }
+
+      .nav-title {
+        font-size: 0.75rem;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.75rem;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 15px;
+        border-radius: 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+
+      .nav-item:hover,
+      .nav-item.active {
+        background: rgba(0, 240, 255, 0.1);
+        color: var(--primary);
+      }
+
+      .nav-item.back-btn {
+        margin-top: auto;
+        border: 1px solid var(--border);
+      }
+
+      .nav-item.back-btn:hover {
+        border-color: var(--primary);
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        padding: 40px;
+        overflow-y: auto;
+      }
+
+      .page-header {
+        margin-bottom: 40px;
+      }
+
+      .page-title {
+        font-size: 2.2rem;
+        font-weight: 900;
+        background: linear-gradient(90deg, white, var(--text-muted));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+      }
+
+      .page-desc {
+        color: var(--text-muted);
+      }
+
+      /* Tabs */
+      .settings-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 10px;
+      }
+
+      .tab-btn {
+        padding: 10px 20px;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-family: inherit;
+        font-size: 1rem;
+        cursor: pointer;
+        border-radius: 10px 10px 0 0;
+        transition: all 0.3s;
+        position: relative;
+      }
+
+      .tab-btn.active {
+        color: var(--primary);
+        background: rgba(0, 240, 255, 0.1);
+      }
+
+      .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -11px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary);
+      }
+
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+
+      /* Settings Cards */
+      .settings-grid {
+        display: grid;
+        gap: 25px;
+        max-width: 900px;
+      }
+
+      .settings-card {
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 25px;
+        transition: all 0.3s;
+      }
+
+      .settings-card:hover {
+        border-color: rgba(0, 240, 255, 0.3);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .card-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(0, 240, 255, 0.1);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+      }
+
+      .card-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+      .card-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      /* Form Elements */
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group:last-child {
+        margin-bottom: 0;
+      }
+
+      .form-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 14px 18px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: white;
+        font-family: inherit;
+        font-size: 1rem;
+        transition: all 0.3s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+      }
+
+      .form-input::placeholder {
+        color: var(--text-muted);
+      }
+
+      /* Model Selection */
+      .model-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
+
+      .model-option {
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+      }
+
+      .model-option:hover {
+        border-color: rgba(0, 240, 255, 0.5);
+      }
+
+      .model-option.selected {
+        border-color: var(--primary);
+        background: rgba(0, 240, 255, 0.1);
+        box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+      }
+
+      .model-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+      .model-name {
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+      .model-desc {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      /* Sliders */
+      .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .slider {
+        flex: 1;
+        -webkit-appearance: none;
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        outline: none;
+      }
+
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+      }
+
+      .slider-value {
+        min-width: 50px;
+        text-align: center;
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      /* Toggle Switch */
+      .toggle-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .toggle-row:last-child {
+        border-bottom: none;
+      }
+
+      .toggle-info h4 {
+        font-size: 1rem;
+        margin-bottom: 3px;
+      }
+      .toggle-info p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .toggle-switch {
+        width: 56px;
+        height: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        position: relative;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      .toggle-switch.active {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+      }
+
+      .toggle-switch::after {
+        content: '';
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        background: white;
+        border-radius: 50%;
+        top: 3px;
+        left: 3px;
+        transition: transform 0.3s;
+      }
+
+      .toggle-switch.active::after {
+        transform: translateX(26px);
+      }
+
+      /* API Key Input */
+      .api-key-input {
+        position: relative;
+      }
+
+      .api-key-input input {
+        padding-left: 45px;
+      }
+
+      .api-key-input .key-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+      }
+
+      .api-key-status {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--text-muted);
+      }
+
+      .api-key-status.valid {
+        background: var(--success);
+      }
+      .api-key-status.invalid {
+        background: var(--error);
+      }
+
+      /* Buttons */
+      .btn {
+        padding: 12px 24px;
+        border-radius: 12px;
+        border: none;
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: black;
+      }
+
+      .btn-primary:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+      }
+
+      .btn-outline {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+
+      .btn-outline:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      .btn-danger {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid var(--error);
+        color: var(--error);
+      }
+
+      .btn-danger:hover {
+        background: var(--error);
+        color: white;
+      }
+
+      /* Theme Options */
+      .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+      }
+
+      .theme-option {
+        padding: 20px;
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .theme-option:hover {
+        border-color: rgba(0, 240, 255, 0.5);
+      }
+
+      .theme-option.active {
+        border-color: var(--primary);
+        background: rgba(0, 240, 255, 0.05);
+      }
+
+      .theme-preview {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        margin: 0 auto 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Save Bar */
+      .save-bar {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        padding: 15px 30px;
+        border-radius: 50px;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+      }
+
+      .save-bar.visible {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Toast Notification */
+      .toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        padding: 15px 25px;
+        border-radius: 12px;
+        border: 1px solid var(--success);
+        color: var(--success);
+        transition: transform 0.5s;
+        z-index: 1001;
+      }
+
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
         body {
-            font-family: 'Cairo', 'Tajawal', sans-serif;
-            background: var(--bg-void);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
+          flex-direction: column;
         }
-
-        /* 🌌 Background Effect */
-        .cosmic-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            background: radial-gradient(circle at top right, #0a0a20, #000);
-        }
-        
-        .cosmic-bg::before {
-            content: '';
-            position: absolute;
-            top: -20%; right: -20%;
-            width: 800px; height: 800px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.15), transparent 70%);
-            border-radius: 50%;
-            filter: blur(80px);
-            animation: float 20s infinite;
-        }
-
-        .cosmic-bg::after {
-            content: '';
-            position: absolute;
-            bottom: -20%; left: -20%;
-            width: 800px; height: 800px;
-            background: radial-gradient(circle, rgba(0, 240, 255, 0.1), transparent 70%);
-            border-radius: 50%;
-            filter: blur(80px);
-            animation: float 20s infinite reverse;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(30px, 30px); }
-        }
-
-        /* Sidebar */
         .sidebar {
-            width: 280px;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid var(--border);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
+          width: 100%;
+          padding: 15px;
+          border-left: none;
+          border-bottom: 1px solid var(--border);
         }
-
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 20px;
-            text-decoration: none;
-            color: white;
-        }
-
-        .brand-icon {
-            width: 45px; height: 45px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .brand-icon img { width: 80%; height: 80%; object-fit: contain; }
-
-        .brand-name { 
-            font-weight: 800; 
-            font-size: 1.2rem;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .nav-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .nav-title {
-            font-size: 0.75rem;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.75rem;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 15px;
-            border-radius: 12px;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background: rgba(0, 240, 255, 0.1);
-            color: var(--primary);
-        }
-        
-        .nav-item.back-btn {
-            margin-top: auto;
-            border: 1px solid var(--border);
-        }
-
-        .nav-item.back-btn:hover {
-            border-color: var(--primary);
-        }
-
-        /* Main Content */
         .main-content {
-            flex: 1;
-            padding: 40px;
-            overflow-y: auto;
+          padding: 20px;
         }
-
-        .page-header {
-            margin-bottom: 40px;
-        }
-
-        .page-title {
-            font-size: 2.2rem;
-            font-weight: 900;
-            background: linear-gradient(90deg, white, var(--text-muted));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-
-        .page-desc { color: var(--text-muted); }
-
-        /* Tabs */
-        .settings-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-        }
-
-        .tab-btn {
-            padding: 10px 20px;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-family: inherit;
-            font-size: 1rem;
-            cursor: pointer;
-            border-radius: 10px 10px 0 0;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .tab-btn.active {
-            color: var(--primary);
-            background: rgba(0, 240, 255, 0.1);
-        }
-
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -11px;
-            left: 0; right: 0;
-            height: 2px;
-            background: var(--primary);
-        }
-
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* Settings Cards */
-        .settings-grid {
-            display: grid;
-            gap: 25px;
-            max-width: 900px;
-        }
-
-        .settings-card {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 25px;
-            transition: all 0.3s;
-        }
-
-        .settings-card:hover {
-            border-color: rgba(0, 240, 255, 0.3);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .card-icon {
-            width: 50px; height: 50px;
-            background: rgba(0, 240, 255, 0.1);
-            border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px;
-        }
-
-        .card-title { font-size: 1.2rem; font-weight: 700; }
-        .card-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-top: 2px; }
-
-        /* Form Elements */
-        .form-group { margin-bottom: 20px; }
-        .form-group:last-child { margin-bottom: 0; }
-
-        .form-label {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 14px 18px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: white;
-            font-family: inherit;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
-        }
-
-        .form-input::placeholder { color: var(--text-muted); }
-
-        /* Model Selection */
         .model-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+          grid-template-columns: 1fr;
         }
+      }
 
-        .model-option {
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid var(--border);
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
         }
-
-        .model-option:hover {
-            border-color: rgba(0, 240, 255, 0.5);
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
+      }
 
-        .model-option.selected {
-            border-color: var(--primary);
-            background: rgba(0, 240, 255, 0.1);
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
-        }
-
-        .model-icon { font-size: 2rem; margin-bottom: 10px; }
-        .model-name { font-weight: 700; margin-bottom: 5px; }
-        .model-desc { font-size: 0.8rem; color: var(--text-muted); }
-
-        /* Sliders */
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .slider {
-            flex: 1;
-            -webkit-appearance: none;
-            height: 6px;
-            background: var(--border);
-            border-radius: 3px;
-            outline: none;
-        }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
-        }
-
-        .slider-value {
-            min-width: 50px;
-            text-align: center;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        /* Toggle Switch */
-        .toggle-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .toggle-row:last-child { border-bottom: none; }
-
-        .toggle-info h4 { font-size: 1rem; margin-bottom: 3px; }
-        .toggle-info p { font-size: 0.85rem; color: var(--text-muted); }
-
-        .toggle-switch {
-            width: 56px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            position: relative;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .toggle-switch.active {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-        }
-
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            top: 3px;
-            left: 3px;
-            transition: transform 0.3s;
-        }
-
-        .toggle-switch.active::after {
-            transform: translateX(26px);
-        }
-
-        /* API Key Input */
-        .api-key-input {
-            position: relative;
-        }
-
-        .api-key-input input {
-            padding-left: 45px;
-        }
-
-        .api-key-input .key-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-
-        .api-key-status {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--text-muted);
-        }
-
-        .api-key-status.valid { background: var(--success); }
-        .api-key-status.invalid { background: var(--error); }
-
-        /* Buttons */
-        .btn {
-            padding: 12px 24px;
-            border-radius: 12px;
-            border: none;
-            font-family: inherit;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: black;
-        }
-
-        .btn-primary:hover { 
-            transform: scale(1.03);
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .btn-outline:hover { 
-            border-color: var(--primary); 
-            color: var(--primary); 
-        }
-
-        .btn-danger {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid var(--error);
-            color: var(--error);
-        }
-
-        .btn-danger:hover {
-            background: var(--error);
-            color: white;
-        }
-
-        /* Theme Options */
-        .theme-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .theme-option {
-            padding: 20px;
-            border: 2px solid var(--border);
-            border-radius: 14px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .theme-option:hover { border-color: rgba(0, 240, 255, 0.5); }
-
-        .theme-option.active {
-            border-color: var(--primary);
-            background: rgba(0, 240, 255, 0.05);
-        }
-
-        .theme-preview {
-            width: 60px; height: 60px;
-            border-radius: 12px;
-            margin: 0 auto 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        }
-
-        /* Save Bar */
-        .save-bar {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            padding: 15px 30px;
-            border-radius: 50px;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-
-        .save-bar.visible { transform: translateX(-50%) translateY(0); }
-
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            padding: 15px 25px;
-            border-radius: 12px;
-            border: 1px solid var(--success);
-            color: var(--success);
-            transition: transform 0.5s;
-            z-index: 1001;
-        }
-
-        .toast.show { transform: translateX(-50%) translateY(0); }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { 
-                width: 100%; 
-                padding: 15px; 
-                border-left: none; 
-                border-bottom: 1px solid var(--border); 
-            }
-            .main-content { padding: 20px; }
-            .model-grid { grid-template-columns: 1fr; }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .settings-card { animation: fadeIn 0.5s ease both; }
-        .settings-card:nth-child(2) { animation-delay: 0.1s; }
-        .settings-card:nth-child(3) { animation-delay: 0.2s; }
-        .settings-card:nth-child(4) { animation-delay: 0.3s; }
+      .settings-card {
+        animation: fadeIn 0.5s ease both;
+      }
+      .settings-card:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      .settings-card:nth-child(3) {
+        animation-delay: 0.2s;
+      }
+      .settings-card:nth-child(4) {
+        animation-delay: 0.3s;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <div class="cosmic-bg"></div>
 
     <!-- Sidebar -->
     <aside class="sidebar">
-        <a href="chat.html" class="sidebar-header">
-            <div class="brand-icon"><img src="public/assets/logo.png" alt="Logo"></div>
-            <div class="brand-name">Nova Settings</div>
-        </a>
-        
-        <div class="nav-section">
-            <div class="nav-title">الإعدادات</div>
-            <div class="nav-item active" onclick="showTab('agent')">
-                <span>🤖</span> إعدادات الـ Agent
-            </div>
-            <div class="nav-item" onclick="showTab('api')">
-                <span>🔑</span> مفاتيح API
-            </div>
-            <div class="nav-item" onclick="showTab('appearance')">
-                <span>🎨</span> المظهر
-            </div>
-            <div class="nav-item" onclick="showTab('profile')">
-                <span>👤</span> الملف الشخصي
-            </div>
+      <a href="chat.html" class="sidebar-header">
+        <div class="brand-icon">
+          <img src="public/assets/logo.png" alt="Logo" />
         </div>
+        <div class="brand-name">Nova Settings</div>
+      </a>
 
-        <div class="nav-section">
-            <div class="nav-title">روابط سريعة</div>
-            <a href="/admin" class="nav-item">
-                <span>📊</span> لوحة التحكم
-            </a>
-            <a href="/developers" class="nav-item">
-                <span>📚</span> التوثيق
-            </a>
+      <div class="nav-section">
+        <div class="nav-title">الإعدادات</div>
+        <div class="nav-item active" onclick="showTab('agent')">
+          <span>🤖</span> إعدادات الـ Agent
         </div>
+        <div class="nav-item" onclick="showTab('api')">
+          <span>🔑</span> مفاتيح API
+        </div>
+        <div class="nav-item" onclick="showTab('appearance')">
+          <span>🎨</span> المظهر
+        </div>
+        <div class="nav-item" onclick="showTab('profile')">
+          <span>👤</span> الملف الشخصي
+        </div>
+      </div>
 
-        <a href="chat.html" class="nav-item back-btn">
-            <span>↩️</span> العودة للشات
-        </a>
+      <div class="nav-section">
+        <div class="nav-title">روابط سريعة</div>
+        <a href="/admin" class="nav-item"> <span>📊</span> لوحة التحكم </a>
+        <a href="/developers" class="nav-item"> <span>📚</span> التوثيق </a>
+      </div>
+
+      <a href="chat.html" class="nav-item back-btn">
+        <span>↩️</span> العودة للشات
+      </a>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
-        <div class="page-header">
-            <h1 class="page-title">⚙️ الإعدادات</h1>
-            <p class="page-desc">تحكم في سلوك الـ Agent وتفضيلات التطبيق</p>
-        </div>
+      <div class="page-header">
+        <h1 class="page-title">⚙️ الإعدادات</h1>
+        <p class="page-desc">تحكم في سلوك الـ Agent وتفضيلات التطبيق</p>
+      </div>
 
-        <!-- Agent Settings Tab -->
-        <div class="tab-content active" id="tab-agent">
-            <div class="settings-grid">
-                
-                <!-- Model Selection -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="card-icon">🧠</div>
-                        <div>
-                            <div class="card-title">اختيار الموديل</div>
-                            <div class="card-subtitle">حدد نموذج الذكاء الاصطناعي</div>
-                        </div>
-                    </div>
-
-                    <div class="model-grid">
-                        <div class="model-option selected" data-model="llama-3.3-70b" onclick="selectModel(this, 'llama-3.3-70b')">
-                            <div class="model-icon">🦙</div>
-                            <div class="model-name">Llama 3.3 70B</div>
-                            <div class="model-desc">سريع ومجاني (Groq)</div>
-                        </div>
-                        <div class="model-option" data-model="nvidia-llama" onclick="selectModel(this, 'nvidia-llama')">
-                            <div class="model-icon">🟢</div>
-                            <div class="model-name">NVIDIA Llama</div>
-                            <div class="model-desc">NVIDIA NIM</div>
-                        </div>
-                        <div class="model-option" data-model="openrouter" onclick="selectModel(this, 'openrouter')">
-                            <div class="model-icon">🌐</div>
-                            <div class="model-name">OpenRouter</div>
-                            <div class="model-desc">Multi-model Router</div>
-                        </div>
-                        <div class="model-option" data-model="auto" onclick="selectModel(this, 'auto')">
-                            <div class="model-icon">⚡</div>
-                            <div class="model-name">Auto (Smart)</div>
-                            <div class="model-desc">اختيار تلقائي ذكي</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Agent Parameters -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="card-icon">⚡</div>
-                        <div>
-                            <div class="card-title">معايير الـ Agent</div>
-                            <div class="card-subtitle">ضبط سلوك النموذج</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="form-label">
-                            <span>Temperature (الإبداعية)</span>
-                            <span class="slider-value" id="tempValue">0.7</span>
-                        </div>
-                        <div class="slider-container">
-                            <span>دقيق</span>
-                            <input type="range" class="slider" id="temperature" min="0" max="1" step="0.1" value="0.7" oninput="updateSlider('temp', this.value)">
-                            <span>إبداعي</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="form-label">
-                            <span>Max Tokens (طول الرد)</span>
-                            <span class="slider-value" id="tokensValue">4096</span>
-                        </div>
-                        <div class="slider-container">
-                            <span>قصير</span>
-                            <input type="range" class="slider" id="maxTokens" min="256" max="8192" step="256" value="4096" oninput="updateSlider('tokens', this.value)">
-                            <span>طويل</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Agent Features -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="card-icon">🛠️</div>
-                        <div>
-                            <div class="card-title">ميزات الـ Agent</div>
-                            <div class="card-subtitle">تفعيل/تعطيل الميزات</div>
-                        </div>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <h4>🧠 Multi-Agent System</h4>
-                            <p>استخدام عدة agents متخصصة</p>
-                        </div>
-                        <div class="toggle-switch active" data-toggle="multiAgent" onclick="toggleSwitch(this)"></div>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <h4>💾 الذاكرة طويلة المدى</h4>
-                            <p>حفظ التفضيلات والسياق</p>
-                        </div>
-                        <div class="toggle-switch active" data-toggle="longTermMemory" onclick="toggleSwitch(this)"></div>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <h4>⚡ التنفيذ المتوازي</h4>
-                            <p>تشغيل أدوات متعددة في وقت واحد</p>
-                        </div>
-                        <div class="toggle-switch active" data-toggle="parallelExecution" onclick="toggleSwitch(this)"></div>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <h4>📦 Caching</h4>
-                            <p>حفظ نتائج الأدوات المكررة</p>
-                        </div>
-                        <div class="toggle-switch active" data-toggle="caching" onclick="toggleSwitch(this)"></div>
-                    </div>
-                </div>
-
+      <!-- Agent Settings Tab -->
+      <div class="tab-content active" id="tab-agent">
+        <div class="settings-grid">
+          <!-- Model Selection -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🧠</div>
+              <div>
+                <div class="card-title">اختيار الموديل</div>
+                <div class="card-subtitle">حدد نموذج الذكاء الاصطناعي</div>
+              </div>
             </div>
-        </div>
 
-        <!-- API Keys Tab -->
-        <div class="tab-content" id="tab-api">
-            <div class="settings-grid">
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="card-icon">🔑</div>
-                        <div>
-                            <div class="card-title">مفاتيح API</div>
-                            <div class="card-subtitle">أدخل مفاتيحك الخاصة لاستخدام الخدمات</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Groq API Key (مجاني)</label>
-                        <div class="api-key-input">
-                            <span class="api-key-status valid"></span>
-                            <input type="password" class="form-input" placeholder="gsk_..." id="groqKey">
-                            <span class="key-icon">🔑</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">OpenAI API Key</label>
-                        <div class="api-key-input">
-                            <span class="api-key-status"></span>
-                            <input type="password" class="form-input" placeholder="sk-..." id="openaiKey">
-                            <span class="key-icon">🔑</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Anthropic API Key</label>
-                        <div class="api-key-input">
-                            <span class="api-key-status"></span>
-                            <input type="password" class="form-input" placeholder="sk-ant-..." id="anthropicKey">
-                            <span class="key-icon">🔑</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Google Gemini API Key</label>
-                        <div class="api-key-input">
-                            <span class="api-key-status"></span>
-                            <input type="password" class="form-input" placeholder="AIza..." id="geminiKey">
-                            <span class="key-icon">🔑</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Telegram Bot Token</label>
-                        <div class="api-key-input">
-                            <span class="api-key-status"></span>
-                            <input type="password" class="form-input" placeholder="123456:ABC-DEF..." id="telegramToken">
-                            <span class="key-icon">📱</span>
-                        </div>
-                    </div>
-                </div>
+            <div class="model-grid">
+              <div
+                class="model-option selected"
+                data-model="llama-3.3-70b"
+                onclick="selectModel(this, 'llama-3.3-70b')"
+              >
+                <div class="model-icon">🦙</div>
+                <div class="model-name">Llama 3.3 70B</div>
+                <div class="model-desc">سريع ومجاني (Groq)</div>
+              </div>
+              <div
+                class="model-option"
+                data-model="nvidia-llama"
+                onclick="selectModel(this, 'nvidia-llama')"
+              >
+                <div class="model-icon">🟢</div>
+                <div class="model-name">NVIDIA Llama</div>
+                <div class="model-desc">NVIDIA NIM</div>
+              </div>
+              <div
+                class="model-option"
+                data-model="openrouter"
+                onclick="selectModel(this, 'openrouter')"
+              >
+                <div class="model-icon">🌐</div>
+                <div class="model-name">OpenRouter</div>
+                <div class="model-desc">Multi-model Router</div>
+              </div>
+              <div
+                class="model-option"
+                data-model="auto"
+                onclick="selectModel(this, 'auto')"
+              >
+                <div class="model-icon">⚡</div>
+                <div class="model-name">Auto (Smart)</div>
+                <div class="model-desc">اختيار تلقائي ذكي</div>
+              </div>
             </div>
-        </div>
+          </div>
 
-        <!-- Appearance Tab -->
-        <div class="tab-content" id="tab-appearance">
-            <div class="settings-grid">
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="card-icon">🎨</div>
-                        <div>
-                            <div class="card-title">المظهر والثيم</div>
-                            <div class="card-subtitle">خصص واجهة التطبيق</div>
-                        </div>
-                    </div>
-
-                    <div class="theme-grid">
-                        <div class="theme-option active" data-theme="cosmic-dark" onclick="selectTheme(this, 'cosmic-dark')">
-                            <div class="theme-preview" style="background: linear-gradient(135deg, #000, #1a1a2e);"></div>
-                            <div>Cosmic Dark</div>
-                        </div>
-                        <div class="theme-option" data-theme="light-future" onclick="selectTheme(this, 'light-future')">
-                            <div class="theme-preview" style="background: linear-gradient(135deg, #ffffff, #f0f0f0); border: 1px solid #ddd;"></div>
-                            <div>Light Future</div>
-                        </div>
-                        <div class="theme-option" data-theme="slate-deep" onclick="selectTheme(this, 'slate-deep')">
-                            <div class="theme-preview" style="background: linear-gradient(135deg, #0f172a, #1e293b);"></div>
-                            <div>Slate Deep</div>
-                        </div>
-                        <div class="theme-option" data-theme="midnight-purple" onclick="selectTheme(this, 'midnight-purple')">
-                            <div class="theme-preview" style="background: linear-gradient(135deg, #1a0a2e, #2d1b4e);"></div>
-                            <div>Midnight Purple</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="card-icon">🌐</div>
-                        <div>
-                            <div class="card-title">اللغة والعرض</div>
-                            <div class="card-subtitle">تخصيص اللغة والخط</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">اللغة</label>
-                        <select class="form-input" id="language">
-                            <option value="ar" selected>العربية</option>
-                            <option value="en">English</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="form-label">
-                            <span>حجم الخط</span>
-                            <span class="slider-value" id="fontValue">16px</span>
-                        </div>
-                        <input type="range" class="slider" min="12" max="24" value="16" oninput="updateSlider('font', this.value)">
-                    </div>
-                </div>
+          <!-- Agent Parameters -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">⚡</div>
+              <div>
+                <div class="card-title">معايير الـ Agent</div>
+                <div class="card-subtitle">ضبط سلوك النموذج</div>
+              </div>
             </div>
-        </div>
 
-        <!-- Profile Tab -->
-        <div class="tab-content" id="tab-profile">
-            <div class="settings-grid">
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="card-icon">👤</div>
-                        <div>
-                            <div class="card-title">الملف الشخصي</div>
-                            <div class="card-subtitle">معلوماتك الأساسية</div>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 25px;">
-                        <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 0 30px rgba(0,240,255,0.3);">👽</div>
-                        <div>
-                            <button class="btn btn-outline">تغيير الصورة</button>
-                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">PNG, JPG حتى 5MB</div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">الاسم</label>
-                        <input type="text" class="form-input" value="مستخدم RobovAI" id="userName">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">البريد الإلكتروني</label>
-                        <input type="email" class="form-input" value="user@robovai.tech" disabled style="opacity: 0.5;">
-                    </div>
-                </div>
-
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="card-icon" style="background: rgba(239,68,68,0.1);">⚠️</div>
-                        <div>
-                            <div class="card-title">منطقة الخطر</div>
-                            <div class="card-subtitle">إجراءات لا يمكن التراجع عنها</div>
-                        </div>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <h4>🗑️ مسح جميع المحادثات</h4>
-                            <p>حذف تاريخ المحادثات بالكامل</p>
-                        </div>
-                        <button class="btn btn-danger" onclick="clearHistory()">مسح</button>
-                    </div>
-
-                    <div class="toggle-row">
-                        <div class="toggle-info">
-                            <h4>🧹 مسح الذاكرة</h4>
-                            <p>حذف التفضيلات والذكريات المحفوظة</p>
-                        </div>
-                        <button class="btn btn-danger" onclick="clearMemory()">مسح</button>
-                    </div>
-                </div>
+            <div class="form-group">
+              <div class="form-label">
+                <span>Temperature (الإبداعية)</span>
+                <span class="slider-value" id="tempValue">0.7</span>
+              </div>
+              <div class="slider-container">
+                <span>دقيق</span>
+                <input
+                  type="range"
+                  class="slider"
+                  id="temperature"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value="0.7"
+                  oninput="updateSlider('temp', this.value)"
+                />
+                <span>إبداعي</span>
+              </div>
             </div>
-        </div>
 
+            <div class="form-group">
+              <div class="form-label">
+                <span>Max Tokens (طول الرد)</span>
+                <span class="slider-value" id="tokensValue">4096</span>
+              </div>
+              <div class="slider-container">
+                <span>قصير</span>
+                <input
+                  type="range"
+                  class="slider"
+                  id="maxTokens"
+                  min="256"
+                  max="8192"
+                  step="256"
+                  value="4096"
+                  oninput="updateSlider('tokens', this.value)"
+                />
+                <span>طويل</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agent Features -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🛠️</div>
+              <div>
+                <div class="card-title">ميزات الـ Agent</div>
+                <div class="card-subtitle">تفعيل/تعطيل الميزات</div>
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <h4>🧠 Multi-Agent System</h4>
+                <p>استخدام عدة agents متخصصة</p>
+              </div>
+              <div
+                class="toggle-switch active"
+                data-toggle="multiAgent"
+                onclick="toggleSwitch(this)"
+              ></div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <h4>💾 الذاكرة طويلة المدى</h4>
+                <p>حفظ التفضيلات والسياق</p>
+              </div>
+              <div
+                class="toggle-switch active"
+                data-toggle="longTermMemory"
+                onclick="toggleSwitch(this)"
+              ></div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <h4>⚡ التنفيذ المتوازي</h4>
+                <p>تشغيل أدوات متعددة في وقت واحد</p>
+              </div>
+              <div
+                class="toggle-switch active"
+                data-toggle="parallelExecution"
+                onclick="toggleSwitch(this)"
+              ></div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <h4>📦 Caching</h4>
+                <p>حفظ نتائج الأدوات المكررة</p>
+              </div>
+              <div
+                class="toggle-switch active"
+                data-toggle="caching"
+                onclick="toggleSwitch(this)"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Keys Tab -->
+      <div class="tab-content" id="tab-api">
+        <div class="settings-grid">
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🔑</div>
+              <div>
+                <div class="card-title">مفاتيح API</div>
+                <div class="card-subtitle">
+                  أدخل مفاتيحك الخاصة لاستخدام الخدمات
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Groq API Key (مجاني)</label>
+              <div class="api-key-input">
+                <span class="api-key-status valid"></span>
+                <input
+                  type="password"
+                  class="form-input"
+                  placeholder="gsk_..."
+                  id="groqKey"
+                />
+                <span class="key-icon">🔑</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">OpenAI API Key</label>
+              <div class="api-key-input">
+                <span class="api-key-status"></span>
+                <input
+                  type="password"
+                  class="form-input"
+                  placeholder="sk-..."
+                  id="openaiKey"
+                />
+                <span class="key-icon">🔑</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Anthropic API Key</label>
+              <div class="api-key-input">
+                <span class="api-key-status"></span>
+                <input
+                  type="password"
+                  class="form-input"
+                  placeholder="sk-ant-..."
+                  id="anthropicKey"
+                />
+                <span class="key-icon">🔑</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Google Gemini API Key</label>
+              <div class="api-key-input">
+                <span class="api-key-status"></span>
+                <input
+                  type="password"
+                  class="form-input"
+                  placeholder="AIza..."
+                  id="geminiKey"
+                />
+                <span class="key-icon">🔑</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Telegram Bot Token</label>
+              <div class="api-key-input">
+                <span class="api-key-status"></span>
+                <input
+                  type="password"
+                  class="form-input"
+                  placeholder="123456:ABC-DEF..."
+                  id="telegramToken"
+                />
+                <span class="key-icon">📱</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance Tab -->
+      <div class="tab-content" id="tab-appearance">
+        <div class="settings-grid">
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🎨</div>
+              <div>
+                <div class="card-title">المظهر والثيم</div>
+                <div class="card-subtitle">خصص واجهة التطبيق</div>
+              </div>
+            </div>
+
+            <div class="theme-grid">
+              <div
+                class="theme-option active"
+                data-theme="cosmic-dark"
+                onclick="selectTheme(this, 'cosmic-dark')"
+              >
+                <div
+                  class="theme-preview"
+                  style="background: linear-gradient(135deg, #000, #1a1a2e)"
+                ></div>
+                <div>Cosmic Dark</div>
+              </div>
+              <div
+                class="theme-option"
+                data-theme="light-future"
+                onclick="selectTheme(this, 'light-future')"
+              >
+                <div
+                  class="theme-preview"
+                  style="
+                    background: linear-gradient(135deg, #ffffff, #f0f0f0);
+                    border: 1px solid #ddd;
+                  "
+                ></div>
+                <div>Light Future</div>
+              </div>
+              <div
+                class="theme-option"
+                data-theme="slate-deep"
+                onclick="selectTheme(this, 'slate-deep')"
+              >
+                <div
+                  class="theme-preview"
+                  style="background: linear-gradient(135deg, #0f172a, #1e293b)"
+                ></div>
+                <div>Slate Deep</div>
+              </div>
+              <div
+                class="theme-option"
+                data-theme="midnight-purple"
+                onclick="selectTheme(this, 'midnight-purple')"
+              >
+                <div
+                  class="theme-preview"
+                  style="background: linear-gradient(135deg, #1a0a2e, #2d1b4e)"
+                ></div>
+                <div>Midnight Purple</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🌐</div>
+              <div>
+                <div class="card-title">اللغة والعرض</div>
+                <div class="card-subtitle">تخصيص اللغة والخط</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">اللغة</label>
+              <select class="form-input" id="language">
+                <option value="ar" selected>العربية</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <div class="form-label">
+                <span>حجم الخط</span>
+                <span class="slider-value" id="fontValue">16px</span>
+              </div>
+              <input
+                type="range"
+                class="slider"
+                min="12"
+                max="24"
+                value="16"
+                oninput="updateSlider('font', this.value)"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Tab -->
+      <div class="tab-content" id="tab-profile">
+        <div class="settings-grid">
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">👤</div>
+              <div>
+                <div class="card-title">الملف الشخصي</div>
+                <div class="card-subtitle">معلوماتك الأساسية</div>
+              </div>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                margin-bottom: 25px;
+              "
+            >
+              <div
+                style="
+                  width: 80px;
+                  height: 80px;
+                  border-radius: 50%;
+                  background: linear-gradient(
+                    135deg,
+                    var(--primary),
+                    var(--secondary)
+                  );
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 30px;
+                  box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+                "
+              >
+                👽
+              </div>
+              <div>
+                <button class="btn btn-outline">تغيير الصورة</button>
+                <div
+                  style="
+                    font-size: 0.8rem;
+                    color: var(--text-muted);
+                    margin-top: 5px;
+                  "
+                >
+                  PNG, JPG حتى 5MB
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">الاسم</label>
+              <input
+                type="text"
+                class="form-input"
+                value="مستخدم RobovAI"
+                id="userName"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">البريد الإلكتروني</label>
+              <input
+                type="email"
+                class="form-input"
+                value="user@robovai.tech"
+                disabled
+                style="opacity: 0.5"
+              />
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon" style="background: rgba(239, 68, 68, 0.1)">
+                ⚠️
+              </div>
+              <div>
+                <div class="card-title">منطقة الخطر</div>
+                <div class="card-subtitle">إجراءات لا يمكن التراجع عنها</div>
+              </div>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <h4>🗑️ مسح جميع المحادثات</h4>
+                <p>حذف تاريخ المحادثات بالكامل</p>
+              </div>
+              <button class="btn btn-danger" onclick="clearHistory()">
+                مسح
+              </button>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <h4>🧹 مسح الذاكرة</h4>
+                <p>حذف التفضيلات والذكريات المحفوظة</p>
+              </div>
+              <button class="btn btn-danger" onclick="clearMemory()">
+                مسح
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- Save Bar -->
     <div class="save-bar" id="saveBar">
-        <span>⚠️ لديك تغييرات غير محفوظة</span>
-        <button class="btn btn-outline" onclick="discardChanges()">تجاهل</button>
-        <button class="btn btn-primary" onclick="saveSettings()">💾 حفظ التغييرات</button>
+      <span>⚠️ لديك تغييرات غير محفوظة</span>
+      <button class="btn btn-outline" onclick="discardChanges()">تجاهل</button>
+      <button class="btn btn-primary" onclick="saveSettings()">
+        💾 حفظ التغييرات
+      </button>
     </div>
 
     <!-- Toast -->
     <div class="toast" id="toast">✅ تم الحفظ بنجاح!</div>
 
     <script>
-        const API = window.location.origin;
-        let hasChanges = false;
-        let currentSettings = {};
+      const API = window.location.origin;
+      let hasChanges = false;
+      let currentSettings = {};
 
-        // Tab Navigation
-        function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById(`tab-${tabName}`).classList.add('active');
-            event.target.closest('.nav-item').classList.add('active');
+      // Tab Navigation
+      function showTab(tabName) {
+        document
+          .querySelectorAll('.tab-content')
+          .forEach((t) => t.classList.remove('active'));
+        document
+          .querySelectorAll('.nav-item')
+          .forEach((n) => n.classList.remove('active'));
+
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        event.target.closest('.nav-item').classList.add('active');
+      }
+
+      // Model Selection
+      function selectModel(el, model) {
+        document
+          .querySelectorAll('.model-option')
+          .forEach((o) => o.classList.remove('selected'));
+        el.classList.add('selected');
+        currentSettings.model = model;
+        markChanged();
+      }
+
+      // Theme Selection
+      function selectTheme(el, theme) {
+        document
+          .querySelectorAll('.theme-option')
+          .forEach((o) => o.classList.remove('active'));
+        el.classList.add('active');
+        currentSettings.theme = theme;
+        // Apply theme preview immediately
+        applyTheme(theme);
+        markChanged();
+      }
+
+      // Toggle Switch
+      function toggleSwitch(el) {
+        el.classList.toggle('active');
+        markChanged();
+      }
+
+      // Slider Update
+      function updateSlider(type, value) {
+        if (type === 'temp') {
+          document.getElementById('tempValue').textContent = value;
+          currentSettings.temperature = parseFloat(value);
+        } else if (type === 'tokens') {
+          document.getElementById('tokensValue').textContent = value;
+          currentSettings.maxTokens = parseInt(value);
+        } else if (type === 'font') {
+          document.getElementById('fontValue').textContent = value + 'px';
+          currentSettings.fontSize = parseInt(value);
+          // Live preview font size
+          document.documentElement.style.fontSize = value + 'px';
         }
+        markChanged();
+      }
 
-        // Model Selection
-        function selectModel(el, model) {
-            document.querySelectorAll('.model-option').forEach(o => o.classList.remove('selected'));
-            el.classList.add('selected');
-            currentSettings.model = model;
-            markChanged();
+      // Mark changes
+      function markChanged() {
+        hasChanges = true;
+        document.getElementById('saveBar').classList.add('visible');
+      }
+
+      // Discard changes
+      function discardChanges() {
+        hasChanges = false;
+        document.getElementById('saveBar').classList.remove('visible');
+        loadSettings();
+      }
+
+      // Apply theme
+      function applyTheme(theme) {
+        const root = document.documentElement;
+        const themes = {
+          'cosmic-dark': {
+            bg: '#030014',
+            surface: 'rgba(255,255,255,0.03)',
+            primary: '#00f0ff',
+            secondary: '#8b5cf6',
+            text: '#e0e0e0',
+          },
+          'light-future': {
+            bg: '#f5f5f5',
+            surface: 'rgba(0,0,0,0.03)',
+            primary: '#0066ff',
+            secondary: '#7c3aed',
+            text: '#1a1a1a',
+          },
+          'slate-deep': {
+            bg: '#0f172a',
+            surface: 'rgba(255,255,255,0.05)',
+            primary: '#38bdf8',
+            secondary: '#818cf8',
+            text: '#e2e8f0',
+          },
+          'midnight-purple': {
+            bg: '#1a0a2e',
+            surface: 'rgba(255,255,255,0.04)',
+            primary: '#c084fc',
+            secondary: '#f472b6',
+            text: '#e0d4f5',
+          },
+        };
+        const t = themes[theme] || themes['cosmic-dark'];
+        root.style.setProperty('--bg-primary', t.bg);
+        root.style.setProperty('--surface', t.surface);
+        root.style.setProperty('--primary', t.primary);
+        root.style.setProperty('--secondary', t.secondary);
+        root.style.setProperty('--text-primary', t.text);
+      }
+
+      // Save settings
+      function saveSettings() {
+        // Collect toggle states via data-toggle
+        const toggles = {};
+        document.querySelectorAll('[data-toggle]').forEach((el) => {
+          toggles[el.dataset.toggle] = el.classList.contains('active');
+        });
+
+        currentSettings = {
+          model:
+            document.querySelector('.model-option.selected')?.dataset?.model ||
+            'llama-3.3-70b',
+          temperature: parseFloat(document.getElementById('temperature').value),
+          maxTokens: parseInt(document.getElementById('maxTokens').value),
+          theme:
+            document.querySelector('.theme-option.active')?.dataset?.theme ||
+            'cosmic-dark',
+          language: document.getElementById('language').value,
+          fontSize: parseInt(
+            document.querySelector('[oninput*="font"]')?.value || '16',
+          ),
+          userName: document.getElementById('userName').value,
+          // API keys (stored locally, sent as headers if user provides them)
+          groqKey: document.getElementById('groqKey')?.value || '',
+          openaiKey: document.getElementById('openaiKey')?.value || '',
+          anthropicKey: document.getElementById('anthropicKey')?.value || '',
+          geminiKey: document.getElementById('geminiKey')?.value || '',
+          telegramToken: document.getElementById('telegramToken')?.value || '',
+          // Toggles
+          ...toggles,
+          // Timestamp
+          savedAt: new Date().toISOString(),
+        };
+
+        // Save to localStorage
+        localStorage.setItem('novaSettings', JSON.stringify(currentSettings));
+
+        // Also try to save user preferences to server
+        saveToServer(currentSettings);
+
+        hasChanges = false;
+        document.getElementById('saveBar').classList.remove('visible');
+        showToast('✅ تم الحفظ بنجاح!');
+      }
+
+      // Save preferences to server (best-effort)
+      async function saveToServer(settings) {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          await fetch(`${API}/auth/settings`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              temperature: settings.temperature,
+              max_tokens: settings.maxTokens,
+              model: settings.model,
+              theme: settings.theme,
+              language: settings.language,
+            }),
+          });
+        } catch (e) {
+          /* server save is optional */
         }
+      }
 
-        // Theme Selection
-        function selectTheme(el, theme) {
-            document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('active'));
-            el.classList.add('active');
-            currentSettings.theme = theme;
-            // Apply theme preview immediately
-            applyTheme(theme);
-            markChanged();
-        }
+      // Load settings
+      function loadSettings() {
+        const saved = localStorage.getItem('novaSettings');
+        if (saved) {
+          currentSettings = JSON.parse(saved);
 
-        // Toggle Switch
-        function toggleSwitch(el) {
-            el.classList.toggle('active');
-            markChanged();
-        }
-
-        // Slider Update
-        function updateSlider(type, value) {
-            if (type === 'temp') {
-                document.getElementById('tempValue').textContent = value;
-                currentSettings.temperature = parseFloat(value);
-            } else if (type === 'tokens') {
-                document.getElementById('tokensValue').textContent = value;
-                currentSettings.maxTokens = parseInt(value);
-            } else if (type === 'font') {
-                document.getElementById('fontValue').textContent = value + 'px';
-                currentSettings.fontSize = parseInt(value);
-                // Live preview font size
-                document.documentElement.style.fontSize = value + 'px';
+          // Temperature
+          if (currentSettings.temperature != null) {
+            document.getElementById('temperature').value =
+              currentSettings.temperature;
+            document.getElementById('tempValue').textContent =
+              currentSettings.temperature;
+          }
+          // Max Tokens
+          if (currentSettings.maxTokens) {
+            document.getElementById('maxTokens').value =
+              currentSettings.maxTokens;
+            document.getElementById('tokensValue').textContent =
+              currentSettings.maxTokens;
+          }
+          // User name
+          if (currentSettings.userName) {
+            document.getElementById('userName').value =
+              currentSettings.userName;
+          }
+          // Font size
+          if (currentSettings.fontSize) {
+            const fontSlider = document.querySelector('[oninput*="font"]');
+            if (fontSlider) {
+              fontSlider.value = currentSettings.fontSize;
             }
-            markChanged();
-        }
-
-        // Mark changes
-        function markChanged() {
-            hasChanges = true;
-            document.getElementById('saveBar').classList.add('visible');
-        }
-
-        // Discard changes
-        function discardChanges() {
-            hasChanges = false;
-            document.getElementById('saveBar').classList.remove('visible');
-            loadSettings();
-        }
-
-        // Apply theme
-        function applyTheme(theme) {
-            const root = document.documentElement;
-            const themes = {
-                'cosmic-dark': { bg: '#030014', surface: 'rgba(255,255,255,0.03)', primary: '#00f0ff', secondary: '#8b5cf6', text: '#e0e0e0' },
-                'light-future': { bg: '#f5f5f5', surface: 'rgba(0,0,0,0.03)', primary: '#0066ff', secondary: '#7c3aed', text: '#1a1a1a' },
-                'slate-deep': { bg: '#0f172a', surface: 'rgba(255,255,255,0.05)', primary: '#38bdf8', secondary: '#818cf8', text: '#e2e8f0' },
-                'midnight-purple': { bg: '#1a0a2e', surface: 'rgba(255,255,255,0.04)', primary: '#c084fc', secondary: '#f472b6', text: '#e0d4f5' }
-            };
-            const t = themes[theme] || themes['cosmic-dark'];
-            root.style.setProperty('--bg-primary', t.bg);
-            root.style.setProperty('--surface', t.surface);
-            root.style.setProperty('--primary', t.primary);
-            root.style.setProperty('--secondary', t.secondary);
-            root.style.setProperty('--text-primary', t.text);
-        }
-
-        // Save settings
-        function saveSettings() {
-            // Collect toggle states via data-toggle
-            const toggles = {};
-            document.querySelectorAll('[data-toggle]').forEach(el => {
-                toggles[el.dataset.toggle] = el.classList.contains('active');
+            const fv = document.getElementById('fontValue');
+            if (fv) fv.textContent = currentSettings.fontSize + 'px';
+          }
+          // Model selection
+          if (currentSettings.model) {
+            document.querySelectorAll('.model-option').forEach((el) => {
+              el.classList.toggle(
+                'selected',
+                el.dataset.model === currentSettings.model,
+              );
             });
-
-            currentSettings = {
-                model: document.querySelector('.model-option.selected')?.dataset?.model || 'llama-3.3-70b',
-                temperature: parseFloat(document.getElementById('temperature').value),
-                maxTokens: parseInt(document.getElementById('maxTokens').value),
-                theme: document.querySelector('.theme-option.active')?.dataset?.theme || 'cosmic-dark',
-                language: document.getElementById('language').value,
-                fontSize: parseInt(document.querySelector('[oninput*="font"]')?.value || '16'),
-                userName: document.getElementById('userName').value,
-                // API keys (stored locally, sent as headers if user provides them)
-                groqKey: document.getElementById('groqKey')?.value || '',
-                openaiKey: document.getElementById('openaiKey')?.value || '',
-                anthropicKey: document.getElementById('anthropicKey')?.value || '',
-                geminiKey: document.getElementById('geminiKey')?.value || '',
-                telegramToken: document.getElementById('telegramToken')?.value || '',
-                // Toggles
-                ...toggles,
-                // Timestamp
-                savedAt: new Date().toISOString()
-            };
-
-            // Save to localStorage  
-            localStorage.setItem('novaSettings', JSON.stringify(currentSettings));
-
-            // Also try to save user preferences to server
-            saveToServer(currentSettings);
-
-            hasChanges = false;
-            document.getElementById('saveBar').classList.remove('visible');
-            showToast('✅ تم الحفظ بنجاح!');
-        }
-
-        // Save preferences to server (best-effort)
-        async function saveToServer(settings) {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) return;
-                await fetch(`${API}/auth/settings`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ temperature: settings.temperature, max_tokens: settings.maxTokens, model: settings.model, theme: settings.theme, language: settings.language })
-                });
-            } catch(e) { /* server save is optional */ }
-        }
-
-        // Load settings
-        function loadSettings() {
-            const saved = localStorage.getItem('novaSettings');
-            if (saved) {
-                currentSettings = JSON.parse(saved);
-                
-                // Temperature
-                if (currentSettings.temperature != null) {
-                    document.getElementById('temperature').value = currentSettings.temperature;
-                    document.getElementById('tempValue').textContent = currentSettings.temperature;
-                }
-                // Max Tokens
-                if (currentSettings.maxTokens) {
-                    document.getElementById('maxTokens').value = currentSettings.maxTokens;
-                    document.getElementById('tokensValue').textContent = currentSettings.maxTokens;
-                }
-                // User name
-                if (currentSettings.userName) {
-                    document.getElementById('userName').value = currentSettings.userName;
-                }
-                // Font size
-                if (currentSettings.fontSize) {
-                    const fontSlider = document.querySelector('[oninput*="font"]');
-                    if (fontSlider) { fontSlider.value = currentSettings.fontSize; }
-                    const fv = document.getElementById('fontValue');
-                    if (fv) fv.textContent = currentSettings.fontSize + 'px';
-                }
-                // Model selection
-                if (currentSettings.model) {
-                    document.querySelectorAll('.model-option').forEach(el => {
-                        el.classList.toggle('selected', el.dataset.model === currentSettings.model);
-                    });
-                }
-                // Theme selection
-                if (currentSettings.theme) {
-                    document.querySelectorAll('.theme-option').forEach(el => {
-                        el.classList.toggle('active', el.dataset.theme === currentSettings.theme);
-                    });
-                    applyTheme(currentSettings.theme);
-                }
-                // Language
-                if (currentSettings.language) {
-                    document.getElementById('language').value = currentSettings.language;
-                }
-                // Toggle switches
-                document.querySelectorAll('[data-toggle]').forEach(el => {
-                    const key = el.dataset.toggle;
-                    if (currentSettings[key] !== undefined) {
-                        el.classList.toggle('active', currentSettings[key]);
-                    }
-                });
-                // API keys
-                if (currentSettings.groqKey) document.getElementById('groqKey').value = currentSettings.groqKey;
-                if (currentSettings.openaiKey) document.getElementById('openaiKey').value = currentSettings.openaiKey;
-                if (currentSettings.anthropicKey) document.getElementById('anthropicKey').value = currentSettings.anthropicKey;
-                if (currentSettings.geminiKey) document.getElementById('geminiKey').value = currentSettings.geminiKey;
-                if (currentSettings.telegramToken) document.getElementById('telegramToken').value = currentSettings.telegramToken;
+          }
+          // Theme selection
+          if (currentSettings.theme) {
+            document.querySelectorAll('.theme-option').forEach((el) => {
+              el.classList.toggle(
+                'active',
+                el.dataset.theme === currentSettings.theme,
+              );
+            });
+            applyTheme(currentSettings.theme);
+          }
+          // Language
+          if (currentSettings.language) {
+            document.getElementById('language').value =
+              currentSettings.language;
+          }
+          // Toggle switches
+          document.querySelectorAll('[data-toggle]').forEach((el) => {
+            const key = el.dataset.toggle;
+            if (currentSettings[key] !== undefined) {
+              el.classList.toggle('active', currentSettings[key]);
             }
+          });
+          // API keys
+          if (currentSettings.groqKey)
+            document.getElementById('groqKey').value = currentSettings.groqKey;
+          if (currentSettings.openaiKey)
+            document.getElementById('openaiKey').value =
+              currentSettings.openaiKey;
+          if (currentSettings.anthropicKey)
+            document.getElementById('anthropicKey').value =
+              currentSettings.anthropicKey;
+          if (currentSettings.geminiKey)
+            document.getElementById('geminiKey').value =
+              currentSettings.geminiKey;
+          if (currentSettings.telegramToken)
+            document.getElementById('telegramToken').value =
+              currentSettings.telegramToken;
         }
+      }
 
-        // Load profile data from server
-        async function loadProfile() {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) return;
-                const res = await fetch(`${API}/auth/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.username) document.getElementById('userName').value = data.username;
-                    const emailEl = document.querySelector('input[type="email"]');
-                    if (emailEl && data.email) emailEl.value = data.email;
-                }
-            } catch(e) { /* profile load is optional */ }
+      // Load profile data from server
+      async function loadProfile() {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) return;
+          const res = await fetch(`${API}/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.username)
+              document.getElementById('userName').value = data.username;
+            const emailEl = document.querySelector('input[type="email"]');
+            if (emailEl && data.email) emailEl.value = data.email;
+          }
+        } catch (e) {
+          /* profile load is optional */
         }
+      }
 
-        // Show toast
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+      // Show toast
+      function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
 
-        // Clear actions
-        async function clearHistory() {
-            if (confirm('⚠️ هل أنت متأكد من مسح جميع المحادثات؟')) {
-                localStorage.removeItem('conversations');
-                try {
-                    const token = localStorage.getItem('token');
-                    const user = JSON.parse(localStorage.getItem('user') || '{}');
-                    if (token && user.id) {
-                        await fetch(`${API}/conversations/${user.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                    }
-                } catch(e) {}
-                showToast('🗑️ تم مسح المحادثات');
-            }
-        }
-
-        async function clearMemory() {
-            if (confirm('⚠️ هل أنت متأكد من مسح الذاكرة؟')) {
-                localStorage.removeItem('novaMemory');
-                try {
-                    const token = localStorage.getItem('token');
-                    const user = JSON.parse(localStorage.getItem('user') || '{}');
-                    if (token && user.id) {
-                        await fetch(`${API}/memory/${user.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                    }
-                } catch(e) {}
-                showToast('🧹 تم مسح الذاكرة');
-            }
-        }
-
-        // Listen to input changes
-        document.querySelectorAll('input, select').forEach(el => {
-            el.addEventListener('input', markChanged);
-        });
-
-        // Auth check
-        document.addEventListener('DOMContentLoaded', () => {
+      // Clear actions
+      async function clearHistory() {
+        if (confirm('⚠️ هل أنت متأكد من مسح جميع المحادثات؟')) {
+          localStorage.removeItem('conversations');
+          try {
             const token = localStorage.getItem('token');
-            if (!token) { window.location.href = '/login'; return; }
-            loadSettings();
-            loadProfile();
-        });
-    </script>
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (token && user.id) {
+              await fetch(`${API}/conversations/${user.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+            }
+          } catch (e) {}
+          showToast('🗑️ تم مسح المحادثات');
+        }
+      }
 
-</body>
+      async function clearMemory() {
+        if (confirm('⚠️ هل أنت متأكد من مسح الذاكرة؟')) {
+          localStorage.removeItem('novaMemory');
+          try {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            if (token && user.id) {
+              await fetch(`${API}/memory/${user.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+            }
+          } catch (e) {}
+          showToast('🧹 تم مسح الذاكرة');
+        }
+      }
+
+      // Listen to input changes
+      document.querySelectorAll('input, select').forEach((el) => {
+        el.addEventListener('input', markChanged);
+      });
+
+      // Auth check
+      document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          window.location.href = '/login';
+          return;
+        }
+        loadSettings();
+        loadProfile();
+      });
+    </script>
+  </body>
 </html>

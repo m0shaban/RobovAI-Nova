@@ -152,7 +152,11 @@ from fastapi import Depends, status, Response, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import RedirectResponse
 from backend.core.database import db_client
-from backend.core.security import create_access_token, decode_access_token, validate_password_strength
+from backend.core.security import (
+    create_access_token,
+    decode_access_token,
+    validate_password_strength,
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -334,7 +338,9 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
     return {
         "id": current_user["id"],
         "email": current_user["email"],
-        "username": current_user.get("full_name", current_user.get("email", "").split("@")[0]),
+        "username": current_user.get(
+            "full_name", current_user.get("email", "").split("@")[0]
+        ),
         "full_name": current_user.get("full_name", ""),
         "role": current_user.get("role", "user"),
         "balance": usage["balance"],
@@ -345,7 +351,9 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 
 
 @app.post("/auth/settings")
-async def save_user_settings(payload: Dict[str, Any], current_user: dict = Depends(get_current_user)):
+async def save_user_settings(
+    payload: Dict[str, Any], current_user: dict = Depends(get_current_user)
+):
     """Save user preferences (best-effort, stored in user record)."""
     # This is optional server-side storage; primary settings are in localStorage
     return {"status": "success", "message": "Settings saved"}
@@ -1069,7 +1077,9 @@ async def payment_webhook(provider: str, request: Request):
         return {"status": "ok", **result}
     else:
         logger.warning(f"⚠️ Payment webhook [{provider}] failed: {result}")
-        raise HTTPException(status_code=400, detail=result.get("error", "Webhook failed"))
+        raise HTTPException(
+            status_code=400, detail=result.get("error", "Webhook failed")
+        )
 
 
 # Keep old endpoint for backwards compatibility
@@ -1213,7 +1223,9 @@ async def stream_agent_endpoint(request: AgentRequest):
 
 @app.get("/agent/stream")
 async def stream_agent_get(
-    message: str, user_id: str = "web_user", platform: str = "web",
+    message: str,
+    user_id: str = "web_user",
+    platform: str = "web",
     request: Request = None,
 ):
     """
@@ -1227,9 +1239,11 @@ async def stream_agent_get(
     # — Check instant / cached response FIRST (zero tokens) —
     instant = get_instant_response(message)
     if instant:
+
         async def _instant():
             yield f"event: completed\ndata: {json.dumps({'final_answer': instant}, ensure_ascii=False)}\n\n"
             yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+
         return _SR(_instant(), media_type="text/event-stream")
 
     # Try to authenticate from cookie
@@ -1241,16 +1255,20 @@ async def stream_agent_get(
             # Check balance before running
             usage = await db_client.get_daily_usage(real_user_id)
             if not usage["can_use"]:
+
                 async def _no_balance():
                     yield f'event: error\ndata: {json.dumps({"error": "رصيدك غير كافي. يرجى شراء توكنز إضافية أو ترقية الباقة."}, ensure_ascii=False)}\n\n'
+
                 return _SR(_no_balance(), media_type="text/event-stream")
 
             # Check LLM cache before deducting
             cached = get_cached(message, real_user_id)
             if cached:
+
                 async def _cached():
                     yield f"event: completed\ndata: {json.dumps({'final_answer': cached, 'cached': True}, ensure_ascii=False)}\n\n"
                     yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+
                 return _SR(_cached(), media_type="text/event-stream")
 
             # Deduct 1 token for the request
@@ -1345,6 +1363,7 @@ async def _stream_agent(message: str, user_id: str, platform: str):
                                         # Cache the response for future identical queries
                                         try:
                                             from backend.cache import set_cached
+
                                             set_cached(message, final_answer, user_id)
                                         except Exception:
                                             pass
@@ -1613,7 +1632,9 @@ async def set_user_role(user_id: int, role: str, admin: dict = Depends(require_a
 
 
 @app.post("/admin/add-tokens")
-async def admin_add_tokens(user_id: int, amount: int, admin: dict = Depends(require_admin)):
+async def admin_add_tokens(
+    user_id: int, amount: int, admin: dict = Depends(require_admin)
+):
     """إضافة توكنز لمستخدم — للمسؤولين فقط"""
     ok = await db_client.add_tokens(str(user_id), amount)
     if not ok:

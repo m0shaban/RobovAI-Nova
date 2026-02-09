@@ -55,7 +55,15 @@ INSTANT_RESPONSES: Dict[str, str] = {
 
 def _normalize_key(text: str) -> str:
     """Normalize user input for cache lookup."""
-    return text.strip().lower().replace("؟", "").replace("?", "").replace("!", "").replace(".", "").strip()
+    return (
+        text.strip()
+        .lower()
+        .replace("؟", "")
+        .replace("?", "")
+        .replace("!", "")
+        .replace(".", "")
+        .strip()
+    )
 
 
 def get_instant_response(message: str) -> Optional[str]:

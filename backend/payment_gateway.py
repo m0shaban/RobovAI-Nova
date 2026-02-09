@@ -410,13 +410,15 @@ class PaymobProvider:
                 logger.error("Paymob payment key failed")
                 return None
 
-            # Return iframe URL for card, or wallet redirect
+            # Return iframe URL for card, or wallet pay URL
             if method == "wallet" and PAYMOB_WALLET_INTEGRATION_ID:
-                return f"https://accept.paymob.com/api/acceptance/payments/pay?payment_token={payment_key}"
+                # Wallet: return payment_key for backend to call pay endpoint
+                return f"WALLET_PAY:{payment_key}"
             elif PAYMOB_IFRAME_ID:
                 return f"https://accept.paymob.com/api/acceptance/iframes/{PAYMOB_IFRAME_ID}?payment_token={payment_key}"
             else:
-                return f"https://accept.paymob.com/api/acceptance/payments/pay?payment_token={payment_key}"
+                # Fallback: always use iframe URL with integration_id as iframe
+                return f"https://accept.paymob.com/api/acceptance/iframes/{PAYMOB_INTEGRATION_ID}?payment_token={payment_key}"
 
         except Exception as e:
             logger.error(f"Paymob error: {e}")

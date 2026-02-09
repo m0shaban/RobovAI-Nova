@@ -1856,6 +1856,58 @@ async def get_subscription(current_user: dict = Depends(get_current_user)):
     }
 
 
+# ── Wallet Payment Helper ──────────────────────────────────────────────
+async def _process_wallet_payment(payment_token: str, phone_number: str) -> dict:
+    """Process Paymob mobile wallet payment (server-side POST)."""
+    import httpx
+
+    # Clean phone number (ensure Egyptian format)
+    phone = phone_number.strip().replace(" ", "").replace("-", "")
+    if phone.startswith("0"):
+        phone = "2" + phone  # 01xxxxxxxxx → 201xxxxxxxxx
+    elif not phone.startswith("2"):
+        phone = "2" + phone
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                "https://accept.paymob.com/api/acceptance/payments/pay",
+                json={
+                    "source": {
+                        "identifier": phone,
+                        "subtype": "WALLET",
+                    },
+                    "payment_token": payment_token,
+                },
+            )
+            data = resp.json()
+            if resp.status_code in (200, 201):
+                redirect_url = data.get("redirect_url") or data.get("iframe_redirection_url")
+                if redirect_url:
+                    return {
+                        "status": "success",
+                        "checkout_url": redirect_url,
+                        "provider": "paymob",
+                        "payment_type": "wallet",
+                    }
+                # Some wallets show a confirmation on phone directly
+                return {
+                    "status": "success",
+                    "message": "تم إرسال طلب الدفع لهاتفك. افتح تطبيق المحفظة لتأكيد الدفع.",
+                    "provider": "paymob",
+                    "payment_type": "wallet_pending",
+                }
+            else:
+                logger.error(f"Wallet payment failed: {data}")
+                return {
+                    "status": "error",
+                    "detail": data.get("message") or data.get("detail") or "فشل الدفع بالمحفظة",
+                }
+    except Exception as e:
+        logger.error(f"Wallet payment error: {e}")
+        return {"status": "error", "detail": "خطأ في الاتصال بخدمة الدفع"}
+
+
 @app.post("/account/buy-tokens")
 async def account_buy_tokens(
     request: Request,
@@ -1869,6 +1921,7 @@ async def account_buy_tokens(
 
     package_id = body.get("package_id", "tokens_500")
     method = body.get("method", "card")
+    phone_number = body.get("phone_number", "")
 
     if package_id not in TOKEN_PACKAGES:
         raise HTTPException(status_code=400, detail="الباكج غير متاح")
@@ -1888,6 +1941,15 @@ async def account_buy_tokens(
             status_code=503, detail=result.get("error", "خدمة الدفع غير متاحة حالياً")
         )
 
+    # Handle wallet payment (needs server-side POST to Paymob)
+    checkout_url = result["checkout_url"]
+    if checkout_url.startswith("WALLET_PAY:"):
+        payment_token = checkout_url.replace("WALLET_PAY:", "")
+        if not phone_number:
+            raise HTTPException(status_code=400, detail="رقم الهاتف مطلوب للدفع بالمحفظة")
+        wallet_result = await _process_wallet_payment(payment_token, phone_number)
+        return wallet_result
+
     return {"status": "success", **result}
 
 
@@ -1904,6 +1966,7 @@ async def account_subscribe(
 
     plan = body.get("plan", "pro")
     method = body.get("method", "card")  # "card" or "wallet"
+    phone_number = body.get("phone_number", "")
 
     if plan not in ["pro", "enterprise"]:
         raise HTTPException(status_code=400, detail="الباقة غير متاحة")
@@ -1925,6 +1988,15 @@ async def account_subscribe(
         raise HTTPException(
             status_code=503, detail=result.get("error", "خدمة الدفع غير متاحة حالياً")
         )
+
+    # Handle wallet payment (needs server-side POST to Paymob)
+    checkout_url = result["checkout_url"]
+    if checkout_url.startswith("WALLET_PAY:"):
+        payment_token = checkout_url.replace("WALLET_PAY:", "")
+        if not phone_number:
+            raise HTTPException(status_code=400, detail="رقم الهاتف مطلوب للدفع بالمحفظة")
+        wallet_result = await _process_wallet_payment(payment_token, phone_number)
+        return wallet_result
 
     return {"status": "success", **result}
 

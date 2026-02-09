@@ -806,6 +806,10 @@
             📱 محفظة إلكترونية
           </button>
         </div>
+        <div id="walletPhoneInput" style="display:none; margin: 12px 0;">
+          <input type="tel" id="walletPhone" placeholder="01xxxxxxxxx رقم المحفظة" 
+            style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#fff; font-size:15px; font-family:inherit; direction:ltr; text-align:center;" />
+        </div>
         <button class="btn btn-primary" id="buyTokensBtn" onclick="buyTokens()">
           💳 شراء التوكنز الآن
         </button>
@@ -1001,6 +1005,8 @@
           .forEach((b) => b.classList.remove('active'));
         el.classList.add('active');
         selectedMethod = method;
+        const phoneInput = document.getElementById('walletPhoneInput');
+        if (phoneInput) phoneInput.style.display = method === 'wallet' ? 'block' : 'none';
       }
 
       async function buyTokens() {
@@ -1008,6 +1014,15 @@
         const orig = btn.innerHTML;
         btn.innerHTML = '<span class="spinner"></span> جاري التحويل...';
         btn.disabled = true;
+
+        const phoneEl = document.getElementById('walletPhone');
+        const phone_number = phoneEl ? phoneEl.value.trim() : '';
+        if (selectedMethod === 'wallet' && !phone_number) {
+          showToast('أدخل رقم المحفظة أولاً', 'error');
+          btn.innerHTML = orig;
+          btn.disabled = false;
+          return;
+        }
 
         try {
           const res = await fetch(`${API}/account/buy-tokens`, {
@@ -1017,10 +1032,15 @@
             body: JSON.stringify({
               package_id: selectedPackage,
               method: selectedMethod,
+              phone_number,
             }),
           });
           const data = await res.json();
-          if (data.checkout_url) {
+          if (data.payment_type === 'wallet_pending') {
+            showToast(data.message || 'تم إرسال طلب الدفع لهاتفك. افتح تطبيق المحفظة لتأكيد الدفع.', 'success');
+            btn.innerHTML = orig;
+            btn.disabled = false;
+          } else if (data.checkout_url) {
             showToast('جاري التحويل لصفحة الدفع...', 'info');
             setTimeout(() => {
               window.location.href = data.checkout_url;
@@ -1039,8 +1059,9 @@
       }
 
       async function subscribePlan(plan) {
-        const method = await pickPaymentMethod();
-        if (!method) return;
+        const result = await pickPaymentMethod();
+        if (!result) return;
+        const { method, phone_number } = result;
 
         showToast('جاري إنشاء رابط الدفع...', 'info');
 
@@ -1049,10 +1070,12 @@
             method: 'POST',
             headers: authHeaders(),
             credentials: 'include',
-            body: JSON.stringify({ plan, method }),
+            body: JSON.stringify({ plan, method, phone_number }),
           });
           const data = await res.json();
-          if (data.checkout_url) {
+          if (data.payment_type === 'wallet_pending') {
+            showToast(data.message || 'تم إرسال طلب الدفع لهاتفك. افتح تطبيق المحفظة لتأكيد الدفع.', 'success');
+          } else if (data.checkout_url) {
             showToast('جاري التحويل لصفحة الدفع...', 'info');
             setTimeout(() => {
               window.location.href = data.checkout_url;
@@ -1076,7 +1099,12 @@
               <p>اختر الطريقة المناسبة لإتمام الدفع</p>
               <div class="modal-btns">
                 <button class="btn btn-primary" data-val="card">💳 بطاقة ائتمان (Visa / Mastercard)</button>
-                <button class="btn btn-gold" data-val="wallet">📱 محفظة إلكترونية (فودافون كاش)</button>
+                <button class="btn btn-gold" id="modalWalletBtn" data-val="wallet">📱 محفظة إلكترونية (فودافون كاش)</button>
+                <div id="modalWalletPhone" style="display:none; margin: 8px 0; width:100%;">
+                  <input type="tel" id="modalPhoneInput" placeholder="01xxxxxxxxx رقم المحفظة"
+                    style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:#fff; font-size:15px; font-family:inherit; direction:ltr; text-align:center;" />
+                  <button class="btn btn-gold" id="modalWalletConfirm" style="margin-top:8px; width:100%;">✅ تأكيد الدفع بالمحفظة</button>
+                </div>
                 <button class="btn btn-outline" data-val="">❌ إلغاء</button>
               </div>
             </div>`;
@@ -1086,11 +1114,27 @@
               resolve(null);
             }
           });
-          overlay.querySelectorAll('.modal-btns button').forEach((btn) => {
-            btn.addEventListener('click', () => {
-              overlay.remove();
-              resolve(btn.dataset.val || null);
-            });
+          // Card button
+          overlay.querySelector('[data-val="card"]').addEventListener('click', () => {
+            overlay.remove();
+            resolve({ method: 'card', phone_number: '' });
+          });
+          // Wallet button — show phone input
+          overlay.querySelector('#modalWalletBtn').addEventListener('click', () => {
+            overlay.querySelector('#modalWalletPhone').style.display = 'block';
+            overlay.querySelector('#modalPhoneInput').focus();
+          });
+          // Wallet confirm
+          overlay.querySelector('#modalWalletConfirm')?.addEventListener('click', () => {
+            const phone = overlay.querySelector('#modalPhoneInput').value.trim();
+            if (!phone) { alert('أدخل رقم المحفظة'); return; }
+            overlay.remove();
+            resolve({ method: 'wallet', phone_number: phone });
+          });
+          // Cancel
+          overlay.querySelector('[data-val=""]').addEventListener('click', () => {
+            overlay.remove();
+            resolve(null);
           });
           document.body.appendChild(overlay);
         });

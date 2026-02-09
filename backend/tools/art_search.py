@@ -76,7 +76,7 @@ class ArtSearchTool(BaseTool):
                 
                 english_query = await llm_client.generate(
                     translation_prompt,
-                    provider="groq",
+                    provider="auto",
                     system_prompt="أنت متخصص في الفن والتاريخ الفني."
                 )
                 search_query = english_query.strip().strip('"\'')
@@ -184,7 +184,7 @@ class ArtSearchTool(BaseTool):
         
         result = await llm_client.generate(
             art_prompt,
-            provider="groq",
+            provider="auto",
             system_prompt="أنت خبير في تاريخ الفن العالمي والأعمال الفنية الشهيرة."
         )
         

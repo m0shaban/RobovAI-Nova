@@ -1,6 +1,7 @@
 """
 Wikipedia Tool - البحث في ويكيبيديا
 """
+
 import httpx
 from typing import Dict, Any
 from .base import BaseTool
@@ -10,23 +11,24 @@ class WikipediaTool(BaseTool):
     """
     أداة البحث في ويكيبيديا
     """
+
     @property
     def name(self) -> str:
         return "/wikipedia"
-    
+
     @property
     def description(self) -> str:
         return "📖 ويكيبيديا - البحث في الموسوعة الحرة (عربي/إنجليزي)"
-    
+
     @property
     def cost(self) -> int:
         return 15
-    
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         """
         البحث في ويكيبيديا
         """
-        
+
         if not user_input or len(user_input) < 2:
             return {
                 "status": "success",
@@ -49,9 +51,9 @@ class WikipediaTool(BaseTool):
 ✅ معلومات موثوقة
 
 💰 التكلفة: 15 توكن""",
-                "tokens_deducted": 0
+                "tokens_deducted": 0,
             }
-        
+
         try:
             # تحديد اللغة
             parts = user_input.split(maxsplit=1)
@@ -61,33 +63,36 @@ class WikipediaTool(BaseTool):
             else:
                 lang = "en"
                 query = user_input
-            
+
             # البحث في ويكيبيديا
             api_url = f"https://{lang}.wikipedia.org/w/api.php"
-            
+
             # أولاً: البحث عن العنوان
             search_params = {
                 "action": "opensearch",
                 "search": query,
                 "limit": 1,
-                "format": "json"
+                "format": "json",
             }
-            
-            async with httpx.AsyncClient(timeout=10.0) as client:
+
+            headers = {
+                "User-Agent": "RobovAI-Nova/1.0 (https://robovai.com; contact@robovai.com)"
+            }
+            async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
                 search_response = await client.get(api_url, params=search_params)
                 search_response.raise_for_status()
                 search_data = search_response.json()
-            
+
             if not search_data[1]:
                 return {
                     "status": "error",
                     "output": f"❌ لم أجد نتائج لـ: **{query}**",
-                    "tokens_deducted": 0
+                    "tokens_deducted": 0,
                 }
-            
+
             title = search_data[1][0]
             page_url = search_data[3][0]
-            
+
             # ثانياً: الحصول على ملخص المقالة
             extract_params = {
                 "action": "query",
@@ -97,24 +102,24 @@ class WikipediaTool(BaseTool):
                 "explaintext": True,
                 "piprop": "thumbnail",
                 "pithumbsize": 300,
-                "format": "json"
+                "format": "json",
             }
-            
-            async with httpx.AsyncClient(timeout=10.0) as client:
+
+            async with httpx.AsyncClient(timeout=10.0, headers=headers) as client:
                 extract_response = await client.get(api_url, params=extract_params)
                 extract_response.raise_for_status()
                 extract_data = extract_response.json()
-            
+
             pages = extract_data.get("query", {}).get("pages", {})
             page = list(pages.values())[0]
-            
+
             extract = page.get("extract", "لا يوجد ملخص متاح")
             thumbnail = page.get("thumbnail", {}).get("source", "")
-            
+
             # تقصير الملخص إذا كان طويلاً
             if len(extract) > 500:
                 extract = extract[:500] + "..."
-            
+
             output = f"""📖 **{title}**
 
 **الملخص:**
@@ -127,16 +132,12 @@ class WikipediaTool(BaseTool):
 
 ---
 💡 المصدر: ويكيبيديا - الموسوعة الحرة"""
-            
-            return {
-                "status": "success",
-                "output": output,
-                "tokens_deducted": self.cost
-            }
-            
+
+            return {"status": "success", "output": output, "tokens_deducted": self.cost}
+
         except Exception as e:
             return {
                 "status": "error",
                 "output": f"❌ خطأ: {str(e)}",
-                "tokens_deducted": 0
+                "tokens_deducted": 0,
             }

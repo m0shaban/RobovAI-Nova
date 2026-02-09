@@ -58,7 +58,7 @@ class UnsplashSearchTool(BaseTool):
                 
                 english_query = await llm_client.generate(
                     translation_prompt,
-                    provider="groq",
+                    provider="auto",
                     system_prompt="أنت مترجم محترف."
                 )
                 search_query = english_query.strip().strip('"\'')

@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>العرض التقديمي - RobovAI Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .presentation {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .slides-container {
+            padding: 40px;
+        }
+        
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        .slide-number {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .slide h2 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .slide .content {
+            color: #555;
+            font-size: 1.2em;
+            line-height: 1.8;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 40px;
+            background: #f8f9fa;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <div class="header">
+            <h1>العرض التقديمي</h1>
+            <div class="subtitle">Powered by RobovAI Nova 🤖</div>
+        </div>
+        
+        <div class="slides-container">
+            
+            <div class="slide">
+                <div class="slide-number">Slide 1/3</div>
+                <h2>Slide 1</h2>
+                <div class="content">
+                    مقدمة
+                </div>
+            </div>
+            
+            <div class="slide">
+                <div class="slide-number">Slide 2/3</div>
+                <h2>Slide 2</h2>
+                <div class="content">
+                    المحتوى
+                </div>
+            </div>
+            
+            <div class="slide">
+                <div class="slide-number">Slide 3/3</div>
+                <h2>Slide 3</h2>
+                <div class="content">
+                    الخاتمة
+                </div>
+            </div>
+            
+        </div>
+        
+        <div class="controls">
+            <button id="prevBtn" onclick="changeSlide(-1)">⏮ السابق</button>
+            <button id="nextBtn" onclick="changeSlide(1)">التالي ⏭</button>
+        </div>
+        
+        <div class="footer">
+            Created with ❤️ by RobovAI Nova
+        </div>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        
+        function showSlide(n) {
+            slides.forEach(s => s.classList.remove('active'));
+            
+            if (n >= slides.length) currentSlide = slides.length - 1;
+            if (n < 0) currentSlide = 0;
+            
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === slides.length - 1;
+        }
+        
+        function changeSlide(direction) {
+            currentSlide += direction;
+            showSlide(currentSlide);
+        }
+        
+        // Show first slide
+        showSlide(0);
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(1);
+            if (e.key === 'ArrowRight') changeSlide(-1);
+        });
+    </script>
+</body>
+</html>
+        

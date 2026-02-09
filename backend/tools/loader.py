@@ -1,21 +1,88 @@
 from backend.tools.registry import ToolRegistry
 
 # Import all tool modules to trigger registration
-from backend.tools.fun import (RoastTool, RizzTool, DreamTool, HoroscopeTool, FightTool,
-                               JokeTool, CatTool, DogTool, BoredTool, TriviaTool)
-from backend.tools.utility import (IpTool, CryptoTool, ShortenTool, PasswordTool, UuidTool,
-                                   QrTool, WebsiteStatusTool, CurrencyTool, ColorTool, UnitTool)
-from backend.tools.dev import (CodeFixTool, SqlTool, RegexTool, ExplainCodeTool, ArduinoTool,
-                               TimestampTool, HashTool, LoremTool, JsonTool, Base64Tool)
-from backend.tools.life import (WeatherTool, WikiTool, DefinitionTool, NumberFactTool, HolidayTool,
-                                TravelPlanTool, MealPlanTool, WorkoutTool, GiftTool, MovieRecTool)
-from backend.tools.edu import (SocialTool, ScriptTool, EmailFormalTool, EmailAngryTool,
-                               Eli5Tool, QuizTool, BookRecTool, TranslateEgyTool, GrammarTool, SynonymTool)
-from backend.tools.vision import (ScanReceiptTool, AnalyzeIdTool, ChartInsightsTool, 
-                                  AskPdfTool, VideoSummaryTool, MemeExplainTool)
-from backend.tools.audio import (VoiceNoteTool, TtsCustomTool, CleanAudioTool, MeetingNotesTool)
-from backend.tools.safety import (CheckContentTool, LegalSummaryTool, OutfitRateTool,
-                                  DishRecipeTool, CompareOffersTool, TranslateVoiceTool)
+from backend.tools.fun import (
+    RoastTool,
+    RizzTool,
+    DreamTool,
+    HoroscopeTool,
+    FightTool,
+    JokeTool,
+    CatTool,
+    DogTool,
+    BoredTool,
+    TriviaTool,
+)
+from backend.tools.utility import (
+    IpTool,
+    CryptoTool,
+    ShortenTool,
+    PasswordTool,
+    UuidTool,
+    QrTool,
+    WebsiteStatusTool,
+    CurrencyTool,
+    ColorTool,
+    UnitTool,
+)
+from backend.tools.dev import (
+    CodeFixTool,
+    SqlTool,
+    RegexTool,
+    ExplainCodeTool,
+    ArduinoTool,
+    TimestampTool,
+    HashTool,
+    LoremTool,
+    JsonTool,
+    Base64Tool,
+)
+from backend.tools.life import (
+    WeatherTool,
+    WikiTool,
+    DefinitionTool,
+    NumberFactTool,
+    HolidayTool,
+    TravelPlanTool,
+    MealPlanTool,
+    WorkoutTool,
+    GiftTool,
+    MovieRecTool,
+)
+from backend.tools.edu import (
+    SocialTool,
+    ScriptTool,
+    EmailFormalTool,
+    EmailAngryTool,
+    Eli5Tool,
+    QuizTool,
+    BookRecTool,
+    TranslateEgyTool,
+    GrammarTool,
+    SynonymTool,
+)
+from backend.tools.vision import (
+    ScanReceiptTool,
+    AnalyzeIdTool,
+    ChartInsightsTool,
+    AskPdfTool,
+    VideoSummaryTool,
+    MemeExplainTool,
+)
+from backend.tools.audio import (
+    VoiceNoteTool,
+    TtsCustomTool,
+    CleanAudioTool,
+    MeetingNotesTool,
+)
+from backend.tools.safety import (
+    CheckContentTool,
+    LegalSummaryTool,
+    OutfitRateTool,
+    DishRecipeTool,
+    CompareOffersTool,
+    TranslateVoiceTool,
+)
 from backend.tools.image_gen import ImageGenTool
 from backend.tools.unsplash import UnsplashSearchTool
 from backend.tools.pexels import PexelsSearchTool
@@ -65,8 +132,19 @@ from backend.tools.custom_utils import (
     DateCalculatorTool,
     RandomPickerTool,
     UnitConverterTool,
-    DiagramTool
+    DiagramTool,
 )
+
+# 🚀 Advanced Agent Tools (Manus-level capabilities)
+from backend.tools.advanced import (
+    DeepResearchTool,
+    PresentationTool,
+    CodeRunnerTool,
+    FileCreatorTool,
+    WebScraperTool,
+    YouTubeTool,
+)
+
 
 def register_all_tools():
     """
@@ -75,60 +153,96 @@ def register_all_tools():
     """
     tools = [
         # Fun
-        RoastTool, RizzTool, DreamTool, HoroscopeTool, FightTool,
-        JokeTool, CatTool, DogTool, BoredTool, TriviaTool,
-        
+        RoastTool,
+        RizzTool,
+        DreamTool,
+        HoroscopeTool,
+        FightTool,
+        JokeTool,
+        CatTool,
+        DogTool,
+        BoredTool,
+        TriviaTool,
         # Utility
-        IpTool, CryptoTool, ShortenTool, PasswordTool, UuidTool,
-        QrTool, WebsiteStatusTool, CurrencyTool, ColorTool, UnitTool,
-        
+        IpTool,
+        CryptoTool,
+        ShortenTool,
+        PasswordTool,
+        UuidTool,
+        QrTool,
+        WebsiteStatusTool,
+        CurrencyTool,
+        ColorTool,
+        UnitTool,
         # Dev
-        CodeFixTool, SqlTool, RegexTool, ExplainCodeTool, ArduinoTool,
-        TimestampTool, HashTool, LoremTool, JsonTool, Base64Tool,
-        
+        CodeFixTool,
+        SqlTool,
+        RegexTool,
+        ExplainCodeTool,
+        ArduinoTool,
+        TimestampTool,
+        HashTool,
+        LoremTool,
+        JsonTool,
+        Base64Tool,
         # Life
-        WeatherTool, WikiTool, DefinitionTool, NumberFactTool, HolidayTool,
-        TravelPlanTool, MealPlanTool, WorkoutTool, GiftTool, MovieRecTool,
-        
+        WeatherTool,
+        WikiTool,
+        DefinitionTool,
+        NumberFactTool,
+        HolidayTool,
+        TravelPlanTool,
+        MealPlanTool,
+        WorkoutTool,
+        GiftTool,
+        MovieRecTool,
         # Education
-        SocialTool, ScriptTool, EmailFormalTool, EmailAngryTool,
-        Eli5Tool, QuizTool, BookRecTool, TranslateEgyTool, GrammarTool, SynonymTool,
-        
+        SocialTool,
+        ScriptTool,
+        EmailFormalTool,
+        EmailAngryTool,
+        Eli5Tool,
+        QuizTool,
+        BookRecTool,
+        TranslateEgyTool,
+        GrammarTool,
+        SynonymTool,
         # Vision & Documents (Phase 7)
-        ScanReceiptTool, AnalyzeIdTool, ChartInsightsTool,
-        AskPdfTool, VideoSummaryTool, MemeExplainTool,
-        
+        ScanReceiptTool,
+        AnalyzeIdTool,
+        ChartInsightsTool,
+        AskPdfTool,
+        VideoSummaryTool,
+        MemeExplainTool,
         # Voice & Audio (Phase 8)
-        VoiceNoteTool, TtsCustomTool, CleanAudioTool, MeetingNotesTool,
-        
+        VoiceNoteTool,
+        TtsCustomTool,
+        CleanAudioTool,
+        MeetingNotesTool,
         # Safety & Business (Phase 9)
-        CheckContentTool, LegalSummaryTool, OutfitRateTool,
-        DishRecipeTool, CompareOffersTool, TranslateVoiceTool,
-        
+        CheckContentTool,
+        LegalSummaryTool,
+        OutfitRateTool,
+        DishRecipeTool,
+        CompareOffersTool,
+        TranslateVoiceTool,
         # Image Generation (NEW - Free!)
         ImageGenTool,
-        
         # Image Search from Unsplash (NEW!)
         UnsplashSearchTool,
-        
         # Image Search from Pexels (NEW!)
         PexelsSearchTool,
-        
         # Advanced AI Image Generation via OpenRouter (NEW!)
         OpenRouterImageTool,
-        
         # Entertainment & Art (NEW!)
         AniDBSearchTool,
         ArtSearchTool,
-        
         # Islamic Content (NEW!)
         QuranTool,
-        
         # Cloud Storage (NEW!)
         GofileTool,
         DDownloadTool,
         ImgBBTool,
-        
         # Enhanced Utilities (NEW!)
         CurrencyEnhancedTool,
         EmailValidatorTool,
@@ -137,7 +251,6 @@ def register_all_tools():
         DictionaryTool,
         WikipediaTool,
         AdvancedCalculatorTool,
-        
         # Entertainment & Fun (NEW!)
         ChuckNorrisTool,
         RandomFactTool,
@@ -149,7 +262,6 @@ def register_all_tools():
         JokeAPITool,
         AdviceSlipTool,
         BoredAPITool,
-        
         # Utilities & Info (NEW!)
         IPGeoTool,
         UUIDGeneratorTool,
@@ -159,27 +271,31 @@ def register_all_tools():
         GitHubUserTool,
         ColorInfoTool,
         MemeTool,
-        
         # Data Visualization (NEW!)
         ImageChartsTool,
         KrokiTool,
         QuickChartTool,
-        
         # 🆕 Custom Python Tools (Pure Logic - No APIs!)
-        MathSolverTool,          # /math - حل معادلات رياضية
-        TextAnalyzerTool,        # /analyze_text - تحليل النصوص
-        TextCaseTool,            # /case - تحويل حالة النص
-        PasswordStrengthTool,    # /check_password - فحص قوة كلمة المرور
-        DateCalculatorTool,      # /date_calc - حسابات التاريخ
-        RandomPickerTool,        # /pick - اختيار عشوائي
-        UnitConverterTool,       # /convert - تحويل الوحدات
-        DiagramTool,             # /diagram - مخططات Mermaid
+        MathSolverTool,  # /math - حل معادلات رياضية
+        TextAnalyzerTool,  # /analyze_text - تحليل النصوص
+        TextCaseTool,  # /case - تحويل حالة النص
+        PasswordStrengthTool,  # /check_password - فحص قوة كلمة المرور
+        DateCalculatorTool,  # /date_calc - حسابات التاريخ
+        RandomPickerTool,  # /pick - اختيار عشوائي
+        UnitConverterTool,  # /convert - تحويل الوحدات
+        DiagramTool,  # /diagram - مخططات Mermaid
+        # 🚀 Advanced Agent Tools (Manus-level!)
+        DeepResearchTool,  # /deep_research - بحث عميق متعدد المصادر
+        PresentationTool,  # /presentation - إنشاء عروض تقديمية
+        CodeRunnerTool,  # /run_code - تنفيذ كود Python
+        FileCreatorTool,  # /create_file - إنشاء ملفات
+        WebScraperTool,  # /scrape_url - استخراج محتوى الويب
+        YouTubeTool,  # /youtube_transcript - تفريغ فيديو يوتيوب
     ]
-    
+
     count = 0
     for t in tools:
         ToolRegistry.register(t)
         count += 1
-        
-    print(f"✅ Successfully Registered {count} Tools ({count} Total - Phase 25 Complete!).")
 
+    print(f"✅ Successfully Registered {count} Tools (Manus-Level Agent Ready! 🚀).")

@@ -3,121 +3,242 @@ from .base import BaseTool
 import httpx
 import uuid
 import secrets
+
 # import qrcode (removed)
 import io
 import base64
 
 # --- API Powered Utility Tools ---
 
+
 class IpTool(BaseTool):
     @property
-    def name(self): return "/ip"
+    def name(self):
+        return "/ip"
+
     @property
-    def description(self): return "Get details about an IP address."
+    def description(self):
+        return "Get details about an IP address."
+
     @property
-    def cost(self): return 0
-    
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         target = user_input if user_input else ""
         async with httpx.AsyncClient() as client:
             resp = await client.get(f"http://ip-api.com/json/{target}")
             data = resp.json()
-            return {"status": "success", "output": f"IP: {data.get('query')}\nCountry: {data.get('country')}\nISP: {data.get('isp')}", "tokens_deducted": self.cost}
+            return {
+                "status": "success",
+                "output": f"IP: {data.get('query')}\nCountry: {data.get('country')}\nISP: {data.get('isp')}",
+                "tokens_deducted": self.cost,
+            }
+
 
 class CryptoTool(BaseTool):
     @property
-    def name(self): return "/crypto"
+    def name(self):
+        return "/crypto"
+
     @property
-    def description(self): return "Get crypto price."
+    def description(self):
+        return "Get crypto price."
+
     @property
-    def cost(self): return 0
-    
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         coin = user_input.lower() or "bitcoin"
         async with httpx.AsyncClient() as client:
-            resp = await client.get(f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=usd")
+            resp = await client.get(
+                f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=usd"
+            )
             data = resp.json()
             if coin in data:
-                return {"status": "success", "output": f"{coin.title()}: ${data[coin]['usd']}", "tokens_deducted": self.cost}
-            return {"status": "error", "output": "Coin not found.", "tokens_deducted": 0}
+                return {
+                    "status": "success",
+                    "output": f"{coin.title()}: ${data[coin]['usd']}",
+                    "tokens_deducted": self.cost,
+                }
+            return {
+                "status": "error",
+                "output": "Coin not found.",
+                "tokens_deducted": 0,
+            }
+
 
 class ShortenTool(BaseTool):
     @property
-    def name(self): return "/shorten"
+    def name(self):
+        return "/shorten"
+
     @property
-    def description(self): return "Shorten a URL."
+    def description(self):
+        return "Shorten a URL."
+
     @property
-    def cost(self): return 0
-    
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         async with httpx.AsyncClient() as client:
-            resp = await client.get(f"http://tinyurl.com/api-create.php?url={user_input}")
-            return {"status": "success", "output": f"Short URL: {resp.text}", "tokens_deducted": self.cost}
+            resp = await client.get(
+                f"http://tinyurl.com/api-create.php?url={user_input}"
+            )
+            return {
+                "status": "success",
+                "output": f"Short URL: {resp.text}",
+                "tokens_deducted": self.cost,
+            }
+
 
 # --- Local Logic Tools ---
 
+
 class PasswordTool(BaseTool):
     @property
-    def name(self): return "/password"
+    def name(self):
+        return "/password"
+
     @property
-    def description(self): return "Generate a secure password."
+    def description(self):
+        return "Generate a secure password."
+
     @property
-    def cost(self): return 0
-    
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         length = 12
         if user_input.isdigit():
-             length = min(int(user_input), 64)
+            length = min(int(user_input), 64)
         pwd = secrets.token_urlsafe(length)
-        return {"status": "success", "output": f"Password: `{pwd}`", "tokens_deducted": self.cost}
+        return {
+            "status": "success",
+            "output": f"Password: `{pwd}`",
+            "tokens_deducted": self.cost,
+        }
+
 
 class UuidTool(BaseTool):
     @property
-    def name(self): return "/uuid"
+    def name(self):
+        return "/uuid"
+
     @property
-    def description(self): return "Generate a UUID v4."
+    def description(self):
+        return "Generate a UUID v4."
+
     @property
-    def cost(self): return 0
-    
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
-        return {"status": "success", "output": f"UUID: `{uuid.uuid4()}`", "tokens_deducted": self.cost}
+        return {
+            "status": "success",
+            "output": f"UUID: `{uuid.uuid4()}`",
+            "tokens_deducted": self.cost,
+        }
+
 
 class QrTool(BaseTool):
     @property
-    def name(self): return "/qr"
+    def name(self):
+        return "/qr"
+
     @property
-    def description(self): return "Generate a QR code."
+    def description(self):
+        return "Generate a QR code."
+
     @property
-    def cost(self): return 0
-    
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         # Using goqr.me API to avoid local dependencies
         data = user_input if user_input else "https://robovai.com"
-        api_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={data}"
-        return {"status": "success", "output": f"![QR Code]({api_url})", "tokens_deducted": self.cost}
+        api_url = (
+            f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={data}"
+        )
+        return {
+            "status": "success",
+            "output": f"![QR Code]({api_url})",
+            "tokens_deducted": self.cost,
+        }
+
 
 # --- Placeholder for others to reach 10 ---
 class WebsiteStatusTool(BaseTool):
     @property
-    def name(self): return "/website_status"
+    def name(self):
+        return "/website_status"
+
     @property
-    def description(self): return "Check if a website is up."
+    def description(self):
+        return "Check if a website is up."
+
     @property
-    def cost(self): return 0
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
-         return {"status": "success", "output": f"Website {user_input} is UP (200 OK)", "tokens_deducted": 0}
+        url = user_input.strip()
+        if not url:
+            return {
+                "status": "error",
+                "output": "Please provide a URL to check.",
+                "tokens_deducted": 0,
+            }
+        if not url.startswith("http"):
+            url = f"https://{url}"
+        try:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+                resp = await client.head(url)
+                code = resp.status_code
+                if code < 400:
+                    return {
+                        "status": "success",
+                        "output": f"✅ Website {url} is UP ({code})",
+                        "tokens_deducted": 0,
+                    }
+                else:
+                    return {
+                        "status": "success",
+                        "output": f"⚠️ Website {url} returned status {code}",
+                        "tokens_deducted": 0,
+                    }
+        except httpx.ConnectTimeout:
+            return {
+                "status": "success",
+                "output": f"❌ Website {url} is DOWN (Connection Timeout)",
+                "tokens_deducted": 0,
+            }
+        except Exception as e:
+            return {
+                "status": "success",
+                "output": f"❌ Website {url} is DOWN ({str(e)[:100]})",
+                "tokens_deducted": 0,
+            }
+
 
 class CurrencyTool(BaseTool):
     @property
-    def name(self): return "/currency"
+    def name(self):
+        return "/currency"
+
     @property
-    def description(self): return "💱 تحويل العملات - أسعار حية ومحدثة"
+    def description(self):
+        return "💱 تحويل العملات - أسعار حية ومحدثة"
+
     @property
-    def cost(self): return 0
-    
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         """تحويل العملات باستخدام API مجاني"""
-        
+
         if not user_input or len(user_input) < 2:
             return {
                 "status": "success",
@@ -139,21 +260,26 @@ class CurrencyTool(BaseTool):
 **مثال:**
 `/currency 100 USD EGP`
 سيحول 100 دولار إلى جنيه مصري""",
-                "tokens_deducted": 0
+                "tokens_deducted": 0,
             }
-        
+
         try:
             import re
-            
+
             # تحليل المدخل
-            user_input = user_input.upper().replace("TO", " ").replace("الى", " ").replace("إلى", " ")
+            user_input = (
+                user_input.upper()
+                .replace("TO", " ")
+                .replace("الى", " ")
+                .replace("إلى", " ")
+            )
             parts = user_input.split()
-            
+
             # حالات مختلفة
             amount = 1.0
             from_curr = "USD"
             to_curr = "EGP"
-            
+
             # /currency USD -> سعر الدولار
             if len(parts) == 1:
                 from_curr = parts[0][:3]
@@ -176,18 +302,19 @@ class CurrencyTool(BaseTool):
                 else:
                     from_curr = parts[0][:3]
                     to_curr = parts[1][:3]
-            
-            # الحصول على سعر الصرف
-            url = f"https://api.exchangerate.host/convert?from={from_curr}&to={to_curr}&amount={amount}"
-            
+
+            # الحصول على سعر الصرف - Using free API
+            url = f"https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/{from_curr.lower()}.json"
+
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.get(url)
                 data = resp.json()
-            
-            if data.get("success") and data.get("result"):
-                result = data["result"]
-                rate = data.get("info", {}).get("rate", result/amount if amount else 1)
-                
+
+            rates = data.get(from_curr.lower(), {})
+            if to_curr.lower() in rates:
+                rate = rates[to_curr.lower()]
+                result = amount * rate
+
                 output = f"""💱 **تحويل العملات**
 
 **المبلغ:** {amount:,.2f} {from_curr}
@@ -197,8 +324,8 @@ class CurrencyTool(BaseTool):
 1 {from_curr} = {rate:.4f} {to_curr}
 
 ---
-📊 المصدر: ExchangeRate.host (محدث)"""
-                
+📊 المصدر: Currency API (محدث)"""
+
                 return {"status": "success", "output": output, "tokens_deducted": 0}
             else:
                 # Fallback محلي للأسعار الشائعة
@@ -211,19 +338,23 @@ class CurrencyTool(BaseTool):
                     ("USD", "SAR"): 3.75,
                     ("EUR", "USD"): 1.08,
                 }
-                
+
                 key = (from_curr, to_curr)
                 rev_key = (to_curr, from_curr)
-                
+
                 if key in rates:
                     rate = rates[key]
                 elif rev_key in rates:
                     rate = 1 / rates[rev_key]
                 else:
-                    return {"status": "error", "output": f"❌ لا أستطيع تحويل {from_curr} إلى {to_curr}", "tokens_deducted": 0}
-                
+                    return {
+                        "status": "error",
+                        "output": f"❌ لا أستطيع تحويل {from_curr} إلى {to_curr}",
+                        "tokens_deducted": 0,
+                    }
+
                 result = amount * rate
-                
+
                 output = f"""💱 **تحويل العملات**
 
 **المبلغ:** {amount:,.2f} {from_curr}
@@ -234,28 +365,111 @@ class CurrencyTool(BaseTool):
 
 ---
 ⚠️ أسعار تقريبية - للتحديث استخدم /currency_live"""
-                
+
                 return {"status": "success", "output": output, "tokens_deducted": 0}
-            
+
         except Exception as e:
-            return {"status": "error", "output": f"❌ خطأ: {str(e)}", "tokens_deducted": 0}
+            return {
+                "status": "error",
+                "output": f"❌ خطأ: {str(e)}",
+                "tokens_deducted": 0,
+            }
+
 
 class ColorTool(BaseTool):
     @property
-    def name(self): return "/color"
+    def name(self):
+        return "/color"
+
     @property
-    def description(self): return "Get random hex color."
+    def description(self):
+        return "Get random hex color."
+
     @property
-    def cost(self): return 0
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
-         return {"status": "success", "output": "Color: #FF5733 \n![Color](https://singlecolorimage.com/get/ff5733/100x100)", "tokens_deducted": 0}
+        import random
+
+        r, g, b = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+        hex_color = f"#{r:02X}{g:02X}{b:02X}"
+        return {
+            "status": "success",
+            "output": f"🎨 Color: {hex_color}\n![Color](https://singlecolorimage.com/get/{hex_color[1:]}/100x100)",
+            "tokens_deducted": 0,
+        }
+
 
 class UnitTool(BaseTool):
     @property
-    def name(self): return "/unit"
+    def name(self):
+        return "/unit"
+
     @property
-    def description(self): return "Convert units."
+    def description(self):
+        return "Convert units."
+
     @property
-    def cost(self): return 0
+    def cost(self):
+        return 0
+
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
-         return {"status": "success", "output": "10 kg = 22 lbs", "tokens_deducted": 0}
+        conversions = {
+            ("kg", "lbs"): 2.20462,
+            ("lbs", "kg"): 0.453592,
+            ("km", "miles"): 0.621371,
+            ("miles", "km"): 1.60934,
+            ("m", "ft"): 3.28084,
+            ("ft", "m"): 0.3048,
+            ("cm", "in"): 0.393701,
+            ("in", "cm"): 2.54,
+            ("c", "f"): lambda x: x * 9 / 5 + 32,
+            ("f", "c"): lambda x: (x - 32) * 5 / 9,
+            ("l", "gal"): 0.264172,
+            ("gal", "l"): 3.78541,
+            ("g", "oz"): 0.035274,
+            ("oz", "g"): 28.3495,
+        }
+        try:
+            parts = user_input.lower().replace("to", " ").split()
+            if len(parts) >= 3:
+                value = float(parts[0])
+                from_u = parts[1].strip()
+                to_u = parts[2].strip()
+            elif len(parts) == 2:
+                value = float(parts[0])
+                from_u = parts[1].strip()
+                to_u = (
+                    "lbs"
+                    if from_u == "kg"
+                    else "km" if from_u == "miles" else "f" if from_u == "c" else "m"
+                )
+            else:
+                return {
+                    "status": "error",
+                    "output": "Usage: /unit 10 kg lbs",
+                    "tokens_deducted": 0,
+                }
+
+            key = (from_u, to_u)
+            if key in conversions:
+                factor = conversions[key]
+                result = factor(value) if callable(factor) else value * factor
+                return {
+                    "status": "success",
+                    "output": f"📏 {value} {from_u} = {result:.4f} {to_u}",
+                    "tokens_deducted": 0,
+                }
+            else:
+                return {
+                    "status": "error",
+                    "output": f"Unsupported conversion: {from_u} to {to_u}.\nSupported: kg/lbs, km/miles, m/ft, cm/in, c/f, l/gal, g/oz",
+                    "tokens_deducted": 0,
+                }
+        except Exception as e:
+            return {
+                "status": "error",
+                "output": f"Error: {str(e)}. Usage: /unit 10 kg lbs",
+                "tokens_deducted": 0,
+            }

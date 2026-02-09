@@ -46,6 +46,7 @@ except Exception as e:
     logger.error(f"Telegram bot init failed: {e}")
     telegram_app = None
 
+
 @app.on_event("startup")
 async def on_startup():
     """Run startup tasks"""
@@ -69,6 +70,7 @@ async def on_startup():
         except Exception as e:
             logger.error(f"❌ Failed to set Telegram webhook: {e}")
 
+
 @app.on_event("shutdown")
 async def on_shutdown():
     """Run shutdown tasks"""
@@ -82,7 +84,6 @@ async def on_shutdown():
             logger.error(f"❌ Failed to stop Telegram Bot: {e}")
 
 
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -90,6 +91,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files for uploads (presentations, files, etc.)
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 @app.exception_handler(Exception)
@@ -331,7 +336,9 @@ async def handle_webhook(
             # Enforce real user_id
             payload.user_id = str(current_user["id"])
 
-        logger.info(f"📨 Webhook received from {payload.user_id} [{payload.platform}]: {payload.message[:100]}")
+        logger.info(
+            f"📨 Webhook received from {payload.user_id} [{payload.platform}]: {payload.message[:100]}"
+        )
 
         user_id = payload.user_id
         message = payload.message.strip()
@@ -346,37 +353,41 @@ async def handle_webhook(
 
         # 2. ROUTE MESSAGE using SmartToolRouter 🚀
         response_text = ""
-        
+
         try:
             from backend.core.smart_router import SmartToolRouter
-            
+
             routing_result = await SmartToolRouter.route_message(
                 message, user_id, platform=payload.platform
             )
-            
+
             logger.info(f"Routing result: {routing_result['type']}")
-            
+
             if routing_result["type"] == "tool":
                 response_text = routing_result["result"].get("output", "تم التنفيذ ✅")
                 logger.info(f"Tool executed: {routing_result.get('tool_name')}")
             elif routing_result["type"] == "error":
-                response_text = f"❌ حدث خطأ: {routing_result.get('error', 'خطأ غير معروف')}"
+                response_text = (
+                    f"❌ حدث خطأ: {routing_result.get('error', 'خطأ غير معروف')}"
+                )
                 logger.error(f"Tool error: {routing_result.get('error')}")
             else:
                 # Chat mode - use LLM
                 from backend.core.llm import llm_client
-                
+
                 # Get context if web
                 context_str = ""
                 if payload.platform == "web":
                     try:
-                        history = await db_client.get_recent_messages(int(user_id), limit=5)
+                        history = await db_client.get_recent_messages(
+                            int(user_id), limit=5
+                        )
                         context_str = "\n".join(
                             [f"{msg['role']}: {msg['content']}" for msg in history]
                         )
                     except Exception as e:
                         logger.warning(f"Failed to get history: {e}")
-                
+
                 system_persona = """
                 أنت نوفا (Nova)، مساعد ذكي متطور من تطوير RobovAI Solutions.
                 - تتحدث باللهجة المصرية الودودة أو العربية الفصحى المبسطة.
@@ -384,11 +395,17 @@ async def handle_webhook(
                 - هدفك مساعدة المستخدم في مهامه.
                 - إذا لم تفهم، اطلب التوضيح بأدب.
                 """
-                
-                prompt = f"Context:\n{context_str}\n\nUser: {message}" if context_str else message
-                response_text = await llm_client.generate(prompt, system_prompt=system_persona)
+
+                prompt = (
+                    f"Context:\n{context_str}\n\nUser: {message}"
+                    if context_str
+                    else message
+                )
+                response_text = await llm_client.generate(
+                    prompt, system_prompt=system_persona
+                )
                 logger.info(f"LLM response generated for user {user_id}")
-                
+
         except Exception as e:
             logger.error(f"Routing/LLM error: {e}", exc_info=True)
             response_text = "⚠️ عذراً، حدث خطأ تقني. يرجى المحاولة مرة أخرى."
@@ -402,7 +419,7 @@ async def handle_webhook(
 
         logger.info(f"✅ Response sent to {user_id}")
         return {"status": "success", "response": response_text}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -611,12 +628,12 @@ async def telegram_webhook(request: Request):
     """
     try:
         logger.info("📨 Telegram webhook received")
-        
+
         from backend.adapters.platforms import TelegramAdapter, OutgoingMessage
 
         payload = await request.json()
         logger.info(f"Telegram payload: {payload}")
-        
+
         bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
         if not bot_token:
@@ -652,7 +669,7 @@ async def telegram_webhook(request: Request):
 
                 response = await llm_client.generate(
                     message.text,
-                    provider="groq",
+                    provider="auto",
                     system_prompt="أنت RobovAI Nova Agent - مساعد ذكي مصري ودود. رد بالمصري العامي.",
                 )
                 logger.info(f"LLM response generated for user {message.user_id}")
@@ -665,7 +682,7 @@ async def telegram_webhook(request: Request):
                     reply_to=message.message_id,
                 )
             )
-            
+
             logger.info(f"✅ Successfully sent response to user {message.user_id}")
 
         except Exception as routing_error:
@@ -676,7 +693,7 @@ async def telegram_webhook(request: Request):
                     OutgoingMessage(
                         text="⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك. يرجى المحاولة مرة أخرى.",
                         chat_id=message.chat_id,
-                        reply_to=message.message_id
+                        reply_to=message.message_id,
                     )
                 )
             except:
@@ -694,7 +711,11 @@ async def telegram_webhook(request: Request):
                 chat_id = msg.get("chat", {}).get("id")
                 message_id = msg.get("message_id")
                 if chat_id:
-                    from backend.adapters.platforms import TelegramAdapter, OutgoingMessage
+                    from backend.adapters.platforms import (
+                        TelegramAdapter,
+                        OutgoingMessage,
+                    )
+
                     bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
                     if bot_token:
                         adapter = TelegramAdapter(bot_token)
@@ -702,12 +723,12 @@ async def telegram_webhook(request: Request):
                             OutgoingMessage(
                                 text="⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك.",
                                 chat_id=str(chat_id),
-                                reply_to=str(message_id) if message_id else None
+                                reply_to=str(message_id) if message_id else None,
                             )
                         )
         except Exception as notify_error:
             logger.error(f"Failed to notify user of error: {notify_error}")
-            
+
         return {"ok": True}
 
 
@@ -748,7 +769,7 @@ async def whatsapp_webhook(request: Request):
 
             response = await llm_client.generate(
                 message.text,
-                provider="groq",
+                provider="auto",
                 system_prompt="أنت RobovAI Nova Agent - مساعد ذكي مصري ودود. رد بالمصري العامي.",
             )
 
@@ -818,7 +839,7 @@ async def messenger_webhook(request: Request):
 
             response = await llm_client.generate(
                 message.text,
-                provider="groq",
+                provider="auto",
                 system_prompt="أنت RobovAI Nova Agent - مساعد ذكي مصري ودود. رد بالمصري العامي.",
             )
 
@@ -956,9 +977,453 @@ async def health_check():
     }
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 🤖 AI AGENT ENDPOINTS (LangGraph)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class AgentRequest(BaseModel):
+    """Request model for agent endpoint"""
+
+    message: str
+    user_id: Optional[str] = "anonymous"
+    platform: Optional[str] = "web"
+    thread_id: Optional[str] = None
+    use_agent: Optional[bool] = True  # If False, use SmartRouter instead
+
+
+@app.post("/agent/run")
+async def run_agent_endpoint(
+    request: AgentRequest,
+    current_user: Optional[dict] = Depends(get_current_user_from_cookie),
+):
+    """
+    🚀 Execute a task using the Nova AI Agent (LangGraph)
+
+    This endpoint uses the advanced AI Agent for complex multi-step tasks.
+    The agent can:
+    - Analyze and plan complex tasks
+    - Execute multiple tools in sequence
+    - Retry on failures
+    - Learn from context
+
+    Use this for complex requests like:
+    - "ارسم صورة قطة وترجم وصفها للفرنساوي"
+    - "ابحث عن مصر في ويكيبيديا واحكيلي نكتة عنها"
+    """
+    try:
+        # Use authenticated user ID if available
+        user_id = str(current_user["id"]) if current_user else request.user_id
+
+        logger.info(f"🤖 Agent request from {user_id}: {request.message[:50]}...")
+
+        if request.use_agent:
+            # Use the LangGraph Agent
+            from backend.agent.graph import run_agent
+
+            result = await run_agent(
+                message=request.message, user_id=user_id, platform=request.platform
+            )
+
+            logger.info(f"✅ Agent completed. Success: {result.get('success')}")
+
+            return {
+                "status": "success" if result.get("success") else "error",
+                "response": result.get("final_answer", "تم!"),
+                "tool_results": result.get("tool_results", []),
+                "plan": result.get("plan", []),
+                "phase": result.get("phase"),
+                "errors": result.get("errors", []),
+            }
+        else:
+            # Fallback to SmartRouter for simple tasks
+            from backend.core.smart_router import SmartToolRouter
+
+            routing_result = await SmartToolRouter.route_message(
+                request.message, user_id, platform=request.platform
+            )
+
+            if routing_result["type"] == "tool":
+                response = routing_result["result"].get("output", "تم التنفيذ ✅")
+            else:
+                from backend.core.llm import llm_client
+
+                response = await llm_client.generate(
+                    request.message, system_prompt="أنت نوفا، مساعد ذكي من RobovAI."
+                )
+
+            return {"status": "success", "response": response}
+
+    except Exception as e:
+        logger.error(f"❌ Agent error: {e}", exc_info=True)
+        return {"status": "error", "response": f"❌ حدث خطأ: {str(e)}", "error": str(e)}
+
+
+@app.post("/agent/stream")
+async def stream_agent_endpoint(request: AgentRequest):
+    """
+    🔄 Stream agent execution step by step (POST version)
+
+    Returns Server-Sent Events for real-time updates.
+    """
+    return await _stream_agent(request.message, request.user_id, request.platform)
+
+
+@app.get("/agent/stream")
+async def stream_agent_get(
+    message: str, user_id: str = "web_user", platform: str = "web"
+):
+    """
+    🔄 Stream agent execution step by step (GET version for EventSource)
+
+    Returns Server-Sent Events for real-time updates.
+    """
+    return await _stream_agent(message, user_id, platform)
+
+
+async def _stream_agent(message: str, user_id: str, platform: str):
+    """Internal streaming function used by both GET and POST endpoints"""
+    from fastapi.responses import StreamingResponse
+    import json
+
+    async def event_generator():
+        try:
+            from backend.agent.graph import NovaAgent
+            import asyncio
+
+            logger.info(f"🎬 Starting stream for: {message[:50]}...")
+
+            # Send start event
+            yield f"event: started\ndata: {json.dumps({'message': 'بدأ التنفيذ...'}, ensure_ascii=False)}\n\n"
+
+            agent = NovaAgent(use_persistence=False)
+            last_phase = None
+
+            # Create iterator for the stream
+            iterator = agent.stream(
+                message, user_id=user_id, platform=platform
+            ).__aiter__()
+
+            # Task based iteration to support non-cancelling heartbeats
+            next_item_task = asyncio.create_task(iterator.__anext__())
+
+            while True:
+                try:
+                    done, pending = await asyncio.wait(
+                        [next_item_task],
+                        timeout=5.0,
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+
+                    if next_item_task in done:
+                        try:
+                            state = next_item_task.result()
+                            # Queue next item immediately
+                            next_item_task = asyncio.create_task(iterator.__anext__())
+
+                            # Send state update
+                            for node_name, node_state in state.items():
+                                if not isinstance(node_state, dict):
+                                    continue
+
+                                phase = node_state.get("phase", "unknown")
+                                phase_upper = phase.upper() if phase else "UNKNOWN"
+
+                                # Only send if phase changed
+                                if phase != last_phase:
+                                    last_phase = phase
+
+                                    if phase_upper == "THINKING":
+                                        yield f"event: thinking\ndata: {json.dumps({'message': '🧠 جاري التفكير...'}, ensure_ascii=False)}\n\n"
+
+                                    elif phase_upper == "PLANNING":
+                                        plan = node_state.get("plan_steps", [])
+                                        yield f"event: planning\ndata: {json.dumps({'plan': plan, 'message': '📋 تم وضع الخطة'}, ensure_ascii=False)}\n\n"
+
+                                    elif phase_upper == "ACTING":
+                                        current_step = node_state.get(
+                                            "current_step_index", 0
+                                        )
+                                        plan_steps = node_state.get("plan_steps", [])
+                                        if current_step < len(plan_steps):
+                                            step = plan_steps[current_step]
+                                            yield f"event: executing\ndata: {json.dumps({'step': step, 'index': current_step + 1, 'total': len(plan_steps)}, ensure_ascii=False)}\n\n"
+
+                                    elif phase_upper == "OBSERVING":
+                                        yield f"event: observing\ndata: {json.dumps({'message': '👁️ جاري المراجعة...'}, ensure_ascii=False)}\n\n"
+
+                                    elif phase_upper == "REFLECTING":
+                                        yield f"event: reflecting\ndata: {json.dumps({'message': '🔄 جاري التحقق...'}, ensure_ascii=False)}\n\n"
+
+                                    elif phase_upper == "COMPLETED":
+                                        final_answer = node_state.get(
+                                            "final_answer", "تم!"
+                                        )
+                                        tool_results = node_state.get(
+                                            "tool_results", []
+                                        )
+                                        yield f"event: completed\ndata: {json.dumps({'final_answer': final_answer, 'tool_count': len(tool_results)}, ensure_ascii=False)}\n\n"
+
+                        except StopAsyncIteration:
+                            break
+                        except Exception as e:
+                            logger.error(f"Stream logic error: {e}")
+                            break
+                    else:
+                        # Timeout - send heartbeat without cancelling
+                        yield f": keep-alive\n\n"
+                        continue
+
+                except Exception as e:
+                    logger.error(f"Event loop error: {e}")
+                    break
+
+            yield f"event: done\ndata: {json.dumps({'done': True}, ensure_ascii=False)}\n\n"
+            logger.info("✅ Stream completed successfully")
+
+        except Exception as e:
+            logger.error(f"❌ Stream error: {e}", exc_info=True)
+            yield f"event: error\ndata: {json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.get("/agent/state/{thread_id}")
+async def get_agent_state(thread_id: str):
+    """
+    📊 Get the current state of an agent thread
+
+    Useful for Human-in-the-loop scenarios.
+    """
+    try:
+        from backend.agent.graph import get_agent
+
+        agent = get_agent()
+        state = agent.get_state(thread_id)
+
+        if state:
+            return {"status": "success", "state": dict(state)}
+        else:
+            return {"status": "not_found", "message": "Thread not found"}
+
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 📜 HISTORY ENDPOINTS
+# ═══════════════════════════════════════════════════════════════
+
+
+@app.get("/history/conversations")
+async def list_conversations(user_id: str = "default"):
+    """قائمة محادثات المستخدم"""
+    try:
+        from backend.history.manager import get_conversation_manager
+
+        manager = get_conversation_manager()
+        conversations = manager.list_conversations(user_id)
+        return {"status": "success", "conversations": conversations}
+    except Exception as e:
+        logger.error(f"Error listing conversations: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/history/conversation/{conv_id}")
+async def get_conversation(conv_id: str, user_id: str = "default"):
+    """الحصول على محادثة"""
+    try:
+        from backend.history.manager import get_conversation_manager
+        from dataclasses import asdict
+
+        manager = get_conversation_manager()
+        conv = manager.get_conversation(user_id, conv_id)
+        if conv:
+            return {"status": "success", "conversation": asdict(conv)}
+        return {"status": "not_found"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.post("/history/conversation")
+async def create_conversation(user_id: str = "default", title: str = "محادثة جديدة"):
+    """إنشاء محادثة جديدة"""
+    try:
+        from backend.history.manager import get_conversation_manager
+        from dataclasses import asdict
+
+        manager = get_conversation_manager()
+        conv = manager.create_conversation(user_id, title)
+        return {
+            "status": "success",
+            "conversation": {"id": conv.id, "title": conv.title},
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.post("/history/message")
+async def add_message(conv_id: str, role: str, content: str, user_id: str = "default"):
+    """إضافة رسالة"""
+    try:
+        from backend.history.manager import get_conversation_manager
+
+        manager = get_conversation_manager()
+        msg = manager.add_message(user_id, conv_id, role, content)
+        return {"status": "success", "message_id": msg.id}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/history/search")
+async def search_conversations(user_id: str, query: str, limit: int = 10):
+    """بحث في المحادثات"""
+    try:
+        from backend.history.manager import get_conversation_manager
+
+        manager = get_conversation_manager()
+        results = manager.search_conversations(user_id, query, limit)
+        return {"status": "success", "results": results}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.delete("/history/conversation/{conv_id}")
+async def delete_conversation(conv_id: str, user_id: str = "default"):
+    """حذف محادثة"""
+    try:
+        from backend.history.manager import get_conversation_manager
+
+        manager = get_conversation_manager()
+        deleted = manager.delete_conversation(user_id, conv_id)
+        return {"status": "success" if deleted else "not_found"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/history/export/{conv_id}")
+async def export_conversation(
+    conv_id: str, user_id: str = "default", format: str = "json"
+):
+    """تصدير محادثة"""
+    try:
+        from backend.history.manager import get_conversation_manager
+
+        manager = get_conversation_manager()
+        content = manager.export_conversation(user_id, conv_id, format)
+        if content:
+            return {"status": "success", "content": content, "format": format}
+        return {"status": "not_found"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 📊 ADMIN & ANALYTICS ENDPOINTS
+# ═══════════════════════════════════════════════════════════════
+
+
+@app.get("/admin/stats")
+async def get_admin_stats():
+    """إحصائيات لوحة التحكم"""
+    try:
+        tools = ToolRegistry.list_tools()
+
+        # إحصائيات الأدوات
+        tool_stats = {"total": len(tools), "by_category": {}}
+
+        for tool_name in tools:
+            try:
+                tool_cls = ToolRegistry.get_tool(tool_name)
+                if tool_cls:
+                    category = getattr(tool_cls, "category", "other")
+                    tool_stats["by_category"][category] = (
+                        tool_stats["by_category"].get(category, 0) + 1
+                    )
+            except:
+                pass
+
+        return {
+            "status": "success",
+            "stats": {
+                "tools": tool_stats,
+                "system": {
+                    "uptime": "running",
+                    "version": "2.0.0",
+                    "agent": "Nova Multi-Agent",
+                },
+            },
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/admin/tools")
+async def get_tools_detailed():
+    """قائمة الأدوات مع التفاصيل"""
+    try:
+        tools = ToolRegistry.list_tools()
+        detailed = []
+
+        for tool_name in tools:
+            try:
+                tool_cls = ToolRegistry.get_tool(tool_name)
+                if tool_cls:
+                    detailed.append(
+                        {
+                            "name": tool_name,
+                            "description": getattr(tool_cls, "description", ""),
+                            "category": getattr(tool_cls, "category", "other"),
+                            "enabled": True,
+                        }
+                    )
+            except:
+                pass
+
+        return {"status": "success", "tools": detailed, "total": len(detailed)}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/admin/memory/{user_id}")
+async def get_user_memory(user_id: str):
+    """الحصول على ذاكرة المستخدم"""
+    try:
+        from backend.agent.memory import get_memory_manager
+
+        manager = get_memory_manager()
+        context = manager.get_context(user_id, f"session_{user_id}")
+        return {"status": "success", "memory": context}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/admin/logs")
+async def get_system_logs(limit: int = 50):
+    """الحصول على آخر السجلات"""
+    try:
+        logs = []
+        log_file = Path("logs/robovai.log")
+
+        if log_file.exists():
+            with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
+                lines = f.readlines()
+                logs = lines[-limit:]
+
+        return {"status": "success", "logs": logs}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)

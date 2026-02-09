@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Type
+from pydantic import BaseModel
+
 
 class BaseTool(ABC):
     """
     Abstract Base Class for all RobovAI tools.
     """
+
     def __init__(self, context: Optional[Dict[str, Any]] = None):
         self.context = context or {}
 
@@ -13,6 +16,11 @@ class BaseTool(ABC):
     def name(self) -> str:
         """Name of the tool (e.g., '/social', '/imagine')."""
         pass
+
+    @property
+    def args_schema(self) -> Optional[Type[BaseModel]]:
+        """Optional Pydantic model for tool arguments. If None, defaults to single 'query' string."""
+        return None
 
     @property
     @abstractmethod

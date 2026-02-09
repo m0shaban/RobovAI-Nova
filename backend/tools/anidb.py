@@ -67,7 +67,7 @@ class AniDBSearchTool(BaseTool):
                 
                 english_query = await llm_client.generate(
                     translation_prompt,
-                    provider="groq",
+                    provider="auto",
                     system_prompt="أنت متخصص في الأنمي والمانجا."
                 )
                 search_query = english_query.strip().strip('"\'')
@@ -95,7 +95,7 @@ class AniDBSearchTool(BaseTool):
             
             result = await llm_client.generate(
                 anime_prompt,
-                provider="groq",
+                provider="auto",
                 system_prompt="أنت خبير في الأنمي والمانجا وتمتلك معرفة واسعة بجميع العناوين."
             )
             

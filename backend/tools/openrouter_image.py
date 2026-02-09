@@ -78,7 +78,7 @@ class OpenRouterImageTool(BaseTool):
                 
                 english_prompt = await llm_client.generate(
                     translation_prompt,
-                    provider="groq",
+                    provider="auto",
                     system_prompt="أنت مترجم محترف لأوصاف توليد الصور بالذكاء الاصطناعي."
                 )
                 english_prompt = english_prompt.strip().strip('"\'')

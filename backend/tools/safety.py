@@ -122,6 +122,6 @@ class TranslateVoiceTool(BaseTool):
         
         # Translate to Egyptian Arabic
         prompt = f"Translate this to Egyptian Arabic: {english_text}"
-        output = await llm_client.generate(prompt, provider="groq")
+        output = await llm_client.generate(prompt, provider="auto")
         
         return {"status": "success", "output": f"🌍 Translation:\n{output}", "tokens_deducted": self.cost}

@@ -15,7 +15,7 @@ class RoastTool(BaseTool):
     
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         prompt = f"Give a savage, funny roast for: {user_input}"
-        output = await llm_client.generate(prompt, provider="groq", system_prompt="You are a clear-cut roast master.")
+        output = await llm_client.generate(prompt, provider="auto", system_prompt="You are a clear-cut roast master.")
         return {"status": "success", "output": output, "tokens_deducted": self.cost}
 
 class RizzTool(BaseTool):
@@ -28,7 +28,7 @@ class RizzTool(BaseTool):
     
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         prompt = f"Generate a smooth, witty 'rizz' reply to: {user_input}"
-        output = await llm_client.generate(prompt, provider="groq")
+        output = await llm_client.generate(prompt, provider="auto")
         return {"status": "success", "output": output, "tokens_deducted": self.cost}
 
 class DreamTool(BaseTool):
@@ -41,7 +41,7 @@ class DreamTool(BaseTool):
     
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         prompt = f"Interpret this dream psychologically: {user_input}"
-        output = await llm_client.generate(prompt, provider="groq")
+        output = await llm_client.generate(prompt, provider="auto")
         return {"status": "success", "output": output, "tokens_deducted": self.cost}
 
 class HoroscopeTool(BaseTool):
@@ -54,7 +54,7 @@ class HoroscopeTool(BaseTool):
     
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         prompt = f"Give a funny and accurate daily horoscope for: {user_input}"
-        output = await llm_client.generate(prompt, provider="groq")
+        output = await llm_client.generate(prompt, provider="auto")
         return {"status": "success", "output": output, "tokens_deducted": self.cost}
 
 class FightTool(BaseTool):
@@ -67,7 +67,7 @@ class FightTool(BaseTool):
     
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         prompt = f"Simulate a short funny fight scenario between: {user_input}"
-        output = await llm_client.generate(prompt, provider="groq")
+        output = await llm_client.generate(prompt, provider="auto")
         return {"status": "success", "output": output, "tokens_deducted": self.cost}
 
 # --- API Powered Tools ---

@@ -479,7 +479,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
                 if llm_client:
-                    response = await llm_client.generate(message, provider="groq", system_prompt=system_prompt)
+                    response = await llm_client.generate(message, provider="auto", system_prompt=system_prompt)
                 else:
                     response = "⚠️ النظام غير متاح حالياً. يرجى المحاولة لاحقاً."
             except Exception as e:

@@ -67,7 +67,7 @@ class VoiceNoteTool(BaseTool):
                             
                             # رد ذكي
                             reply_prompt = f"المستخدم قال: '{transcribed_text}'. رد عليه بود."
-                            reply = await llm_client.generate(reply_prompt, provider="groq")
+                            reply = await llm_client.generate(reply_prompt, provider="auto")
                             
                             output = f"""🎤 **تحويل ناجح!**
 
@@ -79,7 +79,7 @@ class VoiceNoteTool(BaseTool):
             
             else:
                 # نص عادي
-                output = await llm_client.generate(user_input, provider="groq")
+                output = await llm_client.generate(user_input, provider="auto")
             
             return {"status": "success", "output": output, "tokens_deducted": self.cost}
             

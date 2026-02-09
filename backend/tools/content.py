@@ -1,10 +1,7 @@
 from typing import Dict, Any
 from .base import BaseTool
-import os
+from backend.core.llm import llm_client
 
-# Placeholder for Groq Client
-# In a real scenario, we would import the client properly configured from core/config
-# from core.config import groq_client
 
 class SocialTool(BaseTool):
     @property
@@ -20,17 +17,10 @@ class SocialTool(BaseTool):
         return 1
 
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
-        # Logic to call Groq API
-        prompt = f"Act as a social media expert. specific_context: Egyptian market. Generate a viral post for: {user_input}"
-        
-        # Mocking the response for now
-        response_text = f"Here is your viral post for '{user_input}':\n\n🚀 {user_input} rocks! #Trending #Egypt"
-        
-        return {
-            "status": "success",
-            "output": response_text,
-            "tokens_deducted": self.cost
-        }
+        prompt = f"Act as a social media expert for the Egyptian market. Generate a viral post with hashtags for: {user_input}"
+        output = await llm_client.generate(prompt, provider="auto")
+        return {"status": "success", "output": output, "tokens_deducted": self.cost}
+
 
 class ScriptTool(BaseTool):
     @property
@@ -46,14 +36,6 @@ class ScriptTool(BaseTool):
         return 1
 
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
-        # Logic to call Groq API
-        prompt = f"Create a video script for TikTok about: {user_input}. Include scene descriptions."
-        
-        # Mocking response
-        response_text = f"**Title:** {user_input}\n**Scene 1:** Host smiles at camera.\n**Audio:** 'Did you know...'"
-        
-        return {
-            "status": "success",
-            "output": response_text,
-            "tokens_deducted": self.cost
-        }
+        prompt = f"Create a video script for TikTok about: {user_input}. Include scene descriptions, dialogue, and timing."
+        output = await llm_client.generate(prompt, provider="auto")
+        return {"status": "success", "output": output, "tokens_deducted": self.cost}

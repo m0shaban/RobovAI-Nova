@@ -122,12 +122,15 @@ try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
     from slowapi.util import get_remote_address
     from slowapi.errors import RateLimitExceeded
+
     limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     _has_limiter = True
 except ImportError:
-    logger.warning("⚠️ slowapi not installed — rate limiting disabled. Run: pip install slowapi")
+    logger.warning(
+        "⚠️ slowapi not installed — rate limiting disabled. Run: pip install slowapi"
+    )
     _has_limiter = False
 
 # Mount static files for uploads (presentations, files, etc.)
@@ -151,7 +154,17 @@ async def favicon():
 
 
 # Serve other top-level HTML files — allowlist to prevent path traversal
-_ALLOWED_PAGES = {"chat", "signup", "login", "admin", "account", "settings", "developers", "index"}
+_ALLOWED_PAGES = {
+    "chat",
+    "signup",
+    "login",
+    "admin",
+    "account",
+    "settings",
+    "developers",
+    "index",
+}
+
 
 @app.get("/{page}.html")
 async def serve_html_page(page: str):
@@ -268,8 +281,10 @@ def _rl(limit_str: str):
     """Return a slowapi limiter decorator or a no-op if slowapi is unavailable."""
     if _has_limiter:
         return limiter.limit(limit_str)
+
     def _noop(fn):
         return fn
+
     return _noop
 
 
@@ -319,7 +334,11 @@ async def register(request: Request, user: UserCreate, response: Response):
 
 @app.post("/auth/login")
 @_rl("10/minute")
-async def login(request: Request, response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(
+    request: Request,
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
     """Login and set Session Cookie"""
     user = await db_client.authenticate_user(form_data.username, form_data.password)
     if not user:
@@ -577,7 +596,9 @@ async def handle_audio_webhook(
 
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+async def upload_file(
+    file: UploadFile = File(...), current_user: dict = Depends(get_current_user)
+):
     """
     Generic file upload for multimodal interactions (auth required)
     """
@@ -586,7 +607,9 @@ async def upload_file(file: UploadFile = File(...), current_user: dict = Depends
         MAX_SIZE = 20 * 1024 * 1024
         content_peek = await file.read(MAX_SIZE + 1)
         if len(content_peek) > MAX_SIZE:
-            raise HTTPException(status_code=413, detail="الملف كبير جداً — الحد الأقصى 20MB")
+            raise HTTPException(
+                status_code=413, detail="الملف كبير جداً — الحد الأقصى 20MB"
+            )
         await file.seek(0)
         # Create uploads directory if it doesn't exist
         os.makedirs("uploads", exist_ok=True)
@@ -613,7 +636,8 @@ async def upload_file(file: UploadFile = File(...), current_user: dict = Depends
 
 @app.post("/upload_image")
 async def upload_image_to_imgbb(
-    file: UploadFile = File(...), user_id: str = Form("anonymous"),
+    file: UploadFile = File(...),
+    user_id: str = Form("anonymous"),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -1515,7 +1539,9 @@ async def get_agent_state(thread_id: str):
 
 
 @app.get("/history/conversations")
-async def list_conversations(user_id: str = "default", current_user: dict = Depends(get_current_user)):
+async def list_conversations(
+    user_id: str = "default", current_user: dict = Depends(get_current_user)
+):
     """قائمة محادثات المستخدم"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1529,7 +1555,11 @@ async def list_conversations(user_id: str = "default", current_user: dict = Depe
 
 
 @app.get("/history/conversation/{conv_id}")
-async def get_conversation(conv_id: str, user_id: str = "default", current_user: dict = Depends(get_current_user)):
+async def get_conversation(
+    conv_id: str,
+    user_id: str = "default",
+    current_user: dict = Depends(get_current_user),
+):
     """الحصول على محادثة"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1545,7 +1575,11 @@ async def get_conversation(conv_id: str, user_id: str = "default", current_user:
 
 
 @app.post("/history/conversation")
-async def create_conversation(user_id: str = "default", title: str = "محادثة جديدة", current_user: dict = Depends(get_current_user)):
+async def create_conversation(
+    user_id: str = "default",
+    title: str = "محادثة جديدة",
+    current_user: dict = Depends(get_current_user),
+):
     """إنشاء محادثة جديدة"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1562,7 +1596,13 @@ async def create_conversation(user_id: str = "default", title: str = "محادث
 
 
 @app.post("/history/message")
-async def add_message(conv_id: str, role: str, content: str, user_id: str = "default", current_user: dict = Depends(get_current_user)):
+async def add_message(
+    conv_id: str,
+    role: str,
+    content: str,
+    user_id: str = "default",
+    current_user: dict = Depends(get_current_user),
+):
     """إضافة رسالة"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1575,7 +1615,12 @@ async def add_message(conv_id: str, role: str, content: str, user_id: str = "def
 
 
 @app.get("/history/search")
-async def search_conversations(user_id: str, query: str, limit: int = 10, current_user: dict = Depends(get_current_user)):
+async def search_conversations(
+    user_id: str,
+    query: str,
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user),
+):
     """بحث في المحادثات"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1588,7 +1633,11 @@ async def search_conversations(user_id: str, query: str, limit: int = 10, curren
 
 
 @app.delete("/history/conversation/{conv_id}")
-async def delete_conversation(conv_id: str, user_id: str = "default", current_user: dict = Depends(get_current_user)):
+async def delete_conversation(
+    conv_id: str,
+    user_id: str = "default",
+    current_user: dict = Depends(get_current_user),
+):
     """حذف محادثة"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1602,7 +1651,9 @@ async def delete_conversation(conv_id: str, user_id: str = "default", current_us
 
 @app.get("/history/export/{conv_id}")
 async def export_conversation(
-    conv_id: str, user_id: str = "default", format: str = "json",
+    conv_id: str,
+    user_id: str = "default",
+    format: str = "json",
     current_user: dict = Depends(get_current_user),
 ):
     """تصدير محادثة"""

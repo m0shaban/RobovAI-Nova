@@ -28,9 +28,12 @@ def _load_or_create_secret() -> str:
         return env
 
     # Production guard: env var MUST be set
-    is_production = os.getenv("RENDER") or os.getenv("ENVIRONMENT", "").lower() == "production"
+    is_production = (
+        os.getenv("RENDER") or os.getenv("ENVIRONMENT", "").lower() == "production"
+    )
     if is_production:
         import sys
+
         print(
             "❌ CRITICAL: JWT_SECRET_KEY env var is missing or too short (min 32 chars). "
             "Set it in your hosting dashboard to prevent session invalidation on redeploy.",

@@ -1445,7 +1445,7 @@
     <div class="app-shell" id="appShell">
       <!-- 🗂️ SIDEBAR -->
       <aside class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" onclick="toggleSidebar()">⇄</button>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="تبديل الشريط الجانبي">⇄</button>
 
         <div class="sidebar-header">
           <div class="brand-icon">
@@ -1702,6 +1702,7 @@
                   class="action-btn"
                   onclick="triggerUpload()"
                   title="رفع ملف"
+                  aria-label="رفع ملف"
                 >
                   📂
                 </button>
@@ -1710,6 +1711,7 @@
                   id="voiceBtn"
                   onclick="toggleVoice()"
                   title="تسجيل صوتي"
+                  aria-label="تسجيل صوتي"
                 >
                   🎙️
                 </button>
@@ -1726,7 +1728,7 @@
                   }
                 "
               ></textarea>
-              <button class="send-btn" onclick="sendMessage()">➜</button>
+              <button class="send-btn" onclick="sendMessage()" aria-label="إرسال الرسالة">➜</button>
             </div>
           </div>
           <div class="input-footer">
@@ -2059,13 +2061,13 @@
             const answer = data.final_answer || data.response || 'تم!';
             addBotMessage(formatMarkdown(answer));
           } else {
-            addBotMessage('❌ حدث خطأ: ' + (data.error || 'خطأ غير معروف'));
+            addBotMessage('❌ حدث خطأ: ' + (data.error || 'خطأ غير معروف') + retryBtn(text));
           }
           refreshBalance(); // Update balance after request
         } catch (e) {
           console.error('API error:', e);
           removeThinkingIndicator(thinkingId);
-          addBotMessage('❌ فشل الاتصال بالخادم. تأكد من تشغيل السيرفر.');
+          addBotMessage('❌ فشل الاتصال بالخادم.' + retryBtn(text));
         }
       }
 
@@ -2219,11 +2221,11 @@
 
           if (streamedContent) {
             addMessage(
-              streamedContent + '<br><br>⚠️ حدث خطأ أثناء التنفيذ',
+              streamedContent + '<br><br>⚠️ حدث خطأ أثناء التنفيذ' + retryBtn(text),
               'bot',
             );
           } else {
-            addMessage('❌ حدث خطأ في الاتصال بالخادم', 'bot');
+            addMessage('❌ حدث خطأ في الاتصال بالخادم' + retryBtn(text), 'bot');
           }
 
           eventSource.close();
@@ -2244,13 +2246,12 @@
         }, 300000);
       }
 
-      async function sendMessage() {
+      async function sendMessage(retryText) {
         const input = document.getElementById('messageInput');
-        const text = input.value.trim();
+        const text = retryText || input.value.trim();
         if (!text) return;
 
-        input.value = '';
-        input.style.height = 'auto';
+        if (!retryText) { input.value = ''; input.style.height = 'auto'; }
 
         // Try streaming first, fallback to regular API
         try {
@@ -2265,6 +2266,11 @@
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+      }
+
+      function retryBtn(text){
+        const safe = text.replace(/'/g, "\\'").replace(/\n/g, "\\n");
+        return ' <button onclick="sendMessage(\''+safe+'\')" style="background:rgba(139,92,246,.2);border:1px solid #8b5cf6;color:#8b5cf6;border-radius:8px;padding:4px 12px;cursor:pointer;font-family:inherit;margin-right:6px">🔄 إعادة المحاولة</button>';
       }
 
       function addMessage(content, role) {

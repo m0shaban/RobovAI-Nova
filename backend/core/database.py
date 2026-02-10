@@ -617,5 +617,19 @@ class Database:
             "total_requests": total_requests,
         }
 
+    async def delete_user_account(self, user_id: int) -> bool:
+        """Permanently delete a user and all related data."""
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            uid = str(user_id)
+            c.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
+            c.execute("DELETE FROM otp_codes WHERE user_id = ?", (user_id,))
+            c.execute("DELETE FROM usage_logs WHERE user_id = ?", (uid,))
+            c.execute("DELETE FROM conversations WHERE user_id = ?", (uid,))
+            c.execute("DELETE FROM custom_bots WHERE user_id = ?", (uid,))
+            c.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            conn.commit()
+            return c.rowcount > 0
+
 
 db_client = Database()

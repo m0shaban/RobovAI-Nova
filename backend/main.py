@@ -38,10 +38,25 @@ if _missing_pkgs:
     )
 
 # Initialize FastAPI app
+_tags_metadata = [
+    {"name": "Auth", "description": "التسجيل وتسجيل الدخول والتحقق"},
+    {"name": "User", "description": "الملف الشخصي والرصيد"},
+    {"name": "Agent", "description": "تشغيل الذكاء الاصطناعي والبث"},
+    {"name": "History", "description": "المحادثات والرسائل"},
+    {"name": "Admin", "description": "لوحة تحكم المسؤولين"},
+    {"name": "Payments", "description": "المدفوعات والاشتراكات"},
+    {"name": "Webhooks", "description": "Telegram / WhatsApp / Messenger"},
+    {"name": "Bots", "description": "إنشاء بوتات مخصصة"},
+    {"name": "Files", "description": "رفع الملفات والصور"},
+    {"name": "Pages", "description": "صفحات الواجهة"},
+    {"name": "System", "description": "الصحة والحالة"},
+]
+
 app = FastAPI(
     title="RobovAI Backend",
     description="Universal AI Toolset Backend API",
     version="1.0.0",
+    openapi_tags=_tags_metadata,
 )
 
 # Register Tools on Startup
@@ -193,7 +208,7 @@ async def generic_exception_handler(request, exc):
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
 
 
-@app.get("/favicon.ico")
+@app.get("/favicon.ico", tags=["Pages"])
 async def favicon():
     """Serve favicon to avoid noisy 404s in browser console."""
     icon_path = Path(__file__).resolve().parent.parent / "favicon_io" / "favicon.ico"
@@ -215,7 +230,7 @@ _ALLOWED_PAGES = {
 }
 
 
-@app.get("/{page}.html")
+@app.get("/{page}.html", tags=["Pages"])
 async def serve_html_page(page: str):
     # Strip any path separators to block traversal
     safe_page = page.replace("/", "").replace("\\", "").replace("..", "")
@@ -250,6 +265,29 @@ class UserCreate(BaseModel):
     email: str
     password: str
     full_name: str
+
+
+# ── Pydantic request models for POST endpoints ──
+class CreateConversationBody(BaseModel):
+    user_id: str = "default"
+    title: str = "محادثة جديدة"
+
+
+class AddMessageBody(BaseModel):
+    conv_id: str
+    role: str
+    content: str
+    user_id: str = "default"
+
+
+class SetRoleBody(BaseModel):
+    user_id: int
+    role: str
+
+
+class AddTokensBody(BaseModel):
+    user_id: int
+    amount: int
 
 
 async def get_current_user_from_cookie(request: Request):
@@ -337,7 +375,7 @@ def _rl(limit_str: str):
     return _noop
 
 
-@app.post("/auth/register")
+@app.post("/auth/register", tags=["Auth"])
 @_rl("5/minute")
 async def register(request: Request, user: UserCreate, response: Response):
     """Register a new user — account needs Telegram OTP verification."""
@@ -381,7 +419,7 @@ async def register(request: Request, user: UserCreate, response: Response):
         )
 
 
-@app.post("/auth/login")
+@app.post("/auth/login", tags=["Auth"])
 @_rl("10/minute")
 async def login(
     request: Request,
@@ -424,7 +462,7 @@ async def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.post("/auth/logout")
+@app.post("/auth/logout", tags=["Auth"])
 async def logout(response: Response, request: Request):
     """Logout and revoke session"""
     token = request.cookies.get("access_token")
@@ -437,7 +475,7 @@ async def logout(response: Response, request: Request):
     return {"status": "success"}
 
 
-@app.get("/auth/me")
+@app.get("/auth/me", tags=["Auth"])
 async def read_users_me(current_user: dict = Depends(get_current_user)):
     """Get current user info including balance and role."""
     usage = await db_client.get_daily_usage(str(current_user["id"]))
@@ -456,7 +494,7 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
     }
 
 
-@app.post("/auth/settings")
+@app.post("/auth/settings", tags=["Auth"])
 async def save_user_settings(
     payload: Dict[str, Any], current_user: dict = Depends(get_current_user)
 ):
@@ -465,14 +503,14 @@ async def save_user_settings(
     return {"status": "success", "message": "Settings saved"}
 
 
-@app.get("/user/balance")
+@app.get("/user/balance", tags=["User"])
 async def get_user_balance(current_user: dict = Depends(get_current_user)):
     """Get current balance and usage stats."""
     usage = await db_client.get_daily_usage(str(current_user["id"]))
     return usage
 
 
-@app.get("/user/usage-history")
+@app.get("/user/usage-history", tags=["User"])
 async def get_usage_history(current_user: dict = Depends(get_current_user)):
     """Get recent usage history."""
     history = await db_client.get_usage_history(str(current_user["id"]))
@@ -490,7 +528,7 @@ class WebhookPayload(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
-@app.post("/webhook")
+@app.post("/webhook", tags=["Webhooks"])
 async def handle_webhook(
     payload: WebhookPayload,
     current_user: Optional[dict] = Depends(
@@ -601,7 +639,7 @@ async def handle_webhook(
         return {"status": "error", "response": "⚠️ حدث خطأ تقني. يرجى المحاولة لاحقاً."}
 
 
-@app.post("/webhook_audio")
+@app.post("/webhook_audio", tags=["Webhooks"])
 async def handle_audio_webhook(
     audio: UploadFile = File(...), user_id: str = Form(...), platform: str = Form(...)
 ):
@@ -644,7 +682,7 @@ async def handle_audio_webhook(
         return {"status": "error", "message": "فشل معالجة الصوت", "response": "❌ خطأ في معالجة الصوت. حاول مرة أخرى."}
 
 
-@app.post("/upload")
+@app.post("/upload", tags=["Files"])
 async def upload_file(
     file: UploadFile = File(...), current_user: dict = Depends(get_current_user)
 ):
@@ -699,7 +737,7 @@ async def upload_file(
         raise HTTPException(status_code=500, detail="فشل رفع الملف. حاول مرة أخرى.")
 
 
-@app.post("/upload_image")
+@app.post("/upload_image", tags=["Files"])
 async def upload_image_to_imgbb(
     file: UploadFile = File(...),
     user_id: str = Form("anonymous"),
@@ -779,37 +817,37 @@ os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
-@app.get("/")
+@app.get("/", tags=["Pages"])
 async def serve_landing():
     return FileResponse("index.html")
 
 
-@app.get("/chat")
+@app.get("/chat", tags=["Pages"])
 async def serve_chat():
     return FileResponse("chat.html")
 
 
-@app.get("/developers")
+@app.get("/developers", tags=["Pages"])
 async def serve_developers():
     return FileResponse("developers.html")
 
 
-@app.get("/login")
+@app.get("/login", tags=["Pages"])
 async def serve_login():
     return FileResponse("login.html")
 
 
-@app.get("/signup")
+@app.get("/signup", tags=["Pages"])
 async def serve_signup():
     return FileResponse("signup.html")
 
 
-@app.get("/admin")
+@app.get("/admin", tags=["Pages"])
 async def serve_admin():
     return FileResponse("admin.html")
 
 
-@app.get("/tools")
+@app.get("/tools", tags=["System"])
 async def get_tools():
     """
     Get all registered tools for dynamic frontend rendering
@@ -832,7 +870,7 @@ async def get_tools():
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-@app.post("/whatsapp_webhook")
+@app.post("/whatsapp_webhook", tags=["Webhooks"])
 async def whatsapp_webhook(request: Request):
     """
     WhatsApp Business API Webhook
@@ -885,7 +923,7 @@ async def whatsapp_webhook(request: Request):
         return {"status": "ok"}
 
 
-@app.get("/whatsapp_webhook")
+@app.get("/whatsapp_webhook", tags=["Webhooks"])
 async def whatsapp_verify(request: Request):
     """WhatsApp webhook verification"""
     mode = request.query_params.get("hub.mode")
@@ -900,7 +938,7 @@ async def whatsapp_verify(request: Request):
     raise HTTPException(status_code=403, detail="Verification failed")
 
 
-@app.post("/messenger_webhook")
+@app.post("/messenger_webhook", tags=["Webhooks"])
 async def messenger_webhook(request: Request):
     """
     Facebook Messenger Webhook
@@ -957,7 +995,7 @@ async def messenger_webhook(request: Request):
         return {"status": "ok"}
 
 
-@app.get("/messenger_webhook")
+@app.get("/messenger_webhook", tags=["Webhooks"])
 async def messenger_verify(request: Request):
     """Messenger webhook verification"""
     mode = request.query_params.get("hub.mode")
@@ -972,7 +1010,7 @@ async def messenger_verify(request: Request):
     raise HTTPException(status_code=403, detail="Verification failed")
 
 
-@app.get("/user_stats/{user_id}")
+@app.get("/user_stats/{user_id}", tags=["Admin"])
 async def get_user_stats(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get user usage statistics (auth required)"""
     from backend.core.smart_router import SmartToolRouter
@@ -986,7 +1024,7 @@ async def get_user_stats(user_id: str, current_user: dict = Depends(get_current_
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-@app.post("/telegram-webhook")
+@app.post("/telegram-webhook", tags=["Webhooks"])
 async def telegram_webhook(request: Request):
     """Handle Telegram webhook updates"""
     if not telegram_app:
@@ -1015,7 +1053,7 @@ async def telegram_webhook(request: Request):
 from backend.payment_gateway import PaymentGateway, PLANS, TOKEN_PACKAGES
 
 
-@app.post("/payments/checkout")
+@app.post("/payments/checkout", tags=["Payments"])
 async def create_checkout(
     plan: str = "pro",
     provider: str = "auto",
@@ -1043,7 +1081,7 @@ async def create_checkout(
     return result
 
 
-@app.post("/payments/buy-tokens")
+@app.post("/payments/buy-tokens", tags=["Payments"])
 async def buy_tokens(
     package_id: str = "tokens_500",
     provider: str = "auto",
@@ -1070,7 +1108,7 @@ async def buy_tokens(
     return result
 
 
-@app.post("/payments/webhook/{provider}")
+@app.post("/payments/webhook/{provider}", tags=["Payments"])
 async def payment_webhook(provider: str, request: Request):
     """Unified webhook handler — /payments/webhook/stripe|paymob|lemonsqueezy"""
     if provider not in ("stripe", "paymob", "lemonsqueezy"):
@@ -1119,7 +1157,7 @@ async def payment_webhook(provider: str, request: Request):
 
 
 # Keep old endpoint for backwards compatibility
-@app.post("/payments/webhook")
+@app.post("/payments/webhook", tags=["Payments"])
 async def legacy_webhook(request: Request):
     """Legacy webhook — auto-detect provider from headers."""
     headers = dict(request.headers)
@@ -1131,7 +1169,7 @@ async def legacy_webhook(request: Request):
         return await payment_webhook("paymob", request)
 
 
-@app.get("/api/acceptance/post_pay")
+@app.get("/api/acceptance/post_pay", tags=["Payments"])
 async def paymob_post_pay_get(request: Request):
     """Paymob Transaction response callback (GET redirect after payment)."""
     params = dict(request.query_params)
@@ -1157,7 +1195,7 @@ async def paymob_post_pay_get(request: Request):
         return RedirectResponse(url="/account?payment=failed", status_code=303)
 
 
-@app.post("/api/acceptance/post_pay")
+@app.post("/api/acceptance/post_pay", tags=["Payments"])
 async def paymob_post_pay_post(request: Request):
     """Paymob Transaction response callback (POST)."""
     raw_body = await request.body()
@@ -1189,7 +1227,7 @@ async def paymob_post_pay_post(request: Request):
     )
 
 
-@app.get("/payments/pricing")
+@app.get("/payments/pricing", tags=["Payments"])
 async def get_pricing():
     """Get pricing tiers + available providers."""
     return {
@@ -1199,7 +1237,7 @@ async def get_pricing():
     }
 
 
-@app.get("/payments/subscription")
+@app.get("/payments/subscription", tags=["Payments"])
 async def get_subscription(current_user: dict = Depends(get_current_user)):
     """Get user's current subscription."""
     usage = await db_client.get_daily_usage(str(current_user.get("id")))
@@ -1212,7 +1250,7 @@ async def get_subscription(current_user: dict = Depends(get_current_user)):
     }
 
 
-@app.get("/health")
+@app.get("/health", tags=["System"])
 async def health_check():
     """Health check endpoint"""
     return {
@@ -1239,7 +1277,7 @@ class AgentRequest(BaseModel):
     ai_level: Optional[str] = "balanced"  # "fast", "balanced", "powerful"
 
 
-@app.post("/agent/run")
+@app.post("/agent/run", tags=["Agent"])
 async def run_agent_endpoint(
     request: AgentRequest,
     current_user: Optional[dict] = Depends(get_current_user_from_cookie),
@@ -1306,7 +1344,7 @@ async def run_agent_endpoint(
         return {"status": "error", "response": "❌ حدث خطأ أثناء التنفيذ. حاول مرة أخرى.", "error": "internal_error"}
 
 
-@app.post("/agent/stream")
+@app.post("/agent/stream", tags=["Agent"])
 async def stream_agent_endpoint(request: AgentRequest):
     """
     🔄 Stream agent execution step by step (POST version)
@@ -1316,7 +1354,7 @@ async def stream_agent_endpoint(request: AgentRequest):
     return await _stream_agent(request.message, request.user_id, request.platform)
 
 
-@app.get("/agent/stream")
+@app.get("/agent/stream", tags=["Agent"])
 async def stream_agent_get(
     message: str,
     user_id: str = "web_user",
@@ -1580,7 +1618,7 @@ async def _stream_agent(message: str, user_id: str, platform: str):
     )
 
 
-@app.get("/agent/state/{thread_id}")
+@app.get("/agent/state/{thread_id}", tags=["Agent"])
 async def get_agent_state(thread_id: str):
     """
     📊 Get the current state of an agent thread
@@ -1607,23 +1645,28 @@ async def get_agent_state(thread_id: str):
 # ═══════════════════════════════════════════════════════════════
 
 
-@app.get("/history/conversations")
+@app.get("/history/conversations", tags=["History"])
 async def list_conversations(
-    user_id: str = "default", current_user: dict = Depends(get_current_user)
+    user_id: str = "default",
+    skip: int = 0,
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user),
 ):
     """قائمة محادثات المستخدم"""
     try:
         from backend.history.manager import get_conversation_manager
 
         manager = get_conversation_manager()
-        conversations = manager.list_conversations(user_id)
-        return {"status": "success", "conversations": conversations}
+        all_convs = manager.list_conversations(user_id)
+        total = len(all_convs)
+        page = all_convs[skip : skip + limit]
+        return {"status": "success", "conversations": page, "total": total}
     except Exception as e:
         logger.error(f"Error listing conversations: {e}")
         return {"status": "error", "error": str(e)}
 
 
-@app.get("/history/conversation/{conv_id}")
+@app.get("/history/conversation/{conv_id}", tags=["History"])
 async def get_conversation(
     conv_id: str,
     user_id: str = "default",
@@ -1643,10 +1686,9 @@ async def get_conversation(
         return {"status": "error", "error": str(e)}
 
 
-@app.post("/history/conversation")
+@app.post("/history/conversation", tags=["History"])
 async def create_conversation(
-    user_id: str = "default",
-    title: str = "محادثة جديدة",
+    body: CreateConversationBody,
     current_user: dict = Depends(get_current_user),
 ):
     """إنشاء محادثة جديدة"""
@@ -1655,7 +1697,7 @@ async def create_conversation(
         from dataclasses import asdict
 
         manager = get_conversation_manager()
-        conv = manager.create_conversation(user_id, title)
+        conv = manager.create_conversation(body.user_id, body.title)
         return {
             "status": "success",
             "conversation": {"id": conv.id, "title": conv.title},
@@ -1664,12 +1706,9 @@ async def create_conversation(
         return {"status": "error", "error": str(e)}
 
 
-@app.post("/history/message")
+@app.post("/history/message", tags=["History"])
 async def add_message(
-    conv_id: str,
-    role: str,
-    content: str,
-    user_id: str = "default",
+    body: AddMessageBody,
     current_user: dict = Depends(get_current_user),
 ):
     """إضافة رسالة"""
@@ -1677,13 +1716,13 @@ async def add_message(
         from backend.history.manager import get_conversation_manager
 
         manager = get_conversation_manager()
-        msg = manager.add_message(user_id, conv_id, role, content)
+        msg = manager.add_message(body.user_id, body.conv_id, body.role, body.content)
         return {"status": "success", "message_id": msg.id}
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
 
-@app.get("/history/search")
+@app.get("/history/search", tags=["History"])
 async def search_conversations(
     user_id: str,
     query: str,
@@ -1701,7 +1740,7 @@ async def search_conversations(
         return {"status": "error", "error": str(e)}
 
 
-@app.delete("/history/conversation/{conv_id}")
+@app.delete("/history/conversation/{conv_id}", tags=["History"])
 async def delete_conversation(
     conv_id: str,
     user_id: str = "default",
@@ -1718,7 +1757,7 @@ async def delete_conversation(
         return {"status": "error", "error": str(e)}
 
 
-@app.get("/history/export/{conv_id}")
+@app.get("/history/export/{conv_id}", tags=["History"])
 async def export_conversation(
     conv_id: str,
     user_id: str = "default",
@@ -1743,7 +1782,7 @@ async def export_conversation(
 # ═══════════════════════════════════════════════════════════════
 
 
-@app.get("/admin/stats")
+@app.get("/admin/stats", tags=["Admin"])
 async def get_admin_stats(admin: dict = Depends(require_admin)):
     """إحصائيات لوحة التحكم — للمسؤولين فقط"""
     try:
@@ -1778,7 +1817,7 @@ async def get_admin_stats(admin: dict = Depends(require_admin)):
         return {"status": "error", "error": str(e)}
 
 
-@app.get("/admin/tools")
+@app.get("/admin/tools", tags=["Admin"])
 async def get_tools_detailed(admin: dict = Depends(require_admin)):
     """قائمة الأدوات مع التفاصيل — للمسؤولين فقط"""
     try:
@@ -1805,7 +1844,7 @@ async def get_tools_detailed(admin: dict = Depends(require_admin)):
         return {"status": "error", "error": str(e)}
 
 
-@app.get("/admin/memory/{user_id}")
+@app.get("/admin/memory/{user_id}", tags=["Admin"])
 async def get_user_memory(user_id: str, admin: dict = Depends(require_admin)):
     """الحصول على ذاكرة المستخدم — للمسؤولين فقط"""
     try:
@@ -1818,39 +1857,45 @@ async def get_user_memory(user_id: str, admin: dict = Depends(require_admin)):
         return {"status": "error", "error": str(e)}
 
 
-@app.get("/admin/users")
-async def get_admin_users(admin: dict = Depends(require_admin)):
+@app.get("/admin/users", tags=["Admin"])
+async def get_admin_users(
+    skip: int = 0,
+    limit: int = 50,
+    admin: dict = Depends(require_admin),
+):
     """قائمة المستخدمين — للمسؤولين فقط"""
     try:
-        users = await db_client.get_all_users()
-        return {"status": "success", "users": users, "total": len(users)}
+        all_users = await db_client.get_all_users()
+        total = len(all_users)
+        page = all_users[skip : skip + limit]
+        return {"status": "success", "users": page, "total": total}
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
 
-@app.post("/admin/set-role")
-async def set_user_role(user_id: int, role: str, admin: dict = Depends(require_admin)):
+@app.post("/admin/set-role", tags=["Admin"])
+async def set_user_role(body: SetRoleBody, admin: dict = Depends(require_admin)):
     """تغيير صلاحية مستخدم — للمسؤولين فقط"""
-    if role not in ["user", "admin"]:
+    if body.role not in ["user", "admin"]:
         raise HTTPException(status_code=400, detail="Role must be 'user' or 'admin'")
-    ok = await db_client.update_user_role(user_id, role)
+    ok = await db_client.update_user_role(body.user_id, body.role)
     if not ok:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"status": "success", "message": f"User {user_id} role set to {role}"}
+    return {"status": "success", "message": f"User {body.user_id} role set to {body.role}"}
 
 
-@app.post("/admin/add-tokens")
+@app.post("/admin/add-tokens", tags=["Admin"])
 async def admin_add_tokens(
-    user_id: int, amount: int, admin: dict = Depends(require_admin)
+    body: AddTokensBody, admin: dict = Depends(require_admin)
 ):
     """إضافة توكنز لمستخدم — للمسؤولين فقط"""
-    ok = await db_client.add_tokens(str(user_id), amount)
+    ok = await db_client.add_tokens(str(body.user_id), body.amount)
     if not ok:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"status": "success", "message": f"Added {amount} tokens to user {user_id}"}
+    return {"status": "success", "message": f"Added {body.amount} tokens to user {body.user_id}"}
 
 
-@app.get("/admin/logs")
+@app.get("/admin/logs", tags=["Admin"])
 async def get_system_logs(limit: int = 50, admin: dict = Depends(require_admin)):
     """الحصول على آخر السجلات — للمسؤولين فقط"""
     try:
@@ -1876,7 +1921,7 @@ class SubscriptionRequest(BaseModel):
     tier: str  # "free", "pro", "enterprise"
 
 
-@app.get("/account/subscription")
+@app.get("/account/subscription", tags=["Payments"])
 async def get_subscription(current_user: dict = Depends(get_current_user)):
     """Get user subscription details"""
     usage = await db_client.get_daily_usage(str(current_user["id"]))
@@ -2001,7 +2046,7 @@ async def _process_wallet_payment(payment_token: str, phone_number: str) -> dict
         return {"status": "error", "detail": "خطأ في الاتصال بخدمة الدفع"}
 
 
-@app.post("/account/buy-tokens")
+@app.post("/account/buy-tokens", tags=["Payments"])
 async def account_buy_tokens(
     request: Request,
     current_user: dict = Depends(get_current_user),
@@ -2048,7 +2093,7 @@ async def account_buy_tokens(
     return {"status": "success", **result}
 
 
-@app.post("/account/subscribe")
+@app.post("/account/subscribe", tags=["Payments"])
 async def account_subscribe(
     request: Request,
     current_user: dict = Depends(get_current_user),
@@ -2098,7 +2143,7 @@ async def account_subscribe(
     return {"status": "success", **result}
 
 
-@app.get("/account/profile")
+@app.get("/account/profile", tags=["Payments"])
 async def get_full_profile(current_user: dict = Depends(get_current_user)):
     """Full user profile with all settings"""
     usage = await db_client.get_daily_usage(str(current_user["id"]))
@@ -2118,6 +2163,21 @@ async def get_full_profile(current_user: dict = Depends(get_current_user)):
     }
 
 
+class DeleteAccountBody(BaseModel):
+    confirm: str  # must equal user's email
+
+
+@app.delete("/account", tags=["User"])
+async def delete_account(body: DeleteAccountBody, current_user: dict = Depends(get_current_user)):
+    """حذف الحساب نهائياً — يتطلب تأكيد البريد الإلكتروني"""
+    if body.confirm != current_user.get("email"):
+        raise HTTPException(status_code=400, detail="التأكيد غير مطابق للبريد الإلكتروني")
+    deleted = await db_client.delete_user_account(current_user["id"])
+    if not deleted:
+        raise HTTPException(status_code=404, detail="لم يتم العثور على الحساب")
+    return {"status": "success", "message": "تم حذف الحساب نهائياً"}
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 📩 TELEGRAM OTP VERIFICATION
 # ═══════════════════════════════════════════════════════════════════════════
@@ -2134,7 +2194,7 @@ class OTPVerify(BaseModel):
     code: str
 
 
-@app.post("/auth/request-otp")
+@app.post("/auth/request-otp", tags=["Auth"])
 @_rl("5/minute")
 async def request_telegram_otp(request: Request, req: OTPRequest):
     """Generate OTP for a registered-but-unverified user.
@@ -2159,7 +2219,7 @@ async def request_telegram_otp(request: Request, req: OTPRequest):
     }
 
 
-@app.post("/auth/verify-otp")
+@app.post("/auth/verify-otp", tags=["Auth"])
 @_rl("10/minute")
 async def verify_otp_endpoint(request: Request, req: OTPVerify):
     """Verify OTP code and activate the account."""
@@ -2198,7 +2258,7 @@ async def verify_otp_endpoint(request: Request, req: OTPVerify):
     }
 
 
-@app.get("/auth/check-verified")
+@app.get("/auth/check-verified", tags=["Auth"])
 async def check_verified(email: str):
     """Check if a user's account is verified (used for polling from signup page)."""
     user = await db_client.get_user_by_email_unverified(email.strip().lower())
@@ -2212,7 +2272,7 @@ async def check_verified(email: str):
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-@app.get("/account")
+@app.get("/account", tags=["Pages"])
 async def serve_account():
     return FileResponse("account.html")
 
@@ -2231,7 +2291,7 @@ class CustomBotCreate(BaseModel):
     greeting: str = "مرحباً! كيف أقدر أساعدك?"
 
 
-@app.post("/bots/create")
+@app.post("/bots/create", tags=["Bots"])
 async def create_custom_bot(
     bot: CustomBotCreate, current_user: dict = Depends(get_current_user)
 ):
@@ -2263,7 +2323,7 @@ async def create_custom_bot(
         raise HTTPException(status_code=500, detail="حدث خطأ أثناء إنشاء البوت")
 
 
-@app.get("/bots/list")
+@app.get("/bots/list", tags=["Bots"])
 async def list_custom_bots(current_user: dict = Depends(get_current_user)):
     """List user's custom bots."""
     try:
@@ -2276,7 +2336,7 @@ async def list_custom_bots(current_user: dict = Depends(get_current_user)):
         return {"status": "success", "bots": []}
 
 
-@app.delete("/bots/{bot_id}")
+@app.delete("/bots/{bot_id}", tags=["Bots"])
 async def delete_custom_bot(
     bot_id: str, current_user: dict = Depends(get_current_user)
 ):

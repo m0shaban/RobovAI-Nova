@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException, File, UploadFile, Form
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -21,6 +22,20 @@ from backend.core.config import settings
 # Setup Logger FIRST
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("robovai")
+
+# ── Startup sanity check: verify critical packages are importable ──
+_missing_pkgs = []
+for _pkg in ["langchain_openai", "langchain_groq", "langchain_core", "langgraph"]:
+    try:
+        __import__(_pkg)
+    except ImportError:
+        _missing_pkgs.append(_pkg)
+if _missing_pkgs:
+    logger.error(
+        f"❌ Missing packages: {', '.join(_missing_pkgs)}. "
+        f"Python in use: {sys.executable}  —  "
+        f"Make sure you're running with the venv: .venv/Scripts/python"
+    )
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -243,7 +258,7 @@ async def require_admin(current_user: dict = Depends(get_current_user)):
 
 @app.post("/auth/register")
 async def register(user: UserCreate, response: Response):
-    """Register and Auto-Login"""
+    """Register a new user — account needs Telegram OTP verification."""
     logger.info(
         f"Register endpoint called for email={user.email} full_name={user.full_name}"
     )
@@ -262,25 +277,18 @@ async def register(user: UserCreate, response: Response):
         if not res:
             raise HTTPException(status_code=400, detail="البريد الإلكتروني مسجل بالفعل")
 
-        # Auto-login: Create Token
-        access_token = create_access_token(data={"sub": user.email})
-        logger.info(f"access token generated for email={user.email}")
+        # Generate OTP for Telegram verification
+        import random as _rnd
+        otp = str(_rnd.randint(100000, 999999))
+        await db_client.store_otp(res["id"], otp, "telegram_verify", minutes=10)
+        logger.info(f"OTP generated for user_id={res['id']}")
 
-        # Store Session
-        expires_at = (datetime.now() + timedelta(days=1)).isoformat()
-        await db_client.create_session(res["id"], access_token, expires_at)
-        logger.info(f"session created for user_id={res['id']}")
-
-        # Set Cookie
-        response.set_cookie(
-            key="access_token",
-            value=f"Bearer {access_token}",
-            httponly=True,
-            max_age=86400,  # 1 day
-            samesite="lax",
-        )
-
-        return {"status": "success", "user": res, "access_token": access_token}
+        # Return pending — user must verify via Telegram
+        return {
+            "status": "pending_verification",
+            "message": "تم إنشاء الحساب! فعّل حسابك عبر تليجرام.",
+            "user": res,
+        }
     except HTTPException:
         raise
     except Exception:
@@ -299,6 +307,13 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="البريد الإلكتروني أو كلمة المرور غير صحيحة",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Check if account is verified
+    if not user.get("is_verified"):
+        raise HTTPException(
+            status_code=403,
+            detail="الحساب غير مُفعّل. افتح بوت @RobovAI_bot في تليجرام وأرسل /verify لتفعيل حسابك.",
         )
 
     access_token = create_access_token(data={"sub": user["email"]})
@@ -1424,7 +1439,14 @@ async def _stream_agent(message: str, user_id: str, platform: str):
         try:
             from backend.agent.graph import NovaAgent
             import asyncio
+        except ImportError as imp_err:
+            logger.error(
+                f"❌ Agent import failed: {imp_err}  — Python: {sys.executable}"
+            )
+            yield f"event: error\ndata: {json.dumps({'error': f'Server misconfiguration: {imp_err}. Restart with .venv Python.'}, ensure_ascii=False)}\n\n"
+            return
 
+        try:
             logger.info(f"🎬 Starting stream for: {message[:50]}...")
 
             # Send start event
@@ -1870,10 +1892,17 @@ async def _process_wallet_payment(payment_token: str, phone_number: str) -> dict
         phone = "0" + phone[1:]  # 21xxxxxxxxx → 01xxxxxxxxx
     # Ensure starts with 01
     if not phone.startswith("01") or len(phone) != 11:
-        logger.warning(f"Invalid wallet phone format: {phone} (original: {phone_number})")
-        return {"status": "error", "detail": f"رقم الهاتف غير صحيح. يجب أن يكون بصيغة 01xxxxxxxxx (11 رقم)"}
+        logger.warning(
+            f"Invalid wallet phone format: {phone} (original: {phone_number})"
+        )
+        return {
+            "status": "error",
+            "detail": f"رقم الهاتف غير صحيح. يجب أن يكون بصيغة 01xxxxxxxxx (11 رقم)",
+        }
 
-    logger.info(f"💳 Wallet payment: phone={phone}, token_prefix={payment_token[:20]}...")
+    logger.info(
+        f"💳 Wallet payment: phone={phone}, token_prefix={payment_token[:20]}..."
+    )
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
@@ -1962,7 +1991,9 @@ async def account_buy_tokens(
     if checkout_url.startswith("WALLET_PAY:"):
         payment_token = checkout_url.replace("WALLET_PAY:", "")
         if not phone_number:
-            raise HTTPException(status_code=400, detail="رقم الهاتف مطلوب للدفع بالمحفظة")
+            raise HTTPException(
+                status_code=400, detail="رقم الهاتف مطلوب للدفع بالمحفظة"
+            )
         wallet_result = await _process_wallet_payment(payment_token, phone_number)
         return wallet_result
 
@@ -2010,7 +2041,9 @@ async def account_subscribe(
     if checkout_url.startswith("WALLET_PAY:"):
         payment_token = checkout_url.replace("WALLET_PAY:", "")
         if not phone_number:
-            raise HTTPException(status_code=400, detail="رقم الهاتف مطلوب للدفع بالمحفظة")
+            raise HTTPException(
+                status_code=400, detail="رقم الهاتف مطلوب للدفع بالمحفظة"
+            )
         wallet_result = await _process_wallet_payment(payment_token, phone_number)
         return wallet_result
 
@@ -2041,65 +2074,78 @@ async def get_full_profile(current_user: dict = Depends(get_current_user)):
 # 📩 TELEGRAM OTP VERIFICATION
 # ═══════════════════════════════════════════════════════════════════════════
 
-import secrets as _secrets
+import random as _random
 
 
-@app.post("/auth/send-otp")
-async def send_telegram_otp(email: str):
-    """Send OTP to user's Telegram for email verification"""
-    user = await db_client.get_user_by_email(email)
+class OTPRequest(BaseModel):
+    email: str
+
+
+class OTPVerify(BaseModel):
+    email: str
+    code: str
+
+
+@app.post("/auth/request-otp")
+async def request_telegram_otp(req: OTPRequest):
+    """Generate OTP for a registered-but-unverified user.
+    The user then opens @RobovAI_bot → /verify → receives the code."""
+    email = req.email.strip().lower()
+    user = await db_client.get_user_by_email_unverified(email)
     if not user:
-        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+        raise HTTPException(status_code=404, detail="لم يتم العثور على حساب بهذا البريد")
 
-    otp = str(random.randint(100000, 999999))
-    expires_at = (datetime.now() + timedelta(minutes=10)).isoformat()
+    if user.get("is_verified"):
+        return {"status": "already_verified", "message": "الحساب مفعّل بالفعل ✅"}
 
-    # Store OTP in DB
-    await db_client.execute(
-        "INSERT INTO otp_codes (user_id, code, purpose, expires_at) VALUES (?, ?, 'email_verify', ?)",
-        (str(user["id"]), otp, expires_at),
-    )
+    # Generate and store OTP
+    otp = str(_random.randint(100000, 999999))
+    await db_client.store_otp(user["id"], otp, "telegram_verify", minutes=10)
 
-    # Try to send via Telegram bot
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-    if bot_token:
-        try:
-            import httpx
-
-            async with httpx.AsyncClient() as client:
-                # Note: User needs to have started the bot first
-                # We'd need their telegram_id stored — for now return OTP in response for testing
-                pass
-        except Exception:
-            pass
-
-    return {"status": "success", "message": "تم إرسال كود التحقق. صلاحيته 10 دقائق."}
+    return {
+        "status": "success",
+        "message": "تم إنشاء كود التحقق. افتح بوت RobovAI في تليجرام وأرسل /verify",
+    }
 
 
 @app.post("/auth/verify-otp")
-async def verify_otp(email: str, code: str):
-    """Verify Telegram OTP"""
-    user = await db_client.get_user_by_email(email)
+async def verify_otp_endpoint(req: OTPVerify):
+    """Verify OTP code and activate the account."""
+    email = req.email.strip().lower()
+    user = await db_client.get_user_by_email_unverified(email)
     if not user:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
 
-    result = await db_client.execute(
-        "SELECT * FROM otp_codes WHERE user_id = ? AND code = ? AND purpose = 'email_verify' AND used = 0 AND expires_at > ? ORDER BY id DESC LIMIT 1",
-        (str(user["id"]), code, datetime.now().isoformat()),
-    )
+    if user.get("is_verified"):
+        return {"status": "already_verified", "message": "الحساب مفعّل بالفعل ✅"}
 
-    if not result:
-        raise HTTPException(
-            status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية"
-        )
+    valid = await db_client.verify_otp(user["id"], req.code, "telegram_verify")
+    if not valid:
+        raise HTTPException(status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية")
 
-    # Mark as used
-    await db_client.execute(
-        "UPDATE otp_codes SET used = 1 WHERE user_id = ? AND code = ?",
-        (str(user["id"]), code),
-    )
+    await db_client.set_user_verified(user["id"])
 
-    return {"status": "success", "message": "تم التحقق بنجاح ✅"}
+    # Auto-login after verification
+    from backend.core.security import create_access_token
+    access_token = create_access_token(data={"sub": email})
+    expires_at = (datetime.now() + timedelta(days=1)).isoformat()
+    await db_client.create_session(user["id"], access_token, expires_at)
+
+    return {
+        "status": "success",
+        "message": "تم تفعيل الحساب بنجاح! ✅",
+        "access_token": access_token,
+        "user": {"id": user["id"], "email": email, "full_name": user.get("full_name", "")},
+    }
+
+
+@app.get("/auth/check-verified")
+async def check_verified(email: str):
+    """Check if a user's account is verified (used for polling from signup page)."""
+    user = await db_client.get_user_by_email_unverified(email.strip().lower())
+    if not user:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    return {"verified": bool(user.get("is_verified"))}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

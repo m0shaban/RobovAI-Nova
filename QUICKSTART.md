@@ -47,11 +47,11 @@ curl "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook?url=https://robovai-no
 
 ## 💳 Payment Tiers
 
-| Tier | Price | Requests/Day | Features |
-|------|-------|--------------|----------|
-| **Free** | $0 | 100 | Basic tools |
-| **Pro** | $5/mo | 1,000 | All tools, Priority support |
-| **Enterprise** | $50/mo | Unlimited | Custom integrations, API |
+| Tier           | Price  | Requests/Day | Features                    |
+| -------------- | ------ | ------------ | --------------------------- |
+| **Free**       | $0     | 100          | Basic tools                 |
+| **Pro**        | $5/mo  | 1,000        | All tools, Priority support |
+| **Enterprise** | $50/mo | Unlimited    | Custom integrations, API    |
 
 ---
 
@@ -111,6 +111,25 @@ stats = await UsageTracker.get_user_stats(user_id, db)
 - **Chat**: <https://robovai-nova.onrender.com/chat>
 - **Developers**: <https://robovai-nova.onrender.com/developers>
 - **Health**: <https://robovai-nova.onrender.com/health>
+
+---
+
+## 📊 Presentations (/presentation)
+
+- افتراضيًا: يتم توليد محتوى الشرائح بالذكاء الاصطناعي تلقائيًا.
+- Search on web (اختياري):
+  - JSON: أضف `"use_web": true`
+  - نص: أضف `--web`
+
+أمثلة:
+
+```text
+{ "title": "الجوافة", "slides_count": 7, "language": "ar", "use_web": true, "image_source": "none" }
+```
+
+```text
+برزنتيشن عن الجوافة --web --images none --theme modern
+```
 
 ---
 

@@ -96,7 +96,7 @@ class OpenRouterImageTool(BaseTool):
             }
             
             payload = {
-                "model": "google/gemini-2.5-flash-image-preview",  # يمكن تغييره
+                "model": "google/gemini-2.0-flash-exp:free",  # Free image generation model
                 "messages": [
                     {
                         "role": "user",

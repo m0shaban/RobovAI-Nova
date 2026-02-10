@@ -212,6 +212,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = update.message.text or ""
         
         logger.info(f"Nova [{user_id}]: {message}")
+
+        # Check if user is in a verify flow first
+        if await handle_verify_flow(update, context):
+            return
         
         response = ""
         keyboard = get_main_keyboard()
@@ -612,7 +616,152 @@ async def handle_voice_note(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await safe_reply(update, "❌ خطأ في معالجة الصوت.")
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 🚀 APP SETUP
+# � TELEGRAM ACCOUNT VERIFICATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+VERIFY_STATE = {}  # chat_id -> {"step": "awaiting_email" | "awaiting_otp", "email": ..., "user_id": ...}
+
+async def verify_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start the account verification flow"""
+    chat_id = str(update.effective_chat.id)
+    logger.info(f"User {chat_id} started /verify")
+
+    VERIFY_STATE[chat_id] = {"step": "awaiting_email"}
+
+    msg = """🔐 <b>تفعيل حساب RobovAI Nova</b>
+
+━━━━━━━━━━━━━━━━━━━━
+
+لتفعيل حسابك، أرسل <b>البريد الإلكتروني</b> الذي سجلت به في الموقع.
+
+📧 اكتب بريدك الإلكتروني الآن:"""
+
+    await safe_reply(update, msg)
+
+
+async def handle_verify_flow(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    """Handle verification conversation flow. Returns True if handled."""
+    chat_id = str(update.effective_chat.id)
+    state = VERIFY_STATE.get(chat_id)
+
+    if not state:
+        return False
+
+    message = (update.message.text or "").strip()
+
+    # Cancel
+    if message in ("الغاء", "إلغاء", "/cancel", "cancel"):
+        VERIFY_STATE.pop(chat_id, None)
+        await safe_reply(update, "❌ تم إلغاء عملية التفعيل.", reply_markup=get_main_keyboard())
+        return True
+
+    # Step 1: User sent their email
+    if state["step"] == "awaiting_email":
+        email = message.lower()
+        if "@" not in email or "." not in email:
+            await safe_reply(update, "⚠️ هذا لا يبدو بريداً إلكترونياً صحيحاً. حاول مرة أخرى أو اكتب /cancel للإلغاء.")
+            return True
+
+        try:
+            from backend.core.database import db_client
+            user = await db_client.get_user_by_email_unverified(email)
+
+            if not user:
+                await safe_reply(update, "❌ لم يتم العثور على حساب بهذا البريد.\n\nسجّل أولاً من الموقع ثم عد هنا للتفعيل.")
+                VERIFY_STATE.pop(chat_id, None)
+                return True
+
+            if user.get("is_verified"):
+                await safe_reply(update, "✅ هذا الحساب مُفعّل بالفعل! يمكنك تسجيل الدخول من الموقع.", reply_markup=get_main_keyboard())
+                VERIFY_STATE.pop(chat_id, None)
+                return True
+
+            # Generate 6-digit OTP
+            import random
+            otp = str(random.randint(100000, 999999))
+            await db_client.store_otp(user["id"], otp, "telegram_verify", minutes=10)
+
+            VERIFY_STATE[chat_id] = {
+                "step": "awaiting_otp",
+                "email": email,
+                "user_id": user["id"],
+                "otp": otp,
+            }
+
+            msg = f"""✅ تم العثور على الحساب!
+
+📧 <b>البريد:</b> {email}
+👤 <b>الاسم:</b> {user.get('full_name', '—')}
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔑 <b>كود التحقق الخاص بك:</b>
+
+<code>{otp}</code>
+
+━━━━━━━━━━━━━━━━━━━━
+
+📋 انسخ هذا الكود وأدخله في صفحة التسجيل في الموقع.
+
+⏱️ <b>صلاحية الكود:</b> 10 دقائق
+
+أو أدخل الكود هنا مباشرة لتأكيد التفعيل."""
+
+            await safe_reply(update, msg)
+            return True
+
+        except Exception as e:
+            logger.error(f"Verify email error: {e}", exc_info=True)
+            await safe_reply(update, "❌ حدث خطأ تقني. حاول مرة أخرى.")
+            VERIFY_STATE.pop(chat_id, None)
+            return True
+
+    # Step 2: User entered OTP (optional confirmation in Telegram itself)
+    if state["step"] == "awaiting_otp":
+        code = message.strip()
+
+        if not code.isdigit() or len(code) != 6:
+            await safe_reply(update, "⚠️ الكود يتكون من 6 أرقام. حاول مرة أخرى أو اكتب /cancel للإلغاء.")
+            return True
+
+        try:
+            from backend.core.database import db_client
+            valid = await db_client.verify_otp(state["user_id"], code, "telegram_verify")
+
+            if valid:
+                await db_client.set_user_verified(state["user_id"], telegram_chat_id=chat_id)
+                VERIFY_STATE.pop(chat_id, None)
+
+                msg = """🎉 <b>تم تفعيل حسابك بنجاح!</b>
+
+━━━━━━━━━━━━━━━━━━━━
+
+✅ حسابك مُفعّل الآن ويمكنك الاستمتاع بجميع خدمات RobovAI Nova.
+
+🌐 سجّل دخولك الآن من الموقع وابدأ!
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 <b>نصيحة:</b> جرّب /tools لاكتشاف كل الأدوات المتاحة!"""
+
+                await safe_reply(update, msg, reply_markup=get_main_keyboard())
+            else:
+                await safe_reply(update, "❌ الكود غير صحيح أو منتهي الصلاحية.\n\nأعد المحاولة أو اكتب /verify لبدء العملية من جديد.")
+                VERIFY_STATE.pop(chat_id, None)
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Verify OTP error: {e}", exc_info=True)
+            await safe_reply(update, "❌ حدث خطأ تقني.")
+            VERIFY_STATE.pop(chat_id, None)
+            return True
+
+    return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# �🚀 APP SETUP
 # ═══════════════════════════════════════════════════════════════════════════
 
 def create_telegram_app():
@@ -630,6 +779,7 @@ def create_telegram_app():
         app.add_handler(CommandHandler("start", start_command))
         app.add_handler(CommandHandler("help", help_command))
         app.add_handler(CommandHandler("tools", tools_command))
+        app.add_handler(CommandHandler("verify", verify_command))
         
         # Media
         app.add_handler(MessageHandler(filters.Document.ALL, handle_document_upload))

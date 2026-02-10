@@ -1,228 +1,0 @@
-
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>السباحة - رياضة الجسم والعقل - RobovAI Presentation</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .presentation {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 900px;
-            width: 100%;
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-        
-        .header .subtitle {
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
-        
-        .slides-container {
-            padding: 40px;
-        }
-        
-        .slide {
-            display: none;
-            animation: fadeIn 0.5s;
-        }
-        
-        .slide.active {
-            display: block;
-        }
-        
-        .slide-number {
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        
-        .slide h2 {
-            color: #333;
-            font-size: 2em;
-            margin-bottom: 20px;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 10px;
-        }
-        
-        .slide .content {
-            color: #555;
-            font-size: 1.2em;
-            line-height: 1.8;
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            padding: 20px 40px;
-            background: #f8f9fa;
-        }
-        
-        button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.3s;
-        }
-        
-        button:hover {
-            background: #764ba2;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #999;
-            font-size: 0.9em;
-        }
-    </style>
-</head>
-<body>
-    <div class="presentation">
-        <div class="header">
-            <h1>السباحة - رياضة الجسم والعقل</h1>
-            <div class="subtitle">Powered by RobovAI Nova 🤖</div>
-        </div>
-        
-        <div class="slides-container">
-            
-            <div class="slide">
-                <div class="slide-number">Slide 1/6</div>
-                <h2>مقدمة عن السباحة</h2>
-                <div class="content">
-                    السباحة هي واحدة من أقدم وأهم الرياضات في التاريخ البشري. تعتبر من أفضل التمارين الرياضية على الإطلاق لأنها تشغل جميع عضلات الجسم في وقت واحد. مارسها الإنسان منذ آلاف السنين وأصبحت رياضة أولمبية رسمية منذ عام 1896.
-                </div>
-            </div>
-            
-            <div class="slide">
-                <div class="slide-number">Slide 2/6</div>
-                <h2>أنواع السباحة الأربعة</h2>
-                <div class="content">
-                    سباحة الصدر (Breaststroke) - أقدم أسلوب وأسهله للمبتدئين<br> سباحة الظهر (Backstroke) - السباحة على الظهر مع حركة الذراعين بالتناوب<br> سباحة الفراشة (Butterfly) - أصعب الأساليب وأكثرها قوة<br> السباحة الحرة (Freestyle/Crawl) - أسرع أسلوب وأكثرها استخداماً في السباقات
-                </div>
-            </div>
-            
-            <div class="slide">
-                <div class="slide-number">Slide 3/6</div>
-                <h2>فوائد السباحة الصحية</h2>
-                <div class="content">
-                    تقوية عضلات الجسم بالكامل دون إجهاد المفاصل<br> حرق 400-700 سعرة حرارية في الساعة<br> تحسين صحة القلب والأوعية الدموية<br> تقليل التوتر والقلق وتحسين المزاج<br> تحسين مرونة الجسم والتنسيق الحركي<br> تقوية الجهاز التنفسي وزيادة سعة الرئة
-                </div>
-            </div>
-            
-            <div class="slide">
-                <div class="slide-number">Slide 4/6</div>
-                <h2>السباحة في الأولمبياد</h2>
-                <div class="content">
-                    السباحة من أهم الرياضات الأولمبية وتشمل 35 مسابقة.<br><br> أسطورة السباحة: مايكل فيلبس (28 ميدالية أولمبية)<br> مسافات السباق: 50م، 100م، 200م، 400م، 800م، 1500م<br> أنواع السباقات: فردي، تتابع، متنوع<br> أول مشاركة أولمبية للسباحة كانت في أثينا 1896
-                </div>
-            </div>
-            
-            <div class="slide">
-                <div class="slide-number">Slide 5/6</div>
-                <h2>نصائح السلامة في السباحة</h2>
-                <div class="content">
-                    لا تسبح بمفردك أبداً - اصطحب شخصاً معك<br> تعلم الإنعاش القلبي الرئوي (CPR)<br> لا تسبح بعد الأكل مباشرة - انتظر 30 دقيقة<br> استخدم واقي الشمس المقاوم للماء<br> ابدأ بالتدريج خاصة إذا كنت مبتدئاً<br> تأكد من عمق المياه قبل القفز
-                </div>
-            </div>
-            
-            <div class="slide">
-                <div class="slide-number">Slide 6/6</div>
-                <h2>كيف تبدأ تعلم السباحة؟</h2>
-                <div class="content">
-                    1. سجل في نادي سباحة أو استعن بمدرب متخصص<br>2. ابدأ بتعلم الطفو والتنفس الصحيح<br>3. تعلم سباحة الصدر أولاً (الأسهل)<br>4. مارس التمارين بانتظام 2-3 مرات أسبوعياً<br>5. زد المسافة والسرعة تدريجياً<br>6. انضم لمجموعة سباحة للتحفيز والمنافسة
-                </div>
-            </div>
-            
-        </div>
-        
-        <div class="controls">
-            <button id="prevBtn" onclick="changeSlide(-1)">⏮ السابق</button>
-            <button id="nextBtn" onclick="changeSlide(1)">التالي ⏭</button>
-        </div>
-        
-        <div class="footer">
-            Created with ❤️ by RobovAI Nova
-        </div>
-    </div>
-    
-    <script>
-        let currentSlide = 0;
-        const slides = document.querySelectorAll('.slide');
-        
-        function showSlide(n) {
-            slides.forEach(s => s.classList.remove('active'));
-            
-            if (n >= slides.length) currentSlide = slides.length - 1;
-            if (n < 0) currentSlide = 0;
-            
-            slides[currentSlide].classList.add('active');
-            
-            document.getElementById('prevBtn').disabled = currentSlide === 0;
-            document.getElementById('nextBtn').disabled = currentSlide === slides.length - 1;
-        }
-        
-        function changeSlide(direction) {
-            currentSlide += direction;
-            showSlide(currentSlide);
-        }
-        
-        // Show first slide
-        showSlide(0);
-        
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') changeSlide(1);
-            if (e.key === 'ArrowRight') changeSlide(-1);
-        });
-    </script>
-</body>
-</html>
-        

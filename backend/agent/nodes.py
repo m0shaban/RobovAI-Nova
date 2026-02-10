@@ -879,11 +879,18 @@ async def reflect_node(state: AgentState) -> Dict[str, Any]:
         # We have actual successful tool results - build answer directly
         final = "✅ تم تنفيذ المهمة بنجاح!\n\n"
         links = []
+        images = []
         tool_summaries = []
 
         for result in successful_tools:
             output = result.get("output", "")
             tool_name = result.get("tool_name", "")
+
+            # Also grab top-level image_url / display_url from the tool result dict
+            if result.get("image_url"):
+                images.append(result["image_url"])
+            if result.get("display_url"):
+                images.append(result["display_url"])
 
             # Try to parse JSON output from the adapter
             try:
@@ -897,19 +904,44 @@ async def reflect_node(state: AgentState) -> Dict[str, Any]:
                 if parsed:
                     if "url" in parsed:
                         links.append(f"[📁 تحميل الملف]({parsed['url']})")
+                    if "image_url" in parsed:
+                        images.append(parsed["image_url"])
+                    if "display_url" in parsed:
+                        images.append(parsed["display_url"])
                     if "text" in parsed:
-                        tool_summaries.append(
-                            f"- **{tool_name}**: {parsed['text'][:300]}"
-                        )
+                        text_val = parsed["text"]
+                        # Don't truncate text that contains image/link markdown
+                        if "![" in text_val or "](http" in text_val:
+                            tool_summaries.append(f"- **{tool_name}**:\n{text_val}")
+                        else:
+                            tool_summaries.append(
+                                f"- **{tool_name}**: {text_val[:500]}"
+                            )
                 else:
-                    tool_summaries.append(f"- **{tool_name}**: {str(output)[:300]}")
+                    out_str = str(output)
+                    if "![" in out_str or "](http" in out_str:
+                        tool_summaries.append(f"- **{tool_name}**:\n{out_str}")
+                    else:
+                        tool_summaries.append(f"- **{tool_name}**: {out_str[:500]}")
             except:
-                tool_summaries.append(f"- **{tool_name}**: {str(output)[:300]}")
+                out_str = str(output)
+                if "![" in out_str or "](http" in out_str:
+                    tool_summaries.append(f"- **{tool_name}**:\n{out_str}")
+                else:
+                    tool_summaries.append(f"- **{tool_name}**: {out_str[:500]}")
+
+        # De-duplicate images
+        images = list(dict.fromkeys(images))
 
         if links:
             final += "### 📎 الملفات والروابط:\n" + "\n".join(links) + "\n\n"
         if tool_summaries:
             final += "### 📋 النتائج:\n" + "\n".join(tool_summaries[:10])
+        # Append images at the end so they always render
+        if images:
+            final += "\n\n"
+            for img_url in images:
+                final += f"\n![صورة]({img_url})"
 
         return {
             "phase": AgentPhase.COMPLETED.value,

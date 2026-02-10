@@ -137,6 +137,27 @@
         display: none;
         font-size: 0.85rem;
       }
+
+      .verify-banner {
+        display: none;
+        margin-top: 1rem;
+        background: rgba(34,158,217,0.1);
+        border: 1px solid rgba(34,158,217,0.25);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        animation: fadeIn .4s;
+      }
+      @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+      .verify-banner p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem; }
+      .verify-banner a {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #229ED9; color: white; padding: 0.5rem 1.2rem;
+        border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9rem;
+        transition: box-shadow .2s;
+      }
+      .verify-banner a:hover { box-shadow: 0 0 16px rgba(34,158,217,0.4); }
+      .verify-banner svg { width: 18px; height: 18px; fill: white; }
     </style>
   </head>
   <body>
@@ -174,6 +195,13 @@
 
         <button type="submit" class="btn">دخول</button>
         <div class="error-msg" id="errorMsg">خطأ في البريد أو كلمة المرور</div>
+        <div class="verify-banner" id="verifyBanner">
+          <p>⚠️ حسابك غير مفعّل بعد. فعّله عبر بوت تليجرام:</p>
+          <a href="https://t.me/RobovAI_bot" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            افتح بوت RobovAI وأرسل /verify
+          </a>
+        </div>
       </form>
 
       <div class="footer-text">
@@ -225,16 +253,20 @@
                 API_BASE === 'http://localhost:8000' &&
                 window.location.protocol === 'file:'
               ) {
-                // Can't redirect to /chat for file protocol easily unless served
                 alert(
                   'تم تسجيل الدخول بنجاح! ولكنك تفتح الملف مباشرة. يرجى فتح http://localhost:8000/chat',
                 );
               } else {
                 window.location.href = redirectUrl;
               }
+            } else if (res.status === 403) {
+              // Account not verified
+              errorMsg.style.display = 'none';
+              document.getElementById('verifyBanner').style.display = 'block';
             } else {
               errorMsg.textContent = data.detail || 'فشل تسجيل الدخول';
               errorMsg.style.display = 'block';
+              document.getElementById('verifyBanner').style.display = 'none';
             }
           } catch (e) {
             console.error(e);

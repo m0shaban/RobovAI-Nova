@@ -14,6 +14,8 @@ from pydantic import BaseModel, Field, field_validator
 import os, json, ast, logging, re
 from datetime import datetime
 
+from backend.core.llm import llm_client
+
 logger = logging.getLogger("robovai.tools.presentation")
 
 # ─── lazy import of sibling module to avoid circular deps ───────
@@ -91,6 +93,10 @@ class PresentationSchema(BaseModel):
     language: str = Field(
         "ar",
         description="Presentation language: ar | en",
+    )
+    use_web: bool = Field(
+        False,
+        description="If true, do a lightweight web research summary first and use it to guide slide generation.",
     )
     theme: str = Field(
         "modern",
@@ -255,6 +261,7 @@ class PresentationTool(BaseTool):
         slides: Optional[List[str]] = None,
         slides_count: int = 6,
         language: str = "ar",
+        use_web: bool = False,
         theme: str = "modern",
         image_source: str = "auto",
     ) -> Dict[str, Any]:
@@ -271,25 +278,46 @@ class PresentationTool(BaseTool):
             else:
                 parsed.append({"title": s, "content": ""})
 
+        research_text = ""
+        extra_cost = 0
+        if use_web:
+            research_text = await self._web_research(title, user_id=user_id)
+            extra_cost = 3
+
         # If no slides provided, auto-generate.
         if not parsed:
-            parsed = await self._auto_slides(title, slides_count=slides_count, language=language)
+            parsed = await self._auto_slides(
+                title,
+                slides_count=slides_count,
+                language=language,
+                research_text=research_text,
+            )
 
         # If slides exist but some contents are empty, fill them.
-        parsed = await self._fill_missing_slide_content(title, parsed, language=language)
+        parsed = await self._fill_missing_slide_content(
+            title,
+            parsed,
+            language=language,
+            research_text=research_text,
+        )
 
         # Sanitize (remove emojis / noisy markers)
         parsed = [{"title": self._sanitize_text(s.get("title", "")), "content": self._sanitize_text(s.get("content", ""))} for s in parsed]
-        return await self._create_presentation(title, parsed, theme, image_source, user_id)
+        result = await self._create_presentation(title, parsed, theme, image_source, user_id)
+        if result.get("status") == "success" and extra_cost:
+            result["tokens_deducted"] = int(result.get("tokens_deducted") or 0) + extra_cost
+            result["web_research"] = True
+        return result
 
     # ───────── execute (string) ─────────────────────────────────
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         try:
             text = user_input.strip()
 
-            # --- extract flags --theme / --images ---------------
+            # --- extract flags --theme / --images / --web -------
             theme = "modern"
             image_source = "auto"
+            use_web = False
             for flag, choices, attr in [
                 ("--theme", THEME_NAMES, "theme"),
                 ("--images", ["auto", "unsplash", "pexels", "ai", "none"], "image_source"),
@@ -305,12 +333,17 @@ class PresentationTool(BaseTool):
                     text = parts[0].strip() + " " + " ".join(parts[1].strip().split()[1:])
                     text = text.strip()
 
+            if "--web" in text:
+                use_web = True
+                text = text.replace("--web", " ").strip()
+
             # --- JSON input ------------------------------------
             if text.startswith("{") and "title" in text:
                 try:
                     data = json.loads(text)
                     data.setdefault("theme", theme)
                     data.setdefault("image_source", image_source)
+                    data.setdefault("use_web", use_web)
                     return await self.execute_kwargs(user_id, **data)
                 except Exception:
                     pass
@@ -343,7 +376,11 @@ class PresentationTool(BaseTool):
             if not topic:
                 return {"status": "error", "output": "❌ يرجى تحديد موضوع العرض", "tokens_deducted": 0}
 
-            slides = await self._auto_slides(topic, slides_count=6, language="ar")
+            research_text = ""
+            if use_web:
+                research_text = await self._web_research(topic, user_id=user_id)
+
+            slides = await self._auto_slides(topic, slides_count=6, language="ar", research_text=research_text)
             return await self._create_presentation(topic, slides, theme, image_source, user_id)
 
         except Exception as e:
@@ -404,8 +441,18 @@ class PresentationTool(BaseTool):
             logger.warning(f"Image fetch failed: {e}")
             images = []
 
+        effective_image_source = str(images[0].get("source") or "auto") if images else "none"
+        images_count = len(images)
+
         # ── generate HTML ──
-        html = self._build_html(topic, slides, theme, images, user_id=user_id, image_source=image_source)
+        html = self._build_html(
+            topic,
+            slides,
+            theme,
+            images,
+            user_id=user_id,
+            image_source=effective_image_source,
+        )
 
         # ── save file ──
         os.makedirs("uploads/presentations", exist_ok=True)
@@ -430,7 +477,7 @@ class PresentationTool(BaseTool):
             f"📊 الموضوع: **{topic}**",
             f"📄 عدد الشرائح: {len(slides)}",
             f"🎨 الثيم: {theme}",
-            f"🖼️ مصدر الصور: {image_source}",
+            f"🖼️ مصدر الصور: {image_source} (فعليًا: {effective_image_source} · {images_count} صور)",
             f"🔗 رابط HTML: {html_url}",
         ]
         if pdf_url:
@@ -648,42 +695,74 @@ class PresentationTool(BaseTool):
     # ═══════════════════════════════════════════════════════════════
     #  AUTO SLIDE GENERATION  (fallback when agent sends no content)
     # ═══════════════════════════════════════════════════════════════
-    async def _auto_slides(self, topic: str, slides_count: int = 6, language: str = "ar") -> List[Dict[str, str]]:
-        """Generate a reasonable, topic-related slide outline with real content (no placeholders)."""
+    async def _auto_slides(
+        self,
+        topic: str,
+        slides_count: int = 6,
+        language: str = "ar",
+        research_text: str = "",
+    ) -> List[Dict[str, str]]:
+        """Generate topic-related slides (LLM-first)."""
         slides_count = max(3, min(int(slides_count or 6), 20))
 
-        # Try a lightweight Wikipedia summary to anchor content.
-        summary = await self._wiki_summary(topic, language=language)
+        try:
+            slides = await self._llm_generate_slides(
+                topic,
+                slides_count=slides_count,
+                language=language,
+                research_text=research_text,
+            )
+            if slides:
+                return slides[:slides_count]
+        except Exception as e:
+            logger.warning(f"LLM slide generation failed, falling back: {e}")
 
+        # Fallback only if LLM isn't available.
+        summary = await self._wiki_summary(topic, language=language)
         if language == "en":
             base = [
                 {"title": f"Introduction to {topic}", "content": summary or f"A brief overview of {topic}."},
                 {"title": "Key facts", "content": self._generic_facts_en(topic)},
                 {"title": "Uses and applications", "content": self._generic_uses_en(topic)},
             ]
+            while len(base) < slides_count:
+                base.append({"title": "Tips", "content": self._generic_tips_en(topic)})
         else:
             base = [
                 {"title": f"مقدمة عن {topic}", "content": summary or f"نظرة عامة موجزة عن {topic}."},
                 {"title": "معلومات أساسية", "content": self._generic_facts_ar(topic)},
                 {"title": "الاستخدامات", "content": self._generic_uses_ar(topic)},
             ]
-
-        # Add additional slides if requested
-        while len(base) < slides_count:
-            if language == "en":
-                base.append({"title": "Tips", "content": self._generic_tips_en(topic)})
-            else:
+            while len(base) < slides_count:
                 base.append({"title": "نصائح عملية", "content": self._generic_tips_ar(topic)})
-
         return base[:slides_count]
 
-    async def _fill_missing_slide_content(self, topic: str, slides: List[Dict[str, str]], language: str = "ar") -> List[Dict[str, str]]:
-        """If the caller provided only titles (or empty content), fill with meaningful text."""
+    async def _fill_missing_slide_content(
+        self,
+        topic: str,
+        slides: List[Dict[str, str]],
+        language: str = "ar",
+        research_text: str = "",
+    ) -> List[Dict[str, str]]:
+        """If the caller provided only titles (or empty content), fill with meaningful text (LLM-first)."""
         if not slides:
             return slides
 
-        # If many slides are empty, fetch a single summary to anchor.
         needs = sum(1 for s in slides if not (s.get("content") or "").strip())
+        if needs:
+            try:
+                filled = await self._llm_fill_slides(
+                    topic,
+                    slides,
+                    language=language,
+                    research_text=research_text,
+                )
+                if filled:
+                    return filled
+            except Exception as e:
+                logger.warning(f"LLM fill failed, falling back: {e}")
+
+        # If many slides are empty, fetch a single summary to anchor (fallback only).
         summary = await self._wiki_summary(topic, language=language) if needs else ""
 
         filled: List[Dict[str, str]] = []
@@ -714,6 +793,153 @@ class PresentationTool(BaseTool):
 
             filled.append({"title": title, "content": content})
         return filled
+
+    async def _web_research(self, topic: str, user_id: str) -> str:
+        """Lightweight research summary to guide slide generation (best-effort)."""
+        try:
+            from backend.tools.advanced.deep_research import DeepResearchTool
+
+            tool = DeepResearchTool()
+            res = await tool.execute(topic, user_id)
+            if res.get("status") == "success":
+                out = (res.get("output") or "").strip()
+                # keep it bounded so prompts stay stable
+                return out[:6000]
+            return ""
+        except Exception as e:
+            logger.info(f"Web research unavailable: {e}")
+            return ""
+
+    async def _llm_generate_slides(
+        self,
+        topic: str,
+        slides_count: int,
+        language: str = "ar",
+        research_text: str = "",
+    ) -> List[Dict[str, str]]:
+        lang = "Arabic" if language != "en" else "English"
+        research_block = ""
+        if (research_text or "").strip():
+            research_block = (
+                "\n\nHere are research notes (may include noise; use only what is relevant):\n"
+                + research_text.strip()
+            )
+
+        prompt = (
+            f"Create a high-quality slide deck about: {topic}.\n"
+            f"Language: {lang}.\n"
+            f"Slides count: {slides_count}.\n"
+            "Output MUST be valid JSON only (no markdown, no code fences) with this shape:\n"
+            "{\"slides\":[{\"title\":...,\"content\":...}, ...]}\n"
+            "Rules:\n"
+            "- No emojis.\n"
+            "- Each slide content is plain text with 4-6 bullet lines starting with '• '.\n"
+            "- Avoid vague filler; be specific and practical.\n"
+            "- Do not mention internal technologies/providers.\n"
+            "- Keep titles short (2-6 words).\n"
+            "- Cover: overview, key points, benefits/uses, how-to/tips, risks/limitations, conclusion.\n"
+            + research_block
+        )
+
+        system_prompt = (
+            "أنت نوفا، مساعد ذكي. اكتب محتوى عرض تقديمي واضح ومنظم، "
+            "بدون رموز تعبيرية، وبنقاط مختصرة." if language != "en" else
+            "You are Nova. Write clear, structured slide content with no emojis and concise bullets."
+        )
+
+        raw = await llm_client.generate(prompt, provider="auto", system_prompt=system_prompt)
+        data = self._safe_json_load(raw)
+        slides = data.get("slides") if isinstance(data, dict) else None
+        if not isinstance(slides, list):
+            return []
+
+        out: List[Dict[str, str]] = []
+        for item in slides:
+            if not isinstance(item, dict):
+                continue
+            t = str(item.get("title") or "").strip()
+            c = str(item.get("content") or "").strip()
+            if not t or not c:
+                continue
+            out.append({"title": t, "content": c})
+        return out
+
+    async def _llm_fill_slides(
+        self,
+        topic: str,
+        slides: List[Dict[str, str]],
+        language: str = "ar",
+        research_text: str = "",
+    ) -> List[Dict[str, str]]:
+        lang = "Arabic" if language != "en" else "English"
+        skeleton = [{"title": (s.get("title") or "").strip(), "content": (s.get("content") or "").strip()} for s in slides]
+        research_block = ""
+        if (research_text or "").strip():
+            research_block = (
+                "\n\nResearch notes (optional):\n" + research_text.strip()
+            )
+
+        prompt = (
+            f"Fill in missing/empty slide content for a deck about: {topic}.\n"
+            f"Language: {lang}.\n"
+            "Return JSON only: {\"slides\":[{\"title\":...,\"content\":...}, ...]}\n"
+            "Rules:\n"
+            "- Keep the same number of slides and the same titles as provided.\n"
+            "- For any non-empty content, you may lightly polish, but keep meaning.\n"
+            "- No emojis.\n"
+            "- Each content is plain text with 4-6 bullet lines starting with '• '.\n"
+            + research_block
+            + "\n\nInput slides JSON:\n"
+            + json.dumps({"slides": skeleton}, ensure_ascii=False)
+        )
+
+        system_prompt = (
+            "أنت نوفا، اكتب نقاط واضحة ومنظمة للشرائح بدون رموز تعبيرية." if language != "en" else
+            "You are Nova. Write clear bullet slide content with no emojis."
+        )
+
+        raw = await llm_client.generate(prompt, provider="auto", system_prompt=system_prompt)
+        data = self._safe_json_load(raw)
+        slides_out = data.get("slides") if isinstance(data, dict) else None
+        if not isinstance(slides_out, list) or len(slides_out) != len(slides):
+            return []
+
+        out: List[Dict[str, str]] = []
+        for i, item in enumerate(slides_out):
+            if not isinstance(item, dict):
+                return []
+            title = str(item.get("title") or "").strip() or (slides[i].get("title") or topic)
+            content = str(item.get("content") or "").strip() or (slides[i].get("content") or "")
+            out.append({"title": title, "content": content})
+        return out
+
+    @staticmethod
+    def _safe_json_load(text: str) -> Dict[str, Any]:
+        if not text:
+            return {}
+        s = text.strip()
+
+        # Strip common code-fence wrappers just in case.
+        if s.startswith("```"):
+            s = re.sub(r"^```[a-zA-Z0-9_+-]*\n", "", s)
+            s = s.rstrip("`\n ")
+
+        # Try direct json
+        try:
+            return json.loads(s)
+        except Exception:
+            pass
+
+        # Try to extract the first JSON object
+        try:
+            start = s.find("{")
+            end = s.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                return json.loads(s[start : end + 1])
+        except Exception:
+            return {}
+
+        return {}
 
     @staticmethod
     def _sanitize_text(text: str) -> str:

@@ -67,6 +67,8 @@ class Database:
                 ("subscription_tier", "TEXT DEFAULT 'free'"),
                 ("subscription_expires", "TEXT"),
                 ("updated_at", "TIMESTAMP"),
+                ("is_verified", "INTEGER DEFAULT 0"),
+                ("telegram_chat_id", "TEXT"),
             ]:
                 try:
                     c.execute(f"ALTER TABLE users ADD COLUMN {col} {defn}")
@@ -493,6 +495,72 @@ class Database:
                 return [dict(row) for row in c.fetchall()]
             conn.commit()
             return None
+
+    # ═══════════════════════════════════════════════════════════════
+    # 📲 TELEGRAM VERIFICATION
+    # ═══════════════════════════════════════════════════════════════
+
+    async def set_user_verified(self, user_id: int, telegram_chat_id: str = None) -> bool:
+        """Mark a user as verified and optionally link their Telegram chat ID."""
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            if telegram_chat_id:
+                c.execute(
+                    "UPDATE users SET is_verified = 1, telegram_chat_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (telegram_chat_id, user_id),
+                )
+            else:
+                c.execute(
+                    "UPDATE users SET is_verified = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (user_id,),
+                )
+            conn.commit()
+            return c.rowcount > 0
+
+    async def store_otp(self, user_id: int, code: str, purpose: str = "telegram_verify", minutes: int = 10):
+        """Store an OTP code for a user."""
+        expires_at = (datetime.now() + __import__('datetime').timedelta(minutes=minutes)).isoformat()
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            # Invalidate old unused codes for this user + purpose
+            c.execute(
+                "UPDATE otp_codes SET used = 1 WHERE user_id = ? AND purpose = ? AND used = 0",
+                (str(user_id), purpose),
+            )
+            c.execute(
+                "INSERT INTO otp_codes (user_id, code, purpose, expires_at) VALUES (?, ?, ?, ?)",
+                (str(user_id), code, purpose, expires_at),
+            )
+            conn.commit()
+
+    async def verify_otp(self, user_id: int, code: str, purpose: str = "telegram_verify") -> bool:
+        """Verify an OTP code. Returns True if valid."""
+        now = datetime.now().isoformat()
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT id FROM otp_codes WHERE user_id = ? AND code = ? AND purpose = ? AND used = 0 AND expires_at > ? ORDER BY id DESC LIMIT 1",
+                (str(user_id), code, purpose, now),
+            )
+            row = c.fetchone()
+            if not row:
+                return False
+            c.execute("UPDATE otp_codes SET used = 1 WHERE id = ?", (row["id"],))
+            conn.commit()
+            return True
+
+    async def get_user_by_email_unverified(self, email: str) -> Optional[Dict[str, Any]]:
+        """Get an unverified user by email (for OTP flow)."""
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT id, email, full_name, is_verified FROM users WHERE lower(email) = lower(?)",
+                (_normalize_email(email),),
+            )
+            user = c.fetchone()
+            return dict(user) if user else None
 
     # ═══════════════════════════════════════════════════════════════
     # 📊 Admin Stats

@@ -17,248 +17,361 @@
         --text: #e0e0e0;
         --text-muted: #6b7280;
         --border: rgba(255, 255, 255, 0.1);
+        --success: #22c55e;
+        --telegram: #229ED9;
       }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
+      * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
         font-family: 'Cairo', sans-serif;
         background: var(--bg);
         color: var(--text);
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-image: radial-gradient(
-          circle at 10% 20%,
-          #1a1a2e 0%,
-          #0a0a1a 100%
-        );
+        background-image: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #0a0a1a 100%);
+        padding: 20px;
       }
-
       .auth-card {
         background: var(--surface);
         padding: 2.5rem;
         border-radius: 24px;
         width: 100%;
-        max-width: 400px;
+        max-width: 440px;
         border: 1px solid var(--border);
         box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
         text-align: center;
+        position: relative;
+        overflow: hidden;
       }
+      .logo { margin-bottom: 1rem; }
+      .logo img { width: 80px; height: auto; filter: drop-shadow(0 0 20px rgba(0,240,255,.35)); }
+      h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+      .subtitle { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
 
-      .logo {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        background: linear-gradient(135deg, var(--secondary), var(--primary));
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 900;
+      /* Steps indicator */
+      .steps { display: flex; justify-content: center; gap: 8px; margin-bottom: 1.5rem; }
+      .step-dot {
+        width: 10px; height: 10px; border-radius: 50%;
+        background: var(--border); transition: all .4s;
       }
+      .step-dot.active { background: var(--secondary); box-shadow: 0 0 10px var(--secondary); width: 28px; border-radius: 5px; }
+      .step-dot.done { background: var(--success); }
 
-      h1 {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .input-group {
-        margin-bottom: 1.25rem;
-        text-align: right;
-      }
-
-      label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-size: 0.85rem;
-        color: var(--text-muted);
-      }
-
+      /* Form */
+      .input-group { margin-bottom: 1.1rem; text-align: right; }
+      label { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--text-muted); }
       input {
-        width: 100%;
-        padding: 0.8rem 1rem;
+        width: 100%; padding: 0.8rem 1rem;
         background: rgba(255, 255, 255, 0.05);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        color: white;
-        font-family: inherit;
-        transition: all 0.3s;
+        border: 1px solid var(--border); border-radius: 12px;
+        color: white; font-family: inherit; font-size: 0.95rem; transition: all 0.3s;
       }
+      input:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.15); }
 
-      input:focus {
-        outline: none;
-        border-color: var(--secondary);
-        box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
-      }
-
+      /* Buttons */
       .btn {
-        width: 100%;
-        padding: 0.9rem;
-        background: linear-gradient(90deg, var(--secondary), var(--primary));
-        border: none;
-        border-radius: 12px;
-        color: white;
-        font-weight: 700;
-        cursor: pointer;
-        margin-top: 1rem;
-        font-family: inherit;
-        transition: transform 0.2s;
+        width: 100%; padding: 0.85rem; border: none; border-radius: 12px;
+        color: white; font-weight: 700; cursor: pointer;
+        font-family: inherit; font-size: 0.95rem;
+        transition: transform 0.2s, box-shadow 0.2s;
       }
-
-      .btn:hover {
-        transform: scale(1.02);
-        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-      }
-
-      .footer-text {
-        margin-top: 1.5rem;
-        font-size: 0.85rem;
-        color: var(--text-muted);
-      }
-
-      .footer-text a {
-        color: var(--secondary);
+      .btn:hover { transform: scale(1.02); }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+      .btn-primary { background: linear-gradient(90deg, var(--secondary), var(--primary)); margin-top: 0.5rem; }
+      .btn-primary:hover { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+      .btn-telegram {
+        background: var(--telegram); display: flex; align-items: center;
+        justify-content: center; gap: 10px; margin-top: 1rem; font-size: 1rem;
         text-decoration: none;
       }
+      .btn-telegram:hover { box-shadow: 0 0 20px rgba(34,158,217,0.4); }
+      .btn-telegram svg { width: 22px; height: 22px; fill: white; }
+
+      .footer-text { margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted); }
+      .footer-text a { color: var(--secondary); text-decoration: none; }
 
       .error-msg {
-        color: #ef4444;
-        margin-top: 1rem;
-        display: none;
-        font-size: 0.85rem;
+        color: #ef4444; margin-top: 0.75rem; font-size: 0.85rem; display: none;
+        background: rgba(239,68,68,0.08); padding: 8px 12px; border-radius: 8px;
       }
+
+      /* Step panels */
+      .step-panel { display: none; animation: fadeIn .45s; }
+      .step-panel.active { display: block; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+      /* OTP */
+      .otp-wrap { display: flex; gap: 8px; direction: ltr; justify-content: center; margin: 1.25rem 0; }
+      .otp-wrap input {
+        width: 48px; height: 56px; text-align: center; font-size: 1.6rem; font-weight: 700;
+        border-radius: 14px; padding: 0; caret-color: var(--primary); background: rgba(255,255,255,0.04);
+      }
+      .otp-wrap input:focus { border-color: var(--primary); background: rgba(0,240,255,0.05); }
+
+      /* Telegram guide */
+      .telegram-guide {
+        background: rgba(34,158,217,0.08); border: 1px solid rgba(34,158,217,0.2);
+        border-radius: 14px; padding: 1.25rem; margin: 1rem 0; text-align: right;
+      }
+      .telegram-guide h3 { color: var(--telegram); font-size: 0.95rem; margin-bottom: 0.75rem; }
+      .telegram-guide ol { padding-right: 1.25rem; font-size: 0.85rem; color: var(--text-muted); line-height: 2; }
+      .telegram-guide li { margin-bottom: 2px; }
+      .telegram-guide code {
+        background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 6px;
+        font-family: monospace; color: var(--primary); font-size: 0.82rem;
+      }
+
+      .timer { color: var(--text-muted); font-size: 0.82rem; margin-top: 6px; }
+      .timer span { color: var(--primary); font-weight: 600; }
+      .resend-link { color: var(--secondary); cursor: pointer; font-size: 0.85rem; margin-top: 8px; text-decoration: underline; display: inline-block; }
+      .resend-link:hover { color: var(--primary); }
+
+      .success-box {
+        background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+        border-radius: 14px; padding: 2rem; text-align: center;
+      }
+      .success-box .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+      .success-box h2 { color: var(--success); margin-bottom: 0.5rem; }
     </style>
   </head>
   <body>
     <div class="auth-card">
       <div class="logo">
-        <img
-          src="public/assets/logo.png"
-          alt="Logo"
-          style="width: 100px; height: auto"
-        />
+        <img src="public/assets/logo.png" alt="RobovAI Nova" />
       </div>
-      <h1>إنشاء حساب جديد</h1>
 
-      <form id="signupForm">
-        <div class="input-group">
-          <label>الاسم الكامل</label>
-          <input type="text" id="fullname" required placeholder="أحمد محمد" />
+      <!-- Steps Indicator -->
+      <div class="steps">
+        <div class="step-dot active" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+        <div class="step-dot" id="dot3"></div>
+      </div>
+
+      <!-- ═══ STEP 1: Registration Form ═══ -->
+      <div class="step-panel active" id="step1">
+        <h1>إنشاء حساب جديد</h1>
+        <p class="subtitle">ابدأ رحلتك مع RobovAI Nova</p>
+
+        <form id="signupForm">
+          <div class="input-group">
+            <label>الاسم الكامل</label>
+            <input type="text" id="fullname" required placeholder="أحمد محمد" autocomplete="name" />
+          </div>
+          <div class="input-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="email" required placeholder="name@example.com" autocomplete="email" />
+          </div>
+          <div class="input-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="password" required placeholder="••••••••" minlength="6" autocomplete="new-password" />
+          </div>
+          <button type="submit" class="btn btn-primary" id="registerBtn">إنشاء حساب</button>
+          <div class="error-msg" id="step1Error"></div>
+        </form>
+        <div class="footer-text">لديك حساب بالفعل؟ <a href="/login">سجل دخول</a></div>
+      </div>
+
+      <!-- ═══ STEP 2: Telegram Verification ═══ -->
+      <div class="step-panel" id="step2">
+        <h1>🔐 تفعيل الحساب</h1>
+        <p class="subtitle">فعّل حسابك عبر بوت تليجرام</p>
+
+        <div class="telegram-guide">
+          <h3>📱 خطوات التفعيل</h3>
+          <ol>
+            <li>افتح بوت <b>RobovAI</b> في تليجرام</li>
+            <li>أرسل الأمر <code>/verify</code></li>
+            <li>أدخل بريدك الإلكتروني عند الطلب</li>
+            <li>سيظهر لك <b>كود تحقق</b> من 6 أرقام</li>
+            <li>أدخل الكود هنا بالأسفل ⬇️</li>
+          </ol>
         </div>
 
-        <div class="input-group">
-          <label>البريد الإلكتروني</label>
-          <input
-            type="email"
-            id="email"
-            required
-            placeholder="name@example.com"
-          />
+        <a href="https://t.me/RobovAI_bot" target="_blank" class="btn btn-telegram" id="openTelegramBtn">
+          <svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          افتح بوت RobovAI في تليجرام
+        </a>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">أدخل كود التحقق</label>
+          <div class="otp-wrap" id="otpWrap">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-idx="0" />
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-idx="1" />
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-idx="2" />
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-idx="3" />
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-idx="4" />
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" class="otp-digit" data-idx="5" />
+          </div>
+          <div class="timer" id="otpTimer">صلاحية الكود: <span id="countdown">10:00</span></div>
+          <div class="resend-link" id="resendLink" style="display:none" onclick="resendOTP()">إعادة إرسال الكود</div>
         </div>
 
-        <div class="input-group">
-          <label>كلمة المرور</label>
-          <input
-            type="password"
-            id="password"
-            required
-            placeholder="••••••••"
-          />
+        <button class="btn btn-primary" id="verifyBtn" disabled onclick="verifyOTP()">تحقق وفعّل الحساب</button>
+        <div class="error-msg" id="step2Error"></div>
+      </div>
+
+      <!-- ═══ STEP 3: Success ═══ -->
+      <div class="step-panel" id="step3">
+        <div class="success-box">
+          <div class="icon">🎉</div>
+          <h2>تم تفعيل حسابك!</h2>
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem;">حسابك جاهز. مرحباً بك في RobovAI Nova 🚀</p>
+          <button class="btn btn-primary" onclick="goToChat()">ابدأ المحادثة</button>
         </div>
-
-        <button type="submit" class="btn">تسجيل</button>
-        <div class="error-msg" id="errorMsg">حدث خطأ</div>
-        <div
-          class="success-msg"
-          id="successMsg"
-          style="
-            color: #22c55e;
-            margin-top: 1rem;
-            display: none;
-            font-size: 0.85rem;
-          "
-        ></div>
-      </form>
-
-      <div class="footer-text">
-        لديك حساب بالفعل؟ <a href="/login">سجل دخول</a>
       </div>
     </div>
 
     <script>
-      document
-        .getElementById('signupForm')
-        .addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const fullname = document.getElementById('fullname').value;
-          const email = document.getElementById('email').value;
-          const password = document.getElementById('password').value;
-          const errorMsg = document.getElementById('errorMsg');
-          const successMsg = document.getElementById('successMsg');
+      const API_BASE = (window.location.hostname === '' || window.location.protocol === 'file:')
+        ? 'http://localhost:8000' : window.location.origin;
 
-          // Determine API Base URL
-          const API_BASE =
-            window.location.hostname === '' ||
-            window.location.protocol === 'file:'
-              ? 'http://localhost:8000'
-              : window.location.origin;
+      let registeredEmail = '';
+      let countdownInterval = null;
 
-          errorMsg.style.display = 'none';
-          successMsg.style.display = 'none';
+      /* ── Step Navigation ── */
+      function goToStep(n) {
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('step' + n).classList.add('active');
+        for (let i = 1; i <= 3; i++) {
+          const dot = document.getElementById('dot' + i);
+          dot.classList.remove('active', 'done');
+          if (i < n) dot.classList.add('done');
+          else if (i === n) dot.classList.add('active');
+        }
+      }
 
-          try {
-            const res = await fetch(`${API_BASE}/auth/register`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email: email,
-                password: password,
-                full_name: fullname,
-              }),
-            });
+      /* ── STEP 1: Register ── */
+      document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('registerBtn');
+        const err = document.getElementById('step1Error');
+        err.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = 'جارٍ الإنشاء...';
 
-            // Safely parse response: prefer JSON, fallback to text
-            let data = null;
-            const contentType = res.headers.get('content-type') || '';
-            if (contentType.includes('application/json')) {
-              data = await res.json();
-            } else {
-              const text = await res.text();
-              try {
-                data = JSON.parse(text);
-              } catch (err) {
-                data = { detail: text };
-              }
-            }
+        const fullname = document.getElementById('fullname').value.trim();
+        const email    = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
 
-            if (res.ok && data && data.status === 'success') {
-              // Save auth token and auto-login
-              if (data.access_token) {
-                localStorage.setItem('token', data.access_token);
-              }
-              successMsg.textContent = 'تم إنشاء الحساب بنجاح! جارٍ تحويلك...';
-              successMsg.style.display = 'block';
-              errorMsg.style.display = 'none';
-              setTimeout(() => {
-                window.location.href = '/chat';
-              }, 1000);
-            } else {
-              errorMsg.textContent =
-                (data && (data.detail || data.message)) || 'فشل إنشاء الحساب';
-              errorMsg.style.display = 'block';
-              successMsg.style.display = 'none';
-            }
-          } catch (e) {
-            console.error(e);
-            errorMsg.textContent = `فشل الاتصال بالسيرفر (${API_BASE})`;
-            errorMsg.style.display = 'block';
-            successMsg.style.display = 'none';
+        try {
+          const res = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, full_name: fullname }),
+          });
+          const ct = res.headers.get('content-type') || '';
+          let data = ct.includes('json') ? await res.json() : { detail: await res.text() };
+
+          if (res.ok && (data.status === 'pending_verification' || data.status === 'success')) {
+            registeredEmail = email;
+            goToStep(2);
+            startCountdown(600);
+          } else {
+            err.textContent = data.detail || data.message || 'فشل إنشاء الحساب';
+            err.style.display = 'block';
           }
+        } catch (ex) {
+          err.textContent = 'فشل الاتصال بالسيرفر';
+          err.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = 'إنشاء حساب';
+      });
+
+      /* ── OTP Inputs ── */
+      const otpInputs = document.querySelectorAll('.otp-digit');
+      otpInputs.forEach((inp, i) => {
+        inp.addEventListener('input', (e) => {
+          const val = e.target.value.replace(/\D/g, '');
+          e.target.value = val;
+          if (val && i < 5) otpInputs[i + 1].focus();
+          checkOTPComplete();
         });
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !inp.value && i > 0) otpInputs[i - 1].focus();
+        });
+        inp.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+          pasted.split('').forEach((ch, idx) => { if (otpInputs[idx]) otpInputs[idx].value = ch; });
+          if (pasted.length > 0) otpInputs[Math.min(pasted.length, 5)].focus();
+          checkOTPComplete();
+        });
+      });
+
+      function getOTPValue() { return Array.from(otpInputs).map(i => i.value).join(''); }
+      function checkOTPComplete() { document.getElementById('verifyBtn').disabled = getOTPValue().length !== 6; }
+
+      /* ── Countdown ── */
+      function startCountdown(seconds) {
+        clearInterval(countdownInterval);
+        const el = document.getElementById('countdown');
+        const resend = document.getElementById('resendLink');
+        const timerDiv = document.getElementById('otpTimer');
+        resend.style.display = 'none';
+        timerDiv.style.display = 'block';
+        let remaining = seconds;
+        const tick = () => {
+          const m = Math.floor(remaining / 60);
+          const s = remaining % 60;
+          el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+          if (remaining <= 0) { clearInterval(countdownInterval); timerDiv.style.display = 'none'; resend.style.display = 'inline-block'; }
+          remaining--;
+        };
+        tick();
+        countdownInterval = setInterval(tick, 1000);
+      }
+
+      /* ── Resend OTP ── */
+      async function resendOTP() {
+        try {
+          const res = await fetch(`${API_BASE}/auth/request-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: registeredEmail }),
+          });
+          if (res.ok) { startCountdown(600); otpInputs.forEach(i => i.value = ''); document.getElementById('verifyBtn').disabled = true; }
+        } catch (ex) { console.error('Resend failed', ex); }
+      }
+
+      /* ── Verify OTP ── */
+      async function verifyOTP() {
+        const btn = document.getElementById('verifyBtn');
+        const err = document.getElementById('step2Error');
+        err.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = 'جارٍ التحقق...';
+
+        try {
+          const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: registeredEmail, code: getOTPValue() }),
+          });
+          const data = await res.json();
+
+          if (res.ok && (data.status === 'success' || data.status === 'already_verified')) {
+            if (data.access_token) localStorage.setItem('token', data.access_token);
+            clearInterval(countdownInterval);
+            goToStep(3);
+          } else {
+            err.textContent = data.detail || data.message || 'كود غير صحيح';
+            err.style.display = 'block';
+            otpInputs.forEach(i => i.value = '');
+            otpInputs[0].focus();
+          }
+        } catch (ex) {
+          err.textContent = 'فشل الاتصال بالسيرفر';
+          err.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = 'تحقق وفعّل الحساب';
+        checkOTPComplete();
+      }
+
+      /* ── Go to chat ── */
+      function goToChat() { window.location.href = '/chat'; }
     </script>
   </body>
 </html>

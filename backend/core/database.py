@@ -173,6 +173,8 @@ class Database:
                 "CREATE INDEX IF NOT EXISTS idx_logs_user ON logs(user_id)",
                 "CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id)",
                 "CREATE INDEX IF NOT EXISTS idx_usage_logs_user_date ON usage_logs(user_id, timestamp)",
+                "CREATE INDEX IF NOT EXISTS idx_otp_user_purpose ON otp_codes(user_id, purpose, expires_at)",
+                "CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)",
             ]:
                 c.execute(idx)
 
@@ -481,6 +483,18 @@ class Database:
                 (datetime.now().isoformat(),),
             )
             conn.commit()
+
+    async def cleanup_expired_otps(self):
+        """Remove used or expired OTP codes."""
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            c.execute(
+                "DELETE FROM otp_codes WHERE used = 1 OR expires_at < ?",
+                (datetime.now().isoformat(),),
+            )
+            deleted = c.rowcount
+            conn.commit()
+            return deleted
 
     # ═══════════════════════════════════════════════════════════════
     # 🔧 Generic Execute (for payment system compatibility)

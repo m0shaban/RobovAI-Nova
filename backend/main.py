@@ -88,6 +88,21 @@ async def on_startup():
         except Exception as e:
             logger.error(f"❌ Failed to set Telegram webhook: {e}")
 
+    # ── Background cleanup task: expired sessions + OTPs every hour ──
+    import asyncio
+
+    async def _periodic_cleanup():
+        while True:
+            await asyncio.sleep(3600)  # every hour
+            try:
+                await db_client.cleanup_expired_sessions()
+                deleted = await db_client.cleanup_expired_otps()
+                logger.info(f"🧹 Cleanup: expired sessions + {deleted} OTPs removed")
+            except Exception as e:
+                logger.warning(f"Cleanup task error: {e}")
+
+    asyncio.create_task(_periodic_cleanup())
+
 
 @app.on_event("shutdown")
 async def on_shutdown():
@@ -116,6 +131,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── Security Headers Middleware (HSTS, X-Content-Type-Options, CSP, etc.) ──
+_is_prod_env = bool(
+    os.getenv("RENDER") or os.getenv("ENVIRONMENT", "").lower() == "production"
+)
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(self), geolocation=()"
+    if _is_prod_env:
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=63072000; includeSubDomains; preload"
+        )
+    return response
+
+
+# ── HTTPS Redirect in Production ──
+if _is_prod_env:
+    from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
+
+    # Render terminates TLS at the load balancer, so skip redirect there
+    # Only add if not behind a reverse proxy that already handles HTTPS
+    # app.add_middleware(HTTPSRedirectMiddleware)
+    # NOTE: Render/Heroku handle HTTPS at LB level; uncomment if self-hosting
 
 # ── Rate Limiting ──
 try:
@@ -592,7 +638,7 @@ async def handle_audio_webhook(
 
     except Exception as e:
         logger.error(f"Error processing audio: {e}")
-        return {"status": "error", "message": str(e), "response": f"❌ خطأ: {str(e)}"}
+        return {"status": "error", "message": "فشل معالجة الصوت", "response": "❌ خطأ في معالجة الصوت. حاول مرة أخرى."}
 
 
 @app.post("/upload")
@@ -602,7 +648,22 @@ async def upload_file(
     """
     Generic file upload for multimodal interactions (auth required)
     """
+    _UPLOAD_ALLOWED_EXT = {
+        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+        ".txt", ".csv", ".json", ".xml", ".md",
+        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp",
+        ".mp3", ".wav", ".ogg", ".m4a",
+        ".mp4", ".webm", ".mov",
+        ".zip", ".rar", ".7z",
+    }
     try:
+        # Validate file extension
+        ext = os.path.splitext(file.filename or "")[1].lower()
+        if ext not in _UPLOAD_ALLOWED_EXT:
+            raise HTTPException(
+                status_code=400,
+                detail=f"نوع الملف غير مسموح ({ext}). الأنواع المسموحة: صور، مستندات، صوت، فيديو، أرشيف.",
+            )
         # Limit file size to 20MB
         MAX_SIZE = 20 * 1024 * 1024
         content_peek = await file.read(MAX_SIZE + 1)
@@ -615,7 +676,6 @@ async def upload_file(
         os.makedirs("uploads", exist_ok=True)
 
         # Save file with unique name
-        ext = os.path.splitext(file.filename)[1]
         filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
         filepath = os.path.join("uploads", filename)
 
@@ -629,9 +689,11 @@ async def upload_file(
             "filename": filename,
             "url": f"/uploads/{filename}",
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Upload failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="فشل رفع الملف. حاول مرة أخرى.")
 
 
 @app.post("/upload_image")
@@ -696,8 +758,8 @@ async def upload_image_to_imgbb(
         logger.error(f"Image upload failed: {e}")
         return {
             "status": "error",
-            "message": str(e),
-            "response": f"❌ خطأ في رفع الصورة: {str(e)}",
+            "message": "فشل رفع الصورة",
+            "response": "❌ خطأ في رفع الصورة. حاول مرة أخرى.",
         }
 
 
@@ -936,7 +998,7 @@ async def telegram_webhook(request: Request):
         return {"status": "ok"}
     except Exception as e:
         logger.error(f"Telegram webhook error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Webhook processing error")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1234,7 +1296,7 @@ async def run_agent_endpoint(
 
     except Exception as e:
         logger.error(f"❌ Agent error: {e}", exc_info=True)
-        return {"status": "error", "response": f"❌ حدث خطأ: {str(e)}", "error": str(e)}
+        return {"status": "error", "response": "❌ حدث خطأ أثناء التنفيذ. حاول مرة أخرى.", "error": "internal_error"}
 
 
 @app.post("/agent/stream")

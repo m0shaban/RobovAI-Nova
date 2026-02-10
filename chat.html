@@ -2110,7 +2110,6 @@
         // Create EventSource for streaming
         const params = new URLSearchParams({
           message: text,
-          user_id: String(currentUser.id),
           platform: 'web',
           ai_level: currentAiLevel,
         });
@@ -2262,16 +2261,24 @@
         }
       }
 
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
       function addMessage(content, role) {
         const container = document.getElementById('chatContainer');
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role}`;
 
         const avatar = role === 'bot' ? '🤖' : '👤';
+        // Sanitize user messages to prevent XSS; bot messages use formatMarkdown
+        const safeContent = role === 'user' ? escapeHtml(content) : content;
 
         wrapper.innerHTML = `
                 <div class="msg-avatar">${avatar}</div>
-                <div class="msg-content">${content}</div>
+                <div class="msg-content">${safeContent}</div>
             `;
 
         container.appendChild(wrapper);

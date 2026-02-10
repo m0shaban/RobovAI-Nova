@@ -95,12 +95,14 @@ def get_password_hash(password: str) -> str:
 
 def validate_password_strength(password: str) -> tuple[bool, str]:
     """Check password meets minimum requirements."""
-    if len(password) < 6:
-        return False, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
+    if len(password) < 8:
+        return False, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
     if not re.search(r"[A-Za-z]", password):
         return False, "كلمة المرور يجب أن تحتوي على حرف واحد على الأقل"
     if not re.search(r"[0-9]", password):
         return False, "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل"
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};\':",./<>?]', password):
+        return False, "كلمة المرور يجب أن تحتوي على رمز خاص واحد على الأقل (!@#$%...)"
     return True, ""
 
 

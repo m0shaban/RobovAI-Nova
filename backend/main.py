@@ -279,6 +279,7 @@ async def register(user: UserCreate, response: Response):
 
         # Generate OTP for Telegram verification
         import random as _rnd
+
         otp = str(_rnd.randint(100000, 999999))
         await db_client.store_otp(res["id"], otp, "telegram_verify", minutes=10)
         logger.info(f"OTP generated for user_id={res['id']}")
@@ -2093,7 +2094,9 @@ async def request_telegram_otp(req: OTPRequest):
     email = req.email.strip().lower()
     user = await db_client.get_user_by_email_unverified(email)
     if not user:
-        raise HTTPException(status_code=404, detail="لم يتم العثور على حساب بهذا البريد")
+        raise HTTPException(
+            status_code=404, detail="لم يتم العثور على حساب بهذا البريد"
+        )
 
     if user.get("is_verified"):
         return {"status": "already_verified", "message": "الحساب مفعّل بالفعل ✅"}
@@ -2121,12 +2124,15 @@ async def verify_otp_endpoint(req: OTPVerify):
 
     valid = await db_client.verify_otp(user["id"], req.code, "telegram_verify")
     if not valid:
-        raise HTTPException(status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية")
+        raise HTTPException(
+            status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية"
+        )
 
     await db_client.set_user_verified(user["id"])
 
     # Auto-login after verification
     from backend.core.security import create_access_token
+
     access_token = create_access_token(data={"sub": email})
     expires_at = (datetime.now() + timedelta(days=1)).isoformat()
     await db_client.create_session(user["id"], access_token, expires_at)
@@ -2135,7 +2141,11 @@ async def verify_otp_endpoint(req: OTPVerify):
         "status": "success",
         "message": "تم تفعيل الحساب بنجاح! ✅",
         "access_token": access_token,
-        "user": {"id": user["id"], "email": email, "full_name": user.get("full_name", "")},
+        "user": {
+            "id": user["id"],
+            "email": email,
+            "full_name": user.get("full_name", ""),
+        },
     }
 
 

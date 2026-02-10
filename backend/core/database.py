@@ -500,7 +500,9 @@ class Database:
     # 📲 TELEGRAM VERIFICATION
     # ═══════════════════════════════════════════════════════════════
 
-    async def set_user_verified(self, user_id: int, telegram_chat_id: str = None) -> bool:
+    async def set_user_verified(
+        self, user_id: int, telegram_chat_id: str = None
+    ) -> bool:
         """Mark a user as verified and optionally link their Telegram chat ID."""
         with self._get_conn() as conn:
             c = conn.cursor()
@@ -517,9 +519,17 @@ class Database:
             conn.commit()
             return c.rowcount > 0
 
-    async def store_otp(self, user_id: int, code: str, purpose: str = "telegram_verify", minutes: int = 10):
+    async def store_otp(
+        self,
+        user_id: int,
+        code: str,
+        purpose: str = "telegram_verify",
+        minutes: int = 10,
+    ):
         """Store an OTP code for a user."""
-        expires_at = (datetime.now() + __import__('datetime').timedelta(minutes=minutes)).isoformat()
+        expires_at = (
+            datetime.now() + __import__("datetime").timedelta(minutes=minutes)
+        ).isoformat()
         with self._get_conn() as conn:
             c = conn.cursor()
             # Invalidate old unused codes for this user + purpose
@@ -533,7 +543,9 @@ class Database:
             )
             conn.commit()
 
-    async def verify_otp(self, user_id: int, code: str, purpose: str = "telegram_verify") -> bool:
+    async def verify_otp(
+        self, user_id: int, code: str, purpose: str = "telegram_verify"
+    ) -> bool:
         """Verify an OTP code. Returns True if valid."""
         now = datetime.now().isoformat()
         with self._get_conn() as conn:
@@ -550,7 +562,9 @@ class Database:
             conn.commit()
             return True
 
-    async def get_user_by_email_unverified(self, email: str) -> Optional[Dict[str, Any]]:
+    async def get_user_by_email_unverified(
+        self, email: str
+    ) -> Optional[Dict[str, Any]]:
         """Get an unverified user by email (for OTP flow)."""
         with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row

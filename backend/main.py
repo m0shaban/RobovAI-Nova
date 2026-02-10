@@ -68,6 +68,8 @@ except Exception as e:
 @app.on_event("startup")
 async def on_startup():
     """Run startup tasks"""
+    global telegram_app
+
     if telegram_app:
         try:
             logger.info("⚙️ Initializing Telegram Bot Application...")
@@ -76,6 +78,7 @@ async def on_startup():
             logger.info("✅ Telegram Bot Initialized & Started")
         except Exception as e:
             logger.error(f"❌ Failed to initialize Telegram Bot: {e}")
+            telegram_app = None  # Disable bot so webhook returns 503
 
     # Auto-set Telegram Webhook if EXTERNAL_URL is set
     external_url = os.getenv("EXTERNAL_URL") or os.getenv("RENDER_EXTERNAL_URL")
@@ -988,6 +991,10 @@ async def telegram_webhook(request: Request):
     """Handle Telegram webhook updates"""
     if not telegram_app:
         raise HTTPException(status_code=503, detail="Telegram bot not configured")
+
+    # Guard: ensure the app was fully initialized
+    if not telegram_app.running:
+        raise HTTPException(status_code=503, detail="Telegram bot is starting up")
 
     try:
         data = await request.json()

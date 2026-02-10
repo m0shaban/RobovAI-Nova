@@ -645,12 +645,14 @@ async def handle_audio_webhook(
 ):
     """
     نقطة نهاية لاستقبال ملفات الصوت من الواجهة
+    Receives audio → Groq Whisper STT → AI reply → edge-tts TTS → returns text + audio
     """
     logger.info(f"Received audio file: {audio.filename}")
 
     try:
         # حفظ الملف مؤقتاً
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_file:
+        ext = os.path.splitext(audio.filename or "recording.webm")[1] or ".webm"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_file:
             content = await audio.read()
             temp_file.write(content)
             temp_path = temp_file.name
@@ -669,7 +671,31 @@ async def handle_audio_webhook(
                 pass
 
             response = result.get("output", "تم معالجة الصوت")
-            return {"status": "success", "response": response, "output": response}
+
+            # ---- Generate TTS for the bot reply ----
+            audio_url = None
+            try:
+                from backend.tools.audio import synthesize_speech
+                # Extract just the reply part for TTS
+                reply_match = None
+                import re
+                m = re.search(r"💬\s*\*?\*?الرد\*?\*?:\s*([\s\S]*?)$", response)
+                tts_text = m.group(1).strip() if m else response
+                # Limit TTS to 500 chars to keep audio short
+                if len(tts_text) > 500:
+                    tts_text = tts_text[:500]
+                if tts_text:
+                    filepath = await synthesize_speech(tts_text)
+                    audio_url = f"/uploads/files/{os.path.basename(filepath)}"
+            except Exception as e:
+                logger.warning(f"TTS generation failed (non-critical): {e}")
+
+            return {
+                "status": "success",
+                "response": response,
+                "output": response,
+                "audio_url": audio_url,
+            }
         else:
             try:
                 os.unlink(temp_path)
@@ -680,6 +706,31 @@ async def handle_audio_webhook(
     except Exception as e:
         logger.error(f"Error processing audio: {e}")
         return {"status": "error", "message": "فشل معالجة الصوت", "response": "❌ خطأ في معالجة الصوت. حاول مرة أخرى."}
+
+
+class TtsRequest(BaseModel):
+    text: str
+    voice: str | None = None
+
+
+@app.post("/audio/tts", tags=["Audio"])
+async def text_to_speech(body: TtsRequest):
+    """
+    Convert text to speech using edge-tts.
+    Returns JSON with audio_url to the generated .mp3 file.
+    """
+    if not body.text or not body.text.strip():
+        raise HTTPException(status_code=400, detail="text is required")
+
+    try:
+        from backend.tools.audio import synthesize_speech, TTS_VOICES
+        voice = TTS_VOICES.get(body.voice) if body.voice else None
+        filepath = await synthesize_speech(body.text.strip(), voice=voice)
+        audio_url = f"/uploads/files/{os.path.basename(filepath)}"
+        return {"status": "success", "audio_url": audio_url}
+    except Exception as e:
+        logger.error(f"TTS endpoint error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="فشل تحويل النص لصوت")
 
 
 @app.post("/upload", tags=["Files"])

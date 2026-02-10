@@ -1121,6 +1121,25 @@
         }
       }
 
+      /* TTS listen button on bot messages */
+      .tts-btn {
+        display: inline-block;
+        background: none;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 2px 8px;
+        margin-right: 8px;
+        margin-top: 6px;
+        opacity: 0.5;
+        transition: opacity 0.2s, transform 0.2s;
+      }
+      .tts-btn:hover {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+
       #messageInput {
         flex: 1;
         background: transparent;
@@ -2282,9 +2301,14 @@
         // Sanitize user messages to prevent XSS; bot messages use formatMarkdown
         const safeContent = role === 'user' ? escapeHtml(content) : content;
 
+        // For bot messages, add a 🔊 listen button
+        const listenBtn = role === 'bot'
+          ? `<button class="tts-btn" onclick="requestTts(this.closest('.msg-content').innerText.replace('🔊','').trim())" title="اسمع الرد" aria-label="اسمع الرد">🔊</button>`
+          : '';
+
         wrapper.innerHTML = `
                 <div class="msg-avatar">${avatar}</div>
-                <div class="msg-content">${safeContent}</div>
+                <div class="msg-content">${safeContent}${listenBtn}</div>
             `;
 
         container.appendChild(wrapper);
@@ -2693,9 +2717,53 @@
             // Fallback: show full response
             addMessage(formatMarkdown(output), 'bot');
           }
+
+          // Auto-play TTS audio if available
+          if (data.audio_url) {
+            playTtsAudio(data.audio_url);
+          }
         } catch (e) {
           hideTyping(loadingId);
           addMessage('❌ فشل معالجة الصوت: ' + e.message, 'bot');
+        }
+      }
+
+      /* ---- TTS Audio Playback ---- */
+      let ttsAudioEl = null;
+
+      function playTtsAudio(url) {
+        try {
+          // Stop any currently playing TTS
+          if (ttsAudioEl) {
+            ttsAudioEl.pause();
+            ttsAudioEl = null;
+          }
+          const fullUrl = url.startsWith('http') ? url : `${API}${url}`;
+          ttsAudioEl = new Audio(fullUrl);
+          ttsAudioEl.volume = 1.0;
+          ttsAudioEl.play().catch(err => {
+            console.warn('TTS autoplay blocked:', err);
+          });
+        } catch (e) {
+          console.warn('TTS playback error:', e);
+        }
+      }
+
+      /** Request TTS for any text (used by 🔊 button) */
+      async function requestTts(text) {
+        if (!text) return;
+        try {
+          const res = await fetch(`${API}/audio/tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text.substring(0, 500) }),
+          });
+          const data = await res.json();
+          if (data.audio_url) {
+            playTtsAudio(data.audio_url);
+          }
+        } catch (e) {
+          console.warn('TTS request failed:', e);
         }
       }
 

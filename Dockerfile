@@ -15,8 +15,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy app code
 COPY . .
 
-# Create directories for data
-RUN mkdir -p /app/data/conversations /app/data/memory /app/uploads/files /app/uploads/presentations /app/logs
+# Create non-root user and data directories
+RUN adduser --disabled-password --gecos '' appuser \
+    && mkdir -p /app/data/conversations /app/data/memory /app/uploads/files /app/uploads/presentations /app/logs \
+    && chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000

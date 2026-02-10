@@ -102,29 +102,43 @@ async def on_shutdown():
             logger.error(f"❌ Failed to stop Telegram Bot: {e}")
 
 
+# ── CORS: restrict to known origins ──
+_allowed_origins = [
+    os.getenv("FRONTEND_URL", "https://robovai-nova.onrender.com"),
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ── Rate Limiting ──
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+    limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    _has_limiter = True
+except ImportError:
+    logger.warning("⚠️ slowapi not installed — rate limiting disabled. Run: pip install slowapi")
+    _has_limiter = False
+
 # Mount static files for uploads (presentations, files, etc.)
 os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# (mounts registered later after route definitions)
 
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request, exc):
     logger.exception(f"Unhandled exception: {exc}")
     return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
-
-
-@app.get("/")
-async def root():
-    """Serve landing page"""
-    return FileResponse("index.html")
 
 
 @app.get("/favicon.ico")
@@ -136,29 +150,22 @@ async def favicon():
     raise HTTPException(status_code=404, detail="Not Found")
 
 
-# Serve other top-level HTML files (e.g., chat.html, signup.html)
+# Serve other top-level HTML files — allowlist to prevent path traversal
+_ALLOWED_PAGES = {"chat", "signup", "login", "admin", "account", "settings", "developers", "index"}
+
 @app.get("/{page}.html")
 async def serve_html_page(page: str):
-    path = f"{page}.html"
+    # Strip any path separators to block traversal
+    safe_page = page.replace("/", "").replace("\\", "").replace("..", "")
+    if safe_page not in _ALLOWED_PAGES:
+        raise HTTPException(status_code=404, detail="Not Found")
+    path = f"{safe_page}.html"
     if os.path.exists(path):
         return FileResponse(path)
     raise HTTPException(status_code=404, detail="Not Found")
 
 
-# Mount uploads and public assets
-try:
-    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-except Exception:
-    pass
-try:
-    app.mount("/public", StaticFiles(directory="public"), name="public")
-except Exception:
-    pass
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
+# (Duplicate mounts removed — using the ones registered above)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -256,8 +263,19 @@ async def require_admin(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
+# ── Rate limiting helper: no-op decorator when slowapi is missing ──
+def _rl(limit_str: str):
+    """Return a slowapi limiter decorator or a no-op if slowapi is unavailable."""
+    if _has_limiter:
+        return limiter.limit(limit_str)
+    def _noop(fn):
+        return fn
+    return _noop
+
+
 @app.post("/auth/register")
-async def register(user: UserCreate, response: Response):
+@_rl("5/minute")
+async def register(request: Request, user: UserCreate, response: Response):
     """Register a new user — account needs Telegram OTP verification."""
     logger.info(
         f"Register endpoint called for email={user.email} full_name={user.full_name}"
@@ -300,7 +318,8 @@ async def register(user: UserCreate, response: Response):
 
 
 @app.post("/auth/login")
-async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
+@_rl("10/minute")
+async def login(request: Request, response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     """Login and set Session Cookie"""
     user = await db_client.authenticate_user(form_data.username, form_data.password)
     if not user:
@@ -314,7 +333,7 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
     if not user.get("is_verified"):
         raise HTTPException(
             status_code=403,
-            detail="الحساب غير مُفعّل. افتح بوت @RobovAI_bot في تليجرام وأرسل /verify لتفعيل حسابك.",
+            detail="الحساب غير مُفعّل. افتح بوت @robovainova_bot في تليجرام وأرسل /verify لتفعيل حسابك.",
         )
 
     access_token = create_access_token(data={"sub": user["email"]})
@@ -324,10 +343,12 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
     await db_client.create_session(user["id"], access_token, expires_at)
 
     # Set Secure Cookie
+    _is_production = os.getenv("RENDER") or os.getenv("ENVIRONMENT") == "production"
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
+        secure=bool(_is_production),
         max_age=86400,  # 1 day
         samesite="lax",
     )
@@ -556,11 +577,17 @@ async def handle_audio_webhook(
 
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     """
-    Generic file upload for multimodal interactions
+    Generic file upload for multimodal interactions (auth required)
     """
     try:
+        # Limit file size to 20MB
+        MAX_SIZE = 20 * 1024 * 1024
+        content_peek = await file.read(MAX_SIZE + 1)
+        if len(content_peek) > MAX_SIZE:
+            raise HTTPException(status_code=413, detail="الملف كبير جداً — الحد الأقصى 20MB")
+        await file.seek(0)
         # Create uploads directory if it doesn't exist
         os.makedirs("uploads", exist_ok=True)
 
@@ -586,7 +613,8 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.post("/upload_image")
 async def upload_image_to_imgbb(
-    file: UploadFile = File(...), user_id: str = Form("anonymous")
+    file: UploadFile = File(...), user_id: str = Form("anonymous"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Upload image directly to ImgBB and return direct URL
@@ -649,10 +677,15 @@ async def upload_image_to_imgbb(
         }
 
 
-# Mount Public Assets & Uploads
-app.mount("/public", StaticFiles(directory="public"), name="public")
-app.mount("/static", StaticFiles(directory="public"), name="static")
-# Mount uploads directory
+# Mount Public Assets & Uploads (single mount point)
+try:
+    app.mount("/public", StaticFiles(directory="public"), name="public")
+except Exception:
+    pass
+try:
+    app.mount("/static", StaticFiles(directory="public"), name="static")
+except Exception:
+    pass
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
@@ -705,116 +738,9 @@ async def get_tools():
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-@app.post("/telegram-webhook")
-async def telegram_webhook(request: Request):
-    """
-    Telegram Bot Webhook
-    Setup: https://api.telegram.org/bot<TOKEN>/setWebhook?url=YOUR_URL/telegram-webhook
-    """
-    try:
-        logger.info("📨 Telegram webhook received")
-
-        from backend.adapters.platforms import TelegramAdapter, OutgoingMessage
-
-        payload = await request.json()
-        logger.info(f"Telegram payload: {payload}")
-
-        bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-
-        if not bot_token:
-            logger.error("❌ TELEGRAM_BOT_TOKEN not set")
-            return {"ok": True}
-
-        adapter = TelegramAdapter(bot_token)
-        message = await adapter.parse_webhook(payload)
-
-        if not message:
-            logger.info("No message to process (might be a non-message update)")
-            return {"ok": True}
-
-        logger.info(f"📩 Received message from user {message.user_id}: {message.text}")
-
-        # Send typing indicator
-        await adapter.send_typing(message.chat_id)
-
-        # Route message
-        from backend.core.smart_router import SmartToolRouter
-
-        try:
-            routing_result = await SmartToolRouter.route_message(
-                message.text, message.user_id, platform="telegram"
-            )
-
-            # Get response
-            if routing_result["type"] == "tool":
-                response = routing_result["result"].get("output", "تم التنفيذ ✅")
-                logger.info(f"Tool response generated for user {message.user_id}")
-            else:
-                from backend.core.llm import llm_client
-
-                response = await llm_client.generate(
-                    message.text,
-                    provider="auto",
-                    system_prompt="أنت RobovAI Nova Agent - مساعد ذكي مصري ودود. رد بالمصري العامي.",
-                )
-                logger.info(f"LLM response generated for user {message.user_id}")
-
-            # Send response
-            await adapter.send_message(
-                OutgoingMessage(
-                    text=response[:4000],  # Telegram limit
-                    chat_id=message.chat_id,
-                    reply_to=message.message_id,
-                )
-            )
-
-            logger.info(f"✅ Successfully sent response to user {message.user_id}")
-
-        except Exception as routing_error:
-            logger.error(f"❌ Routing/LLM error: {routing_error}", exc_info=True)
-            # Send error message to user
-            try:
-                await adapter.send_message(
-                    OutgoingMessage(
-                        text="⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك. يرجى المحاولة مرة أخرى.",
-                        chat_id=message.chat_id,
-                        reply_to=message.message_id,
-                    )
-                )
-            except:
-                pass
-
-        return {"ok": True}
-
-    except Exception as e:
-        logger.error(f"❌ Telegram webhook critical error: {e}", exc_info=True)
-        # Try to notify user if possible
-        try:
-            payload = await request.json()
-            msg = payload.get("message") or payload.get("edited_message")
-            if msg:
-                chat_id = msg.get("chat", {}).get("id")
-                message_id = msg.get("message_id")
-                if chat_id:
-                    from backend.adapters.platforms import (
-                        TelegramAdapter,
-                        OutgoingMessage,
-                    )
-
-                    bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-                    if bot_token:
-                        adapter = TelegramAdapter(bot_token)
-                        await adapter.send_message(
-                            OutgoingMessage(
-                                text="⚠️ **حدث خطأ تقني.**\nعذراً، لم أتمكن من معالجة طلبك.",
-                                chat_id=str(chat_id),
-                                reply_to=str(message_id) if message_id else None,
-                            )
-                        )
-        except Exception as notify_error:
-            logger.error(f"Failed to notify user of error: {notify_error}")
-
-        return {"ok": True}
+# ═══════════════════════════════════════════════════════════════════════════
+# (Old adapter-based telegram webhook removed — using telegram_app.process_update below)
+# ═══════════════════════════════════════════════════════════════════════════
 
 
 @app.post("/whatsapp_webhook")
@@ -958,8 +884,8 @@ async def messenger_verify(request: Request):
 
 
 @app.get("/user_stats/{user_id}")
-async def get_user_stats(user_id: str):
-    """Get user usage statistics"""
+async def get_user_stats(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get user usage statistics (auth required)"""
     from backend.core.smart_router import SmartToolRouter
 
     stats = SmartToolRouter.get_user_stats(user_id)
@@ -1589,7 +1515,7 @@ async def get_agent_state(thread_id: str):
 
 
 @app.get("/history/conversations")
-async def list_conversations(user_id: str = "default"):
+async def list_conversations(user_id: str = "default", current_user: dict = Depends(get_current_user)):
     """قائمة محادثات المستخدم"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1603,7 +1529,7 @@ async def list_conversations(user_id: str = "default"):
 
 
 @app.get("/history/conversation/{conv_id}")
-async def get_conversation(conv_id: str, user_id: str = "default"):
+async def get_conversation(conv_id: str, user_id: str = "default", current_user: dict = Depends(get_current_user)):
     """الحصول على محادثة"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1619,7 +1545,7 @@ async def get_conversation(conv_id: str, user_id: str = "default"):
 
 
 @app.post("/history/conversation")
-async def create_conversation(user_id: str = "default", title: str = "محادثة جديدة"):
+async def create_conversation(user_id: str = "default", title: str = "محادثة جديدة", current_user: dict = Depends(get_current_user)):
     """إنشاء محادثة جديدة"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1636,7 +1562,7 @@ async def create_conversation(user_id: str = "default", title: str = "محادث
 
 
 @app.post("/history/message")
-async def add_message(conv_id: str, role: str, content: str, user_id: str = "default"):
+async def add_message(conv_id: str, role: str, content: str, user_id: str = "default", current_user: dict = Depends(get_current_user)):
     """إضافة رسالة"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1649,7 +1575,7 @@ async def add_message(conv_id: str, role: str, content: str, user_id: str = "def
 
 
 @app.get("/history/search")
-async def search_conversations(user_id: str, query: str, limit: int = 10):
+async def search_conversations(user_id: str, query: str, limit: int = 10, current_user: dict = Depends(get_current_user)):
     """بحث في المحادثات"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1662,7 +1588,7 @@ async def search_conversations(user_id: str, query: str, limit: int = 10):
 
 
 @app.delete("/history/conversation/{conv_id}")
-async def delete_conversation(conv_id: str, user_id: str = "default"):
+async def delete_conversation(conv_id: str, user_id: str = "default", current_user: dict = Depends(get_current_user)):
     """حذف محادثة"""
     try:
         from backend.history.manager import get_conversation_manager
@@ -1676,7 +1602,8 @@ async def delete_conversation(conv_id: str, user_id: str = "default"):
 
 @app.get("/history/export/{conv_id}")
 async def export_conversation(
-    conv_id: str, user_id: str = "default", format: str = "json"
+    conv_id: str, user_id: str = "default", format: str = "json",
+    current_user: dict = Depends(get_current_user),
 ):
     """تصدير محادثة"""
     try:
@@ -2088,9 +2015,10 @@ class OTPVerify(BaseModel):
 
 
 @app.post("/auth/request-otp")
-async def request_telegram_otp(req: OTPRequest):
+@_rl("5/minute")
+async def request_telegram_otp(request: Request, req: OTPRequest):
     """Generate OTP for a registered-but-unverified user.
-    The user then opens @RobovAI_bot → /verify → receives the code."""
+    The user then opens @robovainova_bot → /verify → receives the code."""
     email = req.email.strip().lower()
     user = await db_client.get_user_by_email_unverified(email)
     if not user:
@@ -2112,7 +2040,8 @@ async def request_telegram_otp(req: OTPRequest):
 
 
 @app.post("/auth/verify-otp")
-async def verify_otp_endpoint(req: OTPVerify):
+@_rl("10/minute")
+async def verify_otp_endpoint(request: Request, req: OTPVerify):
     """Verify OTP code and activate the account."""
     email = req.email.strip().lower()
     user = await db_client.get_user_by_email_unverified(email)

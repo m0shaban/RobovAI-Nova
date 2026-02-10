@@ -1,0 +1,49 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Environment & secrets
+.env
+.env.*
+.jwt_secret
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Test files
+test_*.py
+test_*.html
+verify_*.py
+
+# Logs & data
+logs/
+data/
+uploads/
+push_log.txt
+
+# Documentation
+*.md
+docs/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+
+# Misc
+node_modules/
+public-apis-master/
+python-client/
+favicon_io/
+scripts/

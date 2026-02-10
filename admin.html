@@ -743,9 +743,36 @@
     <script>
         const API = '';
         let allTools = [];
-        
-        // Load all data on page load
-        document.addEventListener('DOMContentLoaded', () => {
+
+        // 🔒 Admin Auth Gate
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/login';
+        }
+        const authHeaders = { Authorization: `Bearer ${token}` };
+
+        // Verify admin role before loading anything
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch(`${API}/auth/me`, {
+                    headers: authHeaders,
+                    credentials: 'include',
+                });
+                if (!res.ok) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                    return;
+                }
+                const user = await res.json();
+                if (user.role !== 'admin') {
+                    window.location.href = '/chat';
+                    return;
+                }
+            } catch (e) {
+                window.location.href = '/login';
+                return;
+            }
+
             loadStats();
             loadTools();
             loadLogs();
@@ -753,7 +780,7 @@
         
         async function loadStats() {
             try {
-                const res = await fetch(`${API}/admin/stats`);
+                const res = await fetch(`${API}/admin/stats`, { headers: authHeaders });
                 const data = await res.json();
                 
                 if (data.status === 'success') {
@@ -815,7 +842,7 @@
         
         async function loadTools() {
             try {
-                const res = await fetch(`${API}/admin/tools`);
+                const res = await fetch(`${API}/admin/tools`, { headers: authHeaders });
                 const data = await res.json();
                 
                 if (data.status === 'success') {
@@ -876,7 +903,7 @@
         
         async function loadLogs() {
             try {
-                const res = await fetch(`${API}/admin/logs?limit=30`);
+                const res = await fetch(`${API}/admin/logs?limit=30`, { headers: authHeaders });
                 const data = await res.json();
                 
                 const container = document.getElementById('logsContainer');

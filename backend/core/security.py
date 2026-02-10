@@ -21,10 +21,25 @@ _SECRET_FILE = os.path.join(
 
 
 def _load_or_create_secret() -> str:
-    """Load or generate a persistent JWT secret — NEVER uses Supabase key."""
+    """Load JWT secret — prefers env var, warns loudly if falling back to file.
+    In production (RENDER / ENVIRONMENT=production) the env var is REQUIRED."""
     env = os.getenv("JWT_SECRET_KEY", "").strip()
     if env and len(env) >= 32:
         return env
+
+    # Production guard: env var MUST be set
+    is_production = os.getenv("RENDER") or os.getenv("ENVIRONMENT", "").lower() == "production"
+    if is_production:
+        import sys
+        print(
+            "❌ CRITICAL: JWT_SECRET_KEY env var is missing or too short (min 32 chars). "
+            "Set it in your hosting dashboard to prevent session invalidation on redeploy.",
+            file=sys.stderr,
+        )
+        # Still generate one so the app can start, but sessions WILL break on restart
+        return secrets.token_urlsafe(64)
+
+    # Development fallback: persist to file
     if os.path.exists(_SECRET_FILE):
         with open(_SECRET_FILE, "r") as f:
             stored = f.read().strip()

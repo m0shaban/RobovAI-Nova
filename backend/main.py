@@ -653,7 +653,25 @@ async def handle_audio_webhook(
 
     try:
         # حفظ الملف مؤقتاً
-        ext = os.path.splitext(audio.filename or "recording.webm")[1] or ".webm"
+        filename = audio.filename or "recording.webm"
+        ext = os.path.splitext(filename)[1].lower()
+        content_type = (audio.content_type or "").lower()
+        ct_to_ext = {
+            "audio/webm": ".webm",
+            "audio/wav": ".wav",
+            "audio/x-wav": ".wav",
+            "audio/mpeg": ".mp3",
+            "audio/mp3": ".mp3",
+            "audio/ogg": ".ogg",
+            "audio/mp4": ".m4a",
+            "audio/x-m4a": ".m4a",
+            "video/mp4": ".m4a",
+            "audio/flac": ".flac",
+        }
+        allowed_exts = {".webm", ".wav", ".mp3", ".ogg", ".m4a", ".flac", ".mp4"}
+        if ext not in allowed_exts:
+            ext = ct_to_ext.get(content_type, ".webm")
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_file:
             content = await audio.read()
             temp_file.write(content)

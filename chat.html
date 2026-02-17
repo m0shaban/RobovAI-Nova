@@ -1790,8 +1790,37 @@
       let toolsData = {};
       let chatActive = false;
       let mediaRecorder = null;
+      let mediaStream = null;
       let audioChunks = [];
+      let recorderMimeType = '';
       let currentAiLevel = localStorage.getItem('ai_level') || 'balanced';
+
+      function getSupportedRecorderMimeType() {
+        const candidates = [
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/mp4',
+          'audio/ogg;codecs=opus',
+          'audio/ogg',
+        ];
+
+        if (typeof MediaRecorder === 'undefined') return '';
+        for (const mime of candidates) {
+          try {
+            if (MediaRecorder.isTypeSupported(mime)) return mime;
+          } catch (e) {}
+        }
+        return '';
+      }
+
+      function getAudioExtensionFromMime(mimeType) {
+        const m = (mimeType || '').toLowerCase();
+        if (m.includes('mp4') || m.includes('m4a')) return 'm4a';
+        if (m.includes('ogg')) return 'ogg';
+        if (m.includes('wav')) return 'wav';
+        if (m.includes('mpeg') || m.includes('mp3')) return 'mp3';
+        return 'webm';
+      }
 
       // Apply saved AI level on load
       document.querySelectorAll('.ai-level-btn').forEach((btn) => {
@@ -2676,16 +2705,36 @@
 
         if (!mediaRecorder || mediaRecorder.state === 'inactive') {
           try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+              alert('المتصفح لا يدعم تسجيل الصوت');
+              return;
+            }
+            if (typeof MediaRecorder === 'undefined') {
+              alert('تسجيل الصوت غير مدعوم في هذا المتصفح');
+              return;
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({
               audio: true,
             });
-            mediaRecorder = new MediaRecorder(stream);
+            mediaStream = stream;
+            recorderMimeType = getSupportedRecorderMimeType();
+            mediaRecorder = recorderMimeType
+              ? new MediaRecorder(stream, { mimeType: recorderMimeType })
+              : new MediaRecorder(stream);
             audioChunks = [];
 
             mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
             mediaRecorder.onstop = () => {
-              const blob = new Blob(audioChunks, { type: 'audio/webm' });
-              sendAudio(blob);
+              const finalMime =
+                recorderMimeType || audioChunks?.[0]?.type || 'audio/webm';
+              const blob = new Blob(audioChunks, { type: finalMime });
+              const ext = getAudioExtensionFromMime(finalMime);
+              sendAudio(blob, `recording.${ext}`);
+              if (mediaStream) {
+                mediaStream.getTracks().forEach((track) => track.stop());
+                mediaStream = null;
+              }
             };
 
             mediaRecorder.start();
@@ -2701,14 +2750,14 @@
         }
       }
 
-      async function sendAudio(blob) {
+      async function sendAudio(blob, filename = 'recording.webm') {
         activateChat();
 
         // Show typing indicator while processing
         const loadingId = showTyping();
 
         const formData = new FormData();
-        formData.append('audio', blob, 'recording.webm');
+        formData.append('audio', blob, filename);
         formData.append('user_id', String(currentUser.id));
         formData.append('platform', 'web');
 
@@ -2717,6 +2766,10 @@
             method: 'POST',
             body: formData,
           });
+          if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(errText || `HTTP ${res.status}`);
+          }
           const data = await res.json();
           hideTyping(loadingId);
 

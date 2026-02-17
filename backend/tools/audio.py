@@ -52,6 +52,7 @@ async def transcribe_audio(file_path: str, language: str = "ar") -> Dict[str, An
         ".mp3": "audio/mpeg",
         ".ogg": "audio/ogg",
         ".m4a": "audio/mp4",
+        ".mp4": "audio/mp4",
         ".flac": "audio/flac",
     }
     content_type = mime_map.get(ext, "audio/webm")

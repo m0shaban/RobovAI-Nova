@@ -1142,6 +1142,117 @@
         transform: scale(1.15);
       }
 
+      /* Voice chat panel */
+      .voice-chat-panel {
+        position: fixed;
+        inset: 0;
+        z-index: 120;
+        background: radial-gradient(
+          circle at top,
+          rgba(0, 240, 255, 0.08),
+          rgba(5, 5, 15, 0.96)
+        );
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        display: none;
+        flex-direction: column;
+      }
+      .voice-chat-panel.open {
+        display: flex;
+      }
+      .voice-chat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .voice-chat-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .voice-chat-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .voice-chip-btn {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-muted);
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-family: inherit;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .voice-chip-btn.active {
+        color: #000;
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        font-weight: 700;
+      }
+      .voice-chat-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 14px;
+      }
+      .voice-log {
+        max-width: 760px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .voice-row {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .voice-row.user {
+        background: rgba(0, 240, 255, 0.08);
+      }
+      .voice-row.bot {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .voice-chat-footer {
+        border-top: 1px solid var(--border);
+        padding: 14px;
+      }
+      .voice-chat-controls {
+        max-width: 760px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .voice-status {
+        color: var(--text-muted);
+        font-size: 13px;
+      }
+      .voice-mic-btn {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 240, 255, 0.5);
+        background: radial-gradient(circle, rgba(0, 240, 255, 0.28), rgba(0, 0, 0, 0.2));
+        color: #fff;
+        font-size: 30px;
+        cursor: pointer;
+      }
+      .voice-mic-btn.recording {
+        border-color: rgba(255, 68, 68, 0.8);
+        background: radial-gradient(circle, rgba(255, 68, 68, 0.35), rgba(0, 0, 0, 0.25));
+        animation: pulse-red 1s ease-in-out infinite;
+      }
+      .voice-audio-player {
+        width: 100%;
+        max-width: 420px;
+      }
+
       #messageInput {
         flex: 1;
         background: transparent;
@@ -1307,11 +1418,31 @@
           bottom: 15px;
           padding: 0 10px;
         }
+        .composer {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .ai-level-bar {
+          position: static;
+          top: auto;
+          left: auto;
+          transform: none;
+          width: 100%;
+          justify-content: center;
+          z-index: 1;
+        }
+        .ai-level-btn {
+          flex: 1;
+          justify-content: center;
+          font-size: 11px;
+          padding: 7px 6px;
+        }
         .hero-section {
           padding: 10px;
         }
         .chat-container {
-          padding: 70px 10px 130px;
+          padding: 70px 10px 180px;
         }
         .msg-content {
           max-width: 85%;
@@ -1742,6 +1873,15 @@
                 >
                   🎙️
                 </button>
+                <button
+                  class="action-btn"
+                  id="voiceChatBtn"
+                  onclick="openVoiceChat()"
+                  title="محادثة صوتية تفاعلية"
+                  aria-label="محادثة صوتية تفاعلية"
+                >
+                  🎧
+                </button>
               </div>
               <textarea
                 id="messageInput"
@@ -1771,6 +1911,30 @@
       </main>
     </div>
 
+    <section class="voice-chat-panel" id="voiceChatPanel" aria-label="Voice chat">
+      <div class="voice-chat-header">
+        <div class="voice-chat-title">🎙️ محادثة صوتية تفاعلية</div>
+        <div class="voice-chat-actions">
+          <button class="voice-chip-btn active" id="voiceAutoBtn" onclick="toggleVoiceAuto()">تشغيل تلقائي</button>
+          <button class="voice-chip-btn" onclick="closeVoiceChat()">إغلاق</button>
+        </div>
+      </div>
+
+      <div class="voice-chat-body">
+        <div class="voice-log" id="voiceLog">
+          <div class="voice-row bot">مرحباً 👋 اضغط زر الميكروفون وابدأ الكلام، وأنا هرد عليك صوت + نص.</div>
+        </div>
+      </div>
+
+      <div class="voice-chat-footer">
+        <div class="voice-chat-controls">
+          <div class="voice-status" id="voiceStatus">جاهز للاستماع</div>
+          <button class="voice-mic-btn" id="voiceModeMicBtn" onclick="toggleVoiceModeCapture()" aria-label="بدء المحادثة الصوتية">🎤</button>
+          <audio class="voice-audio-player" id="voiceReplyAudio" controls></audio>
+        </div>
+      </div>
+    </section>
+
     <!-- Hidden File Input -->
     <input
       type="file"
@@ -1793,6 +1957,9 @@
       let mediaStream = null;
       let audioChunks = [];
       let recorderMimeType = '';
+      let activeRecordTarget = 'chat';
+      let voiceModeOpen = false;
+      let voiceAutoEnabled = true;
       let currentAiLevel = localStorage.getItem('ai_level') || 'balanced';
 
       function getSupportedRecorderMimeType() {
@@ -2700,61 +2867,169 @@
         }
       }
 
-      async function toggleVoice() {
-        const btn = document.getElementById('voiceBtn');
+      function updateRecordButtons() {
+        const chatBtn = document.getElementById('voiceBtn');
+        const modeBtn = document.getElementById('voiceModeMicBtn');
+        const isRec = mediaRecorder && mediaRecorder.state === 'recording';
 
-        if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-          try {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-              alert('المتصفح لا يدعم تسجيل الصوت');
-              return;
-            }
-            if (typeof MediaRecorder === 'undefined') {
-              alert('تسجيل الصوت غير مدعوم في هذا المتصفح');
-              return;
-            }
-
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: true,
-            });
-            mediaStream = stream;
-            recorderMimeType = getSupportedRecorderMimeType();
-            mediaRecorder = recorderMimeType
-              ? new MediaRecorder(stream, { mimeType: recorderMimeType })
-              : new MediaRecorder(stream);
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-            mediaRecorder.onstop = () => {
-              const finalMime =
-                recorderMimeType || audioChunks?.[0]?.type || 'audio/webm';
-              const blob = new Blob(audioChunks, { type: finalMime });
-              const ext = getAudioExtensionFromMime(finalMime);
-              sendAudio(blob, `recording.${ext}`);
-              if (mediaStream) {
-                mediaStream.getTracks().forEach((track) => track.stop());
-                mediaStream = null;
-              }
-            };
-
-            mediaRecorder.start();
-            btn.classList.add('recording');
-            btn.textContent = '⏹️';
-          } catch (e) {
-            alert('فشل الوصول للميكروفون');
-          }
-        } else {
-          mediaRecorder.stop();
-          btn.classList.remove('recording');
-          btn.textContent = '🎙️';
+        if (chatBtn) {
+          chatBtn.classList.toggle('recording', isRec && activeRecordTarget === 'chat');
+          chatBtn.textContent =
+            isRec && activeRecordTarget === 'chat' ? '⏹️' : '🎙️';
+        }
+        if (modeBtn) {
+          modeBtn.classList.toggle('recording', isRec && activeRecordTarget === 'voice');
+          modeBtn.textContent =
+            isRec && activeRecordTarget === 'voice' ? '⏹️' : '🎤';
         }
       }
 
-      async function sendAudio(blob, filename = 'recording.webm') {
+      function setVoiceStatus(text) {
+        const el = document.getElementById('voiceStatus');
+        if (el) el.textContent = text;
+      }
+
+      function appendVoiceLog(role, text) {
+        const log = document.getElementById('voiceLog');
+        if (!log) return;
+        const row = document.createElement('div');
+        row.className = `voice-row ${role}`;
+        row.innerHTML = role === 'bot' ? formatMarkdown(text) : escapeHtml(text);
+        log.appendChild(row);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      async function startAudioCapture(target = 'chat') {
+        try {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('المتصفح لا يدعم تسجيل الصوت');
+            return;
+          }
+          if (typeof MediaRecorder === 'undefined') {
+            alert('تسجيل الصوت غير مدعوم في هذا المتصفح');
+            return;
+          }
+
+          activeRecordTarget = target;
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          });
+          mediaStream = stream;
+          recorderMimeType = getSupportedRecorderMimeType();
+          mediaRecorder = recorderMimeType
+            ? new MediaRecorder(stream, { mimeType: recorderMimeType })
+            : new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const finalMime = recorderMimeType || audioChunks?.[0]?.type || 'audio/webm';
+            const blob = new Blob(audioChunks, { type: finalMime });
+            const ext = getAudioExtensionFromMime(finalMime);
+            const currentTarget = activeRecordTarget;
+
+            if (mediaStream) {
+              mediaStream.getTracks().forEach((track) => track.stop());
+              mediaStream = null;
+            }
+            updateRecordButtons();
+
+            if (!blob || blob.size === 0) {
+              if (currentTarget === 'voice') setVoiceStatus('لم يتم التقاط صوت — جرّب مرة أخرى');
+              return;
+            }
+
+            sendAudio(blob, `recording.${ext}`, currentTarget);
+          };
+
+          mediaRecorder.start();
+          updateRecordButtons();
+          if (target === 'voice') setVoiceStatus('🎙️ أستمع الآن...');
+        } catch (e) {
+          alert('فشل الوصول للميكروفون');
+          if (target === 'voice') setVoiceStatus('فشل الوصول للميكروفون');
+        }
+      }
+
+      function stopAudioCapture() {
+        try {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          } else {
+            updateRecordButtons();
+          }
+        } catch (e) {}
+      }
+
+      async function toggleVoice() {
+        if (mediaRecorder && mediaRecorder.state === 'recording' && activeRecordTarget === 'chat') {
+          stopAudioCapture();
+          return;
+        }
+        if (mediaRecorder && mediaRecorder.state === 'recording' && activeRecordTarget !== 'chat') {
+          return;
+        }
+        await startAudioCapture('chat');
+      }
+
+      function openVoiceChat() {
+        const panel = document.getElementById('voiceChatPanel');
+        if (!panel) return;
+        voiceModeOpen = true;
+        panel.classList.add('open');
+        setVoiceStatus('جاهز للاستماع');
+      }
+
+      function closeVoiceChat() {
+        const panel = document.getElementById('voiceChatPanel');
+        if (panel) panel.classList.remove('open');
+        voiceModeOpen = false;
+        if (mediaRecorder && mediaRecorder.state === 'recording' && activeRecordTarget === 'voice') {
+          stopAudioCapture();
+        }
+      }
+
+      function toggleVoiceAuto() {
+        voiceAutoEnabled = !voiceAutoEnabled;
+        const btn = document.getElementById('voiceAutoBtn');
+        if (btn) {
+          btn.classList.toggle('active', voiceAutoEnabled);
+          btn.textContent = voiceAutoEnabled ? 'تشغيل تلقائي' : 'يدوي';
+        }
+      }
+
+      async function toggleVoiceModeCapture() {
+        if (mediaRecorder && mediaRecorder.state === 'recording' && activeRecordTarget === 'voice') {
+          stopAudioCapture();
+          setVoiceStatus('جاري المعالجة...');
+          return;
+        }
+        if (mediaRecorder && mediaRecorder.state === 'recording' && activeRecordTarget !== 'voice') {
+          return;
+        }
+        await startAudioCapture('voice');
+      }
+
+      function parseVoiceOutput(output) {
+        const textMatch = output.match(/📝\s*\*?\*?النص\*?\*?:\s*([^\n]+)/);
+        const replyMatch = output.match(/💬\s*\*?\*?الرد\*?\*?:\s*([\s\S]*?)$/);
+        const userText = textMatch && textMatch[1] ? textMatch[1].trim() : '';
+        const botText = replyMatch && replyMatch[1] ? replyMatch[1].trim() : output;
+        return { userText, botText };
+      }
+
+      async function sendAudio(blob, filename = 'recording.webm', target = 'chat') {
         activateChat();
 
-        // Show typing indicator while processing
-        const loadingId = showTyping();
+        const loadingId = target === 'chat' ? showTyping() : null;
+        if (target === 'voice') setVoiceStatus('جاري فهم كلامك...');
 
         const formData = new FormData();
         formData.append('audio', blob, filename);
@@ -2771,46 +3046,44 @@
             throw new Error(errText || `HTTP ${res.status}`);
           }
           const data = await res.json();
-          hideTyping(loadingId);
+          if (loadingId) hideTyping(loadingId);
 
           const output = data.response || data.output || 'تم معالجة الصوت';
+          const parsed = parseVoiceOutput(output);
 
-          // Parse the response to extract transcribed text
-          // Format from backend: "🎤 **تحويل ناجح!**\n\n📝 **النص:** {text}\n\n💬 **الرد:** {reply}"
-          const textMatch = output.match(/📝\s*\*?\*?النص\*?\*?:\s*([^\n]+)/);
-          const replyMatch = output.match(
-            /💬\s*\*?\*?الرد\*?\*?:\s*([\s\S]*?)$/,
-          );
-
-          if (textMatch && textMatch[1]) {
-            // Show user's spoken text as their message
-            addMessage(`🎤 ${textMatch[1].trim()}`, 'user');
-
-            // Show bot's reply
-            if (replyMatch && replyMatch[1]) {
-              addMessage(formatMarkdown(replyMatch[1].trim()), 'bot');
-            } else {
-              addMessage(formatMarkdown(output), 'bot');
-            }
+          if (target === 'chat') {
+            if (parsed.userText) addMessage(`🎤 ${parsed.userText}`, 'user');
+            addMessage(formatMarkdown(parsed.botText || output), 'bot');
           } else {
-            // Fallback: show full response
-            addMessage(formatMarkdown(output), 'bot');
+            if (parsed.userText) appendVoiceLog('user', `🎤 ${parsed.userText}`);
+            appendVoiceLog('bot', parsed.botText || output);
+            setVoiceStatus('🔊 جاري تشغيل الرد...');
           }
 
           // Auto-play TTS audio if available
           if (data.audio_url) {
-            playTtsAudio(data.audio_url);
+            playTtsAudio(data.audio_url, target === 'voice', parsed.botText || output);
+          } else if (parsed.botText) {
+            await requestTts(parsed.botText, target === 'voice');
+          } else if (target === 'voice') {
+            setVoiceStatus('تم الرد نصياً');
           }
         } catch (e) {
-          hideTyping(loadingId);
-          addMessage('❌ فشل معالجة الصوت: ' + e.message, 'bot');
+          if (loadingId) hideTyping(loadingId);
+          const msg = '❌ فشل معالجة الصوت: ' + e.message;
+          if (target === 'chat') {
+            addMessage(msg, 'bot');
+          } else {
+            appendVoiceLog('bot', msg);
+            setVoiceStatus('فشل المعالجة');
+          }
         }
       }
 
       /* ---- TTS Audio Playback ---- */
       let ttsAudioEl = null;
 
-      function playTtsAudio(url) {
+      function playTtsAudio(url, fromVoiceMode = false, fallbackText = '') {
         try {
           // Stop any currently playing TTS
           if (ttsAudioEl) {
@@ -2818,18 +3091,50 @@
             ttsAudioEl = null;
           }
           const fullUrl = url.startsWith('http') ? url : `${API}${url}`;
+          const player = document.getElementById('voiceReplyAudio');
+          if (player && fromVoiceMode) {
+            player.src = fullUrl;
+          }
           ttsAudioEl = new Audio(fullUrl);
           ttsAudioEl.volume = 1.0;
+          ttsAudioEl.onended = async () => {
+            if (fromVoiceMode && voiceModeOpen) {
+              if (voiceAutoEnabled) {
+                setVoiceStatus('✅ تم الرد — أستمع مرة أخرى...');
+                setTimeout(() => {
+                  if (voiceModeOpen && (!mediaRecorder || mediaRecorder.state !== 'recording')) {
+                    startAudioCapture('voice');
+                  }
+                }, 250);
+              } else {
+                setVoiceStatus('✅ تم الرد — اضغط الميكروفون للتحدث');
+              }
+            }
+          };
           ttsAudioEl.play().catch((err) => {
             console.warn('TTS autoplay blocked:', err);
+            if (fromVoiceMode) {
+              setVoiceStatus('الصوت محجوب من المتصفح — اضغط تشغيل من المشغّل');
+              if (player) {
+                player.play().catch(() => {});
+              }
+            }
           });
         } catch (e) {
           console.warn('TTS playback error:', e);
+          if (fromVoiceMode && fallbackText) {
+            try {
+              const u = new SpeechSynthesisUtterance(fallbackText);
+              u.lang = /[\u0600-\u06FF]/.test(fallbackText) ? 'ar-EG' : 'en-US';
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(u);
+            } catch (_) {}
+          }
         }
       }
 
       /** Request TTS for any text (used by 🔊 button) */
-      async function requestTts(text) {
+      async function requestTts(text, fromVoiceMode = false) {
         if (!text) return;
         try {
           const res = await fetch(`${API}/audio/tts`, {
@@ -2839,10 +3144,13 @@
           });
           const data = await res.json();
           if (data.audio_url) {
-            playTtsAudio(data.audio_url);
+            playTtsAudio(data.audio_url, fromVoiceMode, text);
+          } else if (fromVoiceMode) {
+            setVoiceStatus('لم يتم إنشاء صوت للرد');
           }
         } catch (e) {
           console.warn('TTS request failed:', e);
+          if (fromVoiceMode) setVoiceStatus('فشل تحويل الرد لصوت');
         }
       }
 

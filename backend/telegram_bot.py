@@ -171,16 +171,22 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🔐 <b>لتفعيل حسابك:</b> اضغط الزر بالأسفل 👇
 """
     # Inline buttons for quick actions
-    inline_kb = InlineKeyboardMarkup([
+    inline_kb = InlineKeyboardMarkup(
         [
-            InlineKeyboardButton("🔐 تفعيل الحساب بالإيميل", callback_data="verify_email"),
-            InlineKeyboardButton("📱 تفعيل برقم الهاتف", callback_data="verify_phone"),
-        ],
-        [
-            InlineKeyboardButton("🛠️ الأدوات", callback_data="show_tools"),
-            InlineKeyboardButton("ℹ️ مساعدة", callback_data="show_help"),
-        ],
-    ])
+            [
+                InlineKeyboardButton(
+                    "🔐 تفعيل الحساب بالإيميل", callback_data="verify_email"
+                ),
+                InlineKeyboardButton(
+                    "📱 تفعيل برقم الهاتف", callback_data="verify_phone"
+                ),
+            ],
+            [
+                InlineKeyboardButton("🛠️ الأدوات", callback_data="show_tools"),
+                InlineKeyboardButton("ℹ️ مساعدة", callback_data="show_help"),
+            ],
+        ]
+    )
 
     # Try to send logo if exists
     try:
@@ -707,28 +713,46 @@ VERIFY_STATE = (
 
 def _verify_method_keyboard():
     """Inline keyboard to choose verification method"""
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📧 بالإيميل", callback_data="verify_email")],
-        [InlineKeyboardButton("📱 برقم الهاتف", callback_data="verify_phone")],
-        [InlineKeyboardButton("❌ إلغاء", callback_data="verify_cancel")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("📧 بالإيميل", callback_data="verify_email")],
+            [InlineKeyboardButton("📱 برقم الهاتف", callback_data="verify_phone")],
+            [InlineKeyboardButton("❌ إلغاء", callback_data="verify_cancel")],
+        ]
+    )
 
 
 def _verify_cancel_keyboard():
     """Cancel button during verification"""
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("❌ إلغاء التفعيل", callback_data="verify_cancel")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("❌ إلغاء التفعيل", callback_data="verify_cancel")],
+        ]
+    )
 
 
 def _verify_confirm_keyboard(otp: str):
     """Inline keyboard with the OTP as a button + confirm + cancel"""
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(f"📋 نسخ الكود: {otp}", callback_data=f"copy_otp_{otp}")],
-        [InlineKeyboardButton(f"✅ تأكيد الكود ({otp})", callback_data=f"confirm_otp_{otp}")],
-        [InlineKeyboardButton("🔄 إعادة إرسال كود جديد", callback_data="resend_otp")],
-        [InlineKeyboardButton("❌ إلغاء", callback_data="verify_cancel")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    f"📋 نسخ الكود: {otp}", callback_data=f"copy_otp_{otp}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    f"✅ تأكيد الكود ({otp})", callback_data=f"confirm_otp_{otp}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "🔄 إعادة إرسال كود جديد", callback_data="resend_otp"
+                )
+            ],
+            [InlineKeyboardButton("❌ إلغاء", callback_data="verify_cancel")],
+        ]
+    )
 
 
 def _phone_share_keyboard():
@@ -798,7 +822,11 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
         # User pressed the confirm button — auto-verify
         otp_code = data.replace("confirm_otp_", "")
         state = VERIFY_STATE.get(chat_id)
-        if state and state.get("step") == "awaiting_otp" and state.get("otp") == otp_code:
+        if (
+            state
+            and state.get("step") == "awaiting_otp"
+            and state.get("otp") == otp_code
+        ):
             await _do_verify_otp(query.message, chat_id, state, otp_code)
         else:
             await query.message.reply_text(
@@ -832,13 +860,17 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
 🎨 إبداعية | 💼 أعمال | 🔧 تقنية | 🌐 ويب | 🎭 ترفيه
 
 استخدم الأزرار بالأسفل 👇"""
-        await query.message.reply_text(tools_text, parse_mode="HTML", reply_markup=get_tools_keyboard())
+        await query.message.reply_text(
+            tools_text, parse_mode="HTML", reply_markup=get_tools_keyboard()
+        )
 
     elif data == "show_help":
-        help_kb = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔐 تفعيل الحساب", callback_data="verify_email")],
-            [InlineKeyboardButton("🛠️ الأدوات", callback_data="show_tools")],
-        ])
+        help_kb = InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton("🔐 تفعيل الحساب", callback_data="verify_email")],
+                [InlineKeyboardButton("🛠️ الأدوات", callback_data="show_tools")],
+            ]
+        )
         await query.message.reply_text(
             "📖 <b>المساعدة السريعة</b>\n\n"
             "• /start - القائمة الرئيسية\n"
@@ -899,7 +931,9 @@ async def _do_verify_otp(message, chat_id: str, state: dict, code: str):
         valid = await db_client.verify_otp(state["user_id"], code, "telegram_verify")
 
         if valid:
-            await db_client.set_user_verified(state["user_id"], telegram_chat_id=chat_id)
+            await db_client.set_user_verified(
+                state["user_id"], telegram_chat_id=chat_id
+            )
             VERIFY_STATE.pop(chat_id, None)
 
             msg = """🎉 <b>تم تفعيل حسابك بنجاح!</b>
@@ -914,7 +948,9 @@ async def _do_verify_otp(message, chat_id: str, state: dict, code: str):
 
 💡 <b>نصيحة:</b> جرّب /tools لاكتشاف كل الأدوات المتاحة!"""
 
-            await message.reply_text(msg, parse_mode="HTML", reply_markup=get_main_keyboard())
+            await message.reply_text(
+                msg, parse_mode="HTML", reply_markup=get_main_keyboard()
+            )
         else:
             await message.reply_text(
                 "❌ الكود غير صحيح أو منتهي الصلاحية.\n\nاضغط /verify للمحاولة من جديد.",
@@ -1037,6 +1073,45 @@ async def handle_verify_flow(
             user = await db_client.get_user_by_email_unverified(email)
 
             if not user:
+                # ── Check external apps (centralized bot mode) ──
+                ext_otp = await db_client.get_external_otp(email)
+                if ext_otp:
+                    # External app pushed an OTP for this email
+                    state["external"] = True
+                    state["email"] = email
+                    state["ext_otp"] = ext_otp
+                    state["step"] = "awaiting_otp"
+                    state["otp"] = ext_otp["code"]
+                    VERIFY_STATE[chat_id] = state
+
+                    msg = f"""✅ <b>تم العثور على طلب تفعيل!</b>
+
+📧 <b>البريد:</b> {email}
+📱 <b>التطبيق:</b> {ext_otp.get('app_id', 'external')}
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔑 <b>كود التحقق:</b>
+
+<code>{ext_otp['code']}</code>
+
+━━━━━━━━━━━━━━━━━━━━
+
+⏱️ صلاحية الكود: <b>10 دقائق</b>
+
+📋 انسخ الكود وأدخله في التطبيق لتفعيل حسابك ✅"""
+
+                    await safe_reply(
+                        update,
+                        msg,
+                        reply_markup=_verify_confirm_keyboard(ext_otp["code"]),
+                    )
+
+                    # Mark as verified in Nova's external_verifications
+                    await db_client.mark_external_verified(email, telegram_chat_id=chat_id)
+
+                    return True
+
                 await safe_reply(
                     update,
                     "❌ لم يتم العثور على حساب بهذا البريد.\n\nسجّل أولاً من الموقع ثم عد هنا للتفعيل.",

@@ -42,7 +42,11 @@ async def get_current_user(
     if (not token) and request:
         cookie_val = request.cookies.get("access_token")
         if cookie_val:
-            token = cookie_val.split(" ")[-1] if cookie_val.startswith("Bearer ") else cookie_val
+            token = (
+                cookie_val.split(" ")[-1]
+                if cookie_val.startswith("Bearer ")
+                else cookie_val
+            )
 
     if not token:
         raise HTTPException(
@@ -64,6 +68,7 @@ async def get_current_user(
 # 📝 SIGNUP
 # ═══════════════════════════════════════════════════════════════
 
+
 @auth_router.post("/signup")
 async def register(user: UserCreate):
     """Register a new user — account needs Telegram OTP verification."""
@@ -84,6 +89,21 @@ async def register(user: UserCreate):
     otp = str(random.randint(100000, 999999))
     await auth_db.store_otp(res["id"], otp, "telegram_verify", minutes=10)
 
+    # Push OTP to centralized Nova bot (if configured)
+    try:
+        from .nova_client import nova_client
+        from .config import auth_settings
+
+        if nova_client.is_configured:
+            await nova_client.push_otp(
+                email=user.email,
+                code=otp,
+                app_id=auth_settings.APP_ID,
+                minutes=10,
+            )
+    except Exception as e:
+        logger.warning(f"Failed to push OTP to Nova (non-critical): {e}")
+
     return {
         "status": "pending_verification",
         "message": "تم إنشاء الحساب! فعّل حسابك عبر تليجرام بوت @robovainova_bot ← /verify",
@@ -94,6 +114,7 @@ async def register(user: UserCreate):
 # ═══════════════════════════════════════════════════════════════
 # 🔑 LOGIN
 # ═══════════════════════════════════════════════════════════════
+
 
 @auth_router.post("/login")
 async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
@@ -131,6 +152,7 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
 # 🚪 LOGOUT
 # ═══════════════════════════════════════════════════════════════
 
+
 @auth_router.post("/logout")
 async def logout(response: Response, request: Request):
     token = request.cookies.get("access_token")
@@ -145,6 +167,7 @@ async def logout(response: Response, request: Request):
 # ═══════════════════════════════════════════════════════════════
 # 👤 ME
 # ═══════════════════════════════════════════════════════════════
+
 
 @auth_router.get("/me")
 async def read_users_me(current_user: dict = Depends(get_current_user)):
@@ -161,19 +184,34 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 # 📲 OTP ENDPOINTS
 # ═══════════════════════════════════════════════════════════════
 
+
 @auth_router.post("/request-otp")
 async def request_telegram_otp(req: OTPRequest):
     """Generate OTP for an unverified user. They then use /verify in the Telegram bot."""
     email = req.email.strip().lower()
     user = await auth_db.get_user_by_email_unverified(email)
     if not user:
-        raise HTTPException(status_code=404, detail="لم يتم العثور على حساب بهذا البريد")
+        raise HTTPException(
+            status_code=404, detail="لم يتم العثور على حساب بهذا البريد"
+        )
 
     if user.get("is_verified"):
         return {"status": "already_verified", "message": "الحساب مفعّل بالفعل ✅"}
 
     otp = str(random.randint(100000, 999999))
     await auth_db.store_otp(user["id"], otp, "telegram_verify", minutes=10)
+
+    # Push to centralized Nova bot
+    try:
+        from .nova_client import nova_client
+        from .config import auth_settings
+
+        if nova_client.is_configured:
+            await nova_client.push_otp(
+                email=email, code=otp, app_id=auth_settings.APP_ID, minutes=10
+            )
+    except Exception as e:
+        logger.warning(f"Failed to push OTP to Nova: {e}")
 
     return {
         "status": "success",
@@ -194,7 +232,9 @@ async def verify_otp_endpoint(req: OTPVerify):
 
     valid = await auth_db.verify_otp(user["id"], req.code, "telegram_verify")
     if not valid:
-        raise HTTPException(status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية")
+        raise HTTPException(
+            status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية"
+        )
 
     await auth_db.set_user_verified(user["id"])
 
@@ -207,25 +247,54 @@ async def verify_otp_endpoint(req: OTPVerify):
         "status": "success",
         "message": "تم تفعيل الحساب بنجاح! ✅",
         "access_token": access_token,
-        "user": {"id": user["id"], "email": email, "full_name": user.get("full_name", "")},
+        "user": {
+            "id": user["id"],
+            "email": email,
+            "full_name": user.get("full_name", ""),
+        },
     }
 
 
 @auth_router.get("/check-verified")
 async def check_verified(email: str):
-    """Check if a user's account is verified (polling from signup page)."""
-    user = await auth_db.get_user_by_email_unverified(email.strip().lower())
+    """Check if a user's account is verified.
+
+    First checks local DB, then polls the centralized Nova bot
+    (if configured) and auto-verifies locally when confirmed.
+    """
+    email = email.strip().lower()
+    user = await auth_db.get_user_by_email_unverified(email)
     if not user:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
-    return {"verified": bool(user.get("is_verified"))}
+
+    if user.get("is_verified"):
+        return {"verified": True}
+
+    # Poll Nova centralized bot
+    try:
+        from .nova_client import nova_client
+
+        if nova_client.is_configured:
+            remote_verified = await nova_client.check_verified(email)
+            if remote_verified:
+                # Auto-verify locally
+                await auth_db.set_user_verified(user["id"])
+                return {"verified": True}
+    except Exception as e:
+        logger.warning(f"Nova check-verified poll error: {e}")
+
+    return {"verified": False}
 
 
 # ═══════════════════════════════════════════════════════════════
 # 🗑️ DELETE ACCOUNT
 # ═══════════════════════════════════════════════════════════════
 
+
 @auth_router.delete("/delete-account")
-async def delete_account(response: Response, current_user: dict = Depends(get_current_user)):
+async def delete_account(
+    response: Response, current_user: dict = Depends(get_current_user)
+):
     """Permanently delete the current user's account."""
     await auth_db.delete_user_account(current_user["id"])
     response.delete_cookie("access_token")

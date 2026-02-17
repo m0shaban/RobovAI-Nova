@@ -1125,7 +1125,7 @@
       .tts-btn {
         display: inline-block;
         background: none;
-        border: 1px solid rgba(255,255,255,0.15);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 8px;
         cursor: pointer;
         font-size: 14px;
@@ -1133,7 +1133,9 @@
         margin-right: 8px;
         margin-top: 6px;
         opacity: 0.5;
-        transition: opacity 0.2s, transform 0.2s;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
       }
       .tts-btn:hover {
         opacity: 1;
@@ -1464,7 +1466,13 @@
     <div class="app-shell" id="appShell">
       <!-- 🗂️ SIDEBAR -->
       <aside class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="تبديل الشريط الجانبي">⇄</button>
+        <button
+          class="sidebar-toggle"
+          onclick="toggleSidebar()"
+          aria-label="تبديل الشريط الجانبي"
+        >
+          ⇄
+        </button>
 
         <div class="sidebar-header">
           <div class="brand-icon">
@@ -1747,7 +1755,13 @@
                   }
                 "
               ></textarea>
-              <button class="send-btn" onclick="sendMessage()" aria-label="إرسال الرسالة">➜</button>
+              <button
+                class="send-btn"
+                onclick="sendMessage()"
+                aria-label="إرسال الرسالة"
+              >
+                ➜
+              </button>
             </div>
           </div>
           <div class="input-footer">
@@ -2080,7 +2094,9 @@
             const answer = data.final_answer || data.response || 'تم!';
             addBotMessage(formatMarkdown(answer));
           } else {
-            addBotMessage('❌ حدث خطأ: ' + (data.error || 'خطأ غير معروف') + retryBtn(text));
+            addBotMessage(
+              '❌ حدث خطأ: ' + (data.error || 'خطأ غير معروف') + retryBtn(text),
+            );
           }
           refreshBalance(); // Update balance after request
         } catch (e) {
@@ -2240,7 +2256,9 @@
 
           if (streamedContent) {
             addMessage(
-              streamedContent + '<br><br>⚠️ حدث خطأ أثناء التنفيذ' + retryBtn(text),
+              streamedContent +
+                '<br><br>⚠️ حدث خطأ أثناء التنفيذ' +
+                retryBtn(text),
               'bot',
             );
           } else {
@@ -2270,7 +2288,10 @@
         const text = retryText || input.value.trim();
         if (!text) return;
 
-        if (!retryText) { input.value = ''; input.style.height = 'auto'; }
+        if (!retryText) {
+          input.value = '';
+          input.style.height = 'auto';
+        }
 
         // Try streaming first, fallback to regular API
         try {
@@ -2287,9 +2308,13 @@
         return div.innerHTML;
       }
 
-      function retryBtn(text){
-        const safe = text.replace(/'/g, "\\'").replace(/\n/g, "\\n");
-        return ' <button onclick="sendMessage(\''+safe+'\')" style="background:rgba(139,92,246,.2);border:1px solid #8b5cf6;color:#8b5cf6;border-radius:8px;padding:4px 12px;cursor:pointer;font-family:inherit;margin-right:6px">🔄 إعادة المحاولة</button>';
+      function retryBtn(text) {
+        const safe = text.replace(/'/g, "\\'").replace(/\n/g, '\\n');
+        return (
+          ' <button onclick="sendMessage(\'' +
+          safe +
+          '\')" style="background:rgba(139,92,246,.2);border:1px solid #8b5cf6;color:#8b5cf6;border-radius:8px;padding:4px 12px;cursor:pointer;font-family:inherit;margin-right:6px">🔄 إعادة المحاولة</button>'
+        );
       }
 
       function addMessage(content, role) {
@@ -2302,9 +2327,10 @@
         const safeContent = role === 'user' ? escapeHtml(content) : content;
 
         // For bot messages, add a 🔊 listen button
-        const listenBtn = role === 'bot'
-          ? `<button class="tts-btn" onclick="requestTts(this.closest('.msg-content').innerText.replace('🔊','').trim())" title="اسمع الرد" aria-label="اسمع الرد">🔊</button>`
-          : '';
+        const listenBtn =
+          role === 'bot'
+            ? `<button class="tts-btn" onclick="requestTts(this.closest('.msg-content').innerText.replace('🔊','').trim())" title="اسمع الرد" aria-label="اسمع الرد">🔊</button>`
+            : '';
 
         wrapper.innerHTML = `
                 <div class="msg-avatar">${avatar}</div>
@@ -2741,7 +2767,7 @@
           const fullUrl = url.startsWith('http') ? url : `${API}${url}`;
           ttsAudioEl = new Audio(fullUrl);
           ttsAudioEl.volume = 1.0;
-          ttsAudioEl.play().catch(err => {
+          ttsAudioEl.play().catch((err) => {
             console.warn('TTS autoplay blocked:', err);
           });
         } catch (e) {

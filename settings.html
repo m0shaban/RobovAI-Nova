@@ -1215,7 +1215,14 @@
               </button>
             </div>
 
-            <div class="toggle-row" style="border-top:1px solid rgba(239,68,68,.15);padding-top:16px;margin-top:8px">
+            <div
+              class="toggle-row"
+              style="
+                border-top: 1px solid rgba(239, 68, 68, 0.15);
+                padding-top: 16px;
+                margin-top: 8px;
+              "
+            >
               <div class="toggle-info">
                 <h4>🗑️ حذف الحساب نهائياً</h4>
                 <p>سيتم حذف جميع بياناتك ومحادثاتك بشكل لا رجعة فيه</p>
@@ -1590,14 +1597,19 @@
       }
 
       async function deleteAccount() {
-        const email = prompt('⚠️ لتأكيد حذف حسابك نهائياً، اكتب بريدك الإلكتروني:');
+        const email = prompt(
+          '⚠️ لتأكيد حذف حسابك نهائياً، اكتب بريدك الإلكتروني:',
+        );
         if (!email) return;
         if (!confirm('هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء!')) return;
         try {
           const token = localStorage.getItem('token');
           const res = await fetch(`${API}/account`, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify({ confirm: email }),
           });
           const data = await res.json();

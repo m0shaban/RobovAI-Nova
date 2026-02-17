@@ -37,7 +37,8 @@ class AuthDatabase:
             c = conn.cursor()
 
             # Users Table
-            c.execute("""
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     email TEXT UNIQUE NOT NULL,
@@ -55,7 +56,8 @@ class AuthDatabase:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Safe migrations for existing DBs
             for col, defn in [
@@ -75,7 +77,8 @@ class AuthDatabase:
                     pass
 
             # Sessions Table
-            c.execute("""
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS sessions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id INTEGER,
@@ -83,10 +86,12 @@ class AuthDatabase:
                     expires_at TIMESTAMP,
                     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
                 )
-            """)
+            """
+            )
 
             # OTP Codes Table
-            c.execute("""
+            c.execute(
+                """
                 CREATE TABLE IF NOT EXISTS otp_codes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT,
@@ -96,7 +101,8 @@ class AuthDatabase:
                     used INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Indexes
             for idx in [
@@ -116,7 +122,12 @@ class AuthDatabase:
     # ═══════════════════════════════════════════════════════════════
 
     async def create_user(
-        self, email: str, password: str, full_name: str, phone: str = None, role: str = "user"
+        self,
+        email: str,
+        password: str,
+        full_name: str,
+        phone: str = None,
+        role: str = "user",
     ) -> Optional[Dict[str, Any]]:
         try:
             email = _normalize_email(email)
@@ -131,8 +142,11 @@ class AuthDatabase:
                 )
                 conn.commit()
                 return {
-                    "id": c.lastrowid, "email": email,
-                    "full_name": full_name, "role": role, "balance": 100,
+                    "id": c.lastrowid,
+                    "email": email,
+                    "full_name": full_name,
+                    "role": role,
+                    "balance": 100,
                 }
         except sqlite3.IntegrityError:
             return None
@@ -140,7 +154,9 @@ class AuthDatabase:
             logger.exception(f"create_user error: {e}")
             raise
 
-    async def authenticate_user(self, email: str, password: str) -> Optional[Dict[str, Any]]:
+    async def authenticate_user(
+        self, email: str, password: str
+    ) -> Optional[Dict[str, Any]]:
         with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
@@ -193,7 +209,9 @@ class AuthDatabase:
             user = c.fetchone()
             return dict(user) if user else None
 
-    async def get_user_by_email_unverified(self, email: str) -> Optional[Dict[str, Any]]:
+    async def get_user_by_email_unverified(
+        self, email: str
+    ) -> Optional[Dict[str, Any]]:
         with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
@@ -280,7 +298,9 @@ class AuthDatabase:
     # 📲 OTP / VERIFICATION
     # ═══════════════════════════════════════════════════════════════
 
-    async def set_user_verified(self, user_id: int, telegram_chat_id: str = None) -> bool:
+    async def set_user_verified(
+        self, user_id: int, telegram_chat_id: str = None
+    ) -> bool:
         with self._get_conn() as conn:
             c = conn.cursor()
             if telegram_chat_id:
@@ -297,7 +317,11 @@ class AuthDatabase:
             return c.rowcount > 0
 
     async def store_otp(
-        self, user_id: int, code: str, purpose: str = "telegram_verify", minutes: int = 10
+        self,
+        user_id: int,
+        code: str,
+        purpose: str = "telegram_verify",
+        minutes: int = 10,
     ):
         expires_at = (datetime.now() + timedelta(minutes=minutes)).isoformat()
         with self._get_conn() as conn:
@@ -312,7 +336,9 @@ class AuthDatabase:
             )
             conn.commit()
 
-    async def verify_otp(self, user_id: int, code: str, purpose: str = "telegram_verify") -> bool:
+    async def verify_otp(
+        self, user_id: int, code: str, purpose: str = "telegram_verify"
+    ) -> bool:
         now = datetime.now().isoformat()
         with self._get_conn() as conn:
             conn.row_factory = sqlite3.Row

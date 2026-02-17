@@ -192,8 +192,21 @@
       }
 
       /* Password toggle */
-      .pw-wrap{position:relative}
-      .toggle-pw{position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem;padding:4px}
+      .pw-wrap {
+        position: relative;
+      }
+      .toggle-pw {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 4px;
+      }
 
       /* Step panels */
       .step-panel {
@@ -358,7 +371,14 @@
                 minlength="8"
                 autocomplete="new-password"
               />
-              <button type="button" class="toggle-pw" onclick="togglePw()" aria-label="إظهار كلمة المرور">👁️</button>
+              <button
+                type="button"
+                class="toggle-pw"
+                onclick="togglePw()"
+                aria-label="إظهار كلمة المرور"
+              >
+                👁️
+              </button>
             </div>
           </div>
           <button type="submit" class="btn btn-primary" id="registerBtn">
@@ -509,7 +529,10 @@
       let registeredEmail = '';
       let countdownInterval = null;
 
-      function togglePw(){const i=document.getElementById('password');i.type=i.type==='password'?'text':'password';}
+      function togglePw() {
+        const i = document.getElementById('password');
+        i.type = i.type === 'password' ? 'text' : 'password';
+      }
 
       /* ── Step Navigation ── */
       function goToStep(n) {

@@ -45,40 +45,57 @@ VERIFY_STATE: dict = {}
 # ⌨️ KEYBOARDS
 # ═══════════════════════════════════════════════════════════════
 
+
 def _main_keyboard():
     return ReplyKeyboardMarkup(
         [[KeyboardButton("🔐 تفعيل الحساب"), KeyboardButton("ℹ️ مساعدة")]],
-        resize_keyboard=True, is_persistent=True,
+        resize_keyboard=True,
+        is_persistent=True,
     )
 
 
 def _verify_method_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📧 بالإيميل", callback_data="verify_email")],
-        [InlineKeyboardButton("📱 برقم الهاتف", callback_data="verify_phone")],
-        [InlineKeyboardButton("❌ إلغاء", callback_data="verify_cancel")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("📧 بالإيميل", callback_data="verify_email")],
+            [InlineKeyboardButton("📱 برقم الهاتف", callback_data="verify_phone")],
+            [InlineKeyboardButton("❌ إلغاء", callback_data="verify_cancel")],
+        ]
+    )
 
 
 def _cancel_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("❌ إلغاء التفعيل", callback_data="verify_cancel")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("❌ إلغاء التفعيل", callback_data="verify_cancel")],
+        ]
+    )
 
 
 def _confirm_otp_keyboard(otp: str):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(f"📋 نسخ الكود: {otp}", callback_data=f"copy_otp_{otp}")],
-        [InlineKeyboardButton(f"✅ تأكيد الكود ({otp})", callback_data=f"confirm_otp_{otp}")],
-        [InlineKeyboardButton("🔄 كود جديد", callback_data="resend_otp")],
-        [InlineKeyboardButton("❌ إلغاء", callback_data="verify_cancel")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    f"📋 نسخ الكود: {otp}", callback_data=f"copy_otp_{otp}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    f"✅ تأكيد الكود ({otp})", callback_data=f"confirm_otp_{otp}"
+                )
+            ],
+            [InlineKeyboardButton("🔄 كود جديد", callback_data="resend_otp")],
+            [InlineKeyboardButton("❌ إلغاء", callback_data="verify_cancel")],
+        ]
+    )
 
 
 def _phone_share_keyboard():
     return ReplyKeyboardMarkup(
         [[KeyboardButton("📱 مشاركة رقم الهاتف", request_contact=True)]],
-        resize_keyboard=True, one_time_keyboard=True,
+        resize_keyboard=True,
+        one_time_keyboard=True,
     )
 
 
@@ -86,9 +103,12 @@ def _phone_share_keyboard():
 # 🛡️ SAFE REPLY
 # ═══════════════════════════════════════════════════════════════
 
+
 async def safe_reply(update: Update, text: str, reply_markup=None, parse_mode="HTML"):
     try:
-        await update.message.reply_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
+        await update.message.reply_text(
+            text, reply_markup=reply_markup, parse_mode=parse_mode
+        )
     except Exception as e:
         logger.warning(f"HTML reply failed: {e}")
         try:
@@ -101,6 +121,7 @@ async def safe_reply(update: Update, text: str, reply_markup=None, parse_mode="H
 # 🎯 COMMANDS
 # ═══════════════════════════════════════════════════════════════
 
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_name = update.effective_user.first_name or "مستخدم"
     msg = f"""✨ <b>مرحباً {user_name}!</b>
@@ -109,14 +130,18 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 اضغط الزر لتفعيل حسابك 👇"""
 
-    inline_kb = InlineKeyboardMarkup([
+    inline_kb = InlineKeyboardMarkup(
         [
-            InlineKeyboardButton("🔐 تفعيل بالإيميل", callback_data="verify_email"),
-            InlineKeyboardButton("📱 تفعيل بالهاتف", callback_data="verify_phone"),
-        ],
-    ])
+            [
+                InlineKeyboardButton("🔐 تفعيل بالإيميل", callback_data="verify_email"),
+                InlineKeyboardButton("📱 تفعيل بالهاتف", callback_data="verify_phone"),
+            ],
+        ]
+    )
     await safe_reply(update, msg, reply_markup=_main_keyboard())
-    await update.message.reply_text("⚡ اختر طريقة التفعيل:", parse_mode="HTML", reply_markup=inline_kb)
+    await update.message.reply_text(
+        "⚡ اختر طريقة التفعيل:", parse_mode="HTML", reply_markup=inline_kb
+    )
 
 
 async def verify_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -146,6 +171,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # 🔘 CALLBACK QUERY HANDLER
 # ═══════════════════════════════════════════════════════════════
 
+
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -156,14 +182,16 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         VERIFY_STATE[chat_id] = {"step": "awaiting_email", "method": "email"}
         await query.message.reply_text(
             "📧 <b>أدخل بريدك الإلكتروني:</b>\n\n<i>مثال: user@example.com</i>",
-            parse_mode="HTML", reply_markup=_cancel_keyboard(),
+            parse_mode="HTML",
+            reply_markup=_cancel_keyboard(),
         )
 
     elif data == "verify_phone":
         VERIFY_STATE[chat_id] = {"step": "awaiting_phone", "method": "phone"}
         await query.message.reply_text(
             "📱 اضغط الزر لمشاركة رقمك 👇\n\n<i>أو اكتب بريدك الإلكتروني</i>",
-            parse_mode="HTML", reply_markup=_phone_share_keyboard(),
+            parse_mode="HTML",
+            reply_markup=_phone_share_keyboard(),
         )
 
     elif data == "verify_cancel":
@@ -173,10 +201,16 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data.startswith("confirm_otp_"):
         otp_code = data.replace("confirm_otp_", "")
         state = VERIFY_STATE.get(chat_id)
-        if state and state.get("step") == "awaiting_otp" and state.get("otp") == otp_code:
+        if (
+            state
+            and state.get("step") == "awaiting_otp"
+            and state.get("otp") == otp_code
+        ):
             await _do_verify(query.message, chat_id, state, otp_code)
         else:
-            await query.message.reply_text("⚠️ انتهت الجلسة. أعد المحاولة بـ /verify", reply_markup=_main_keyboard())
+            await query.message.reply_text(
+                "⚠️ انتهت الجلسة. أعد المحاولة بـ /verify", reply_markup=_main_keyboard()
+            )
 
     elif data.startswith("copy_otp_"):
         otp_code = data.replace("copy_otp_", "")
@@ -190,12 +224,15 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if state and state.get("user_id"):
             await _send_otp(query.message, chat_id, state)
         else:
-            await query.message.reply_text("⚠️ ابدأ من جديد بـ /verify", reply_markup=_main_keyboard())
+            await query.message.reply_text(
+                "⚠️ ابدأ من جديد بـ /verify", reply_markup=_main_keyboard()
+            )
 
 
 # ═══════════════════════════════════════════════════════════════
 # 📲 CONTACT (Phone share)
 # ═══════════════════════════════════════════════════════════════
+
 
 async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(update.effective_chat.id)
@@ -215,6 +252,7 @@ async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         from .database import auth_db
+
         user = await auth_db.get_user_by_telegram_or_phone(chat_id, phone)
 
         if not user:
@@ -227,7 +265,9 @@ async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         if user.get("is_verified"):
-            await safe_reply(update, "✅ حسابك مُفعّل بالفعل!", reply_markup=_main_keyboard())
+            await safe_reply(
+                update, "✅ حسابك مُفعّل بالفعل!", reply_markup=_main_keyboard()
+            )
             VERIFY_STATE.pop(chat_id, None)
             return
 
@@ -247,6 +287,7 @@ async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # 💬 TEXT MESSAGE HANDLER
 # ═══════════════════════════════════════════════════════════════
 
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(update.effective_chat.id)
     state = VERIFY_STATE.get(chat_id)
@@ -261,7 +302,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if not state:
-        await safe_reply(update, "اضغط 🔐 <b>تفعيل الحساب</b> للبدء", reply_markup=_main_keyboard())
+        await safe_reply(
+            update, "اضغط 🔐 <b>تفعيل الحساب</b> للبدء", reply_markup=_main_keyboard()
+        )
         return
 
     # Cancel
@@ -274,20 +317,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if state["step"] == "awaiting_email":
         email = message.lower()
         if "@" not in email or "." not in email:
-            await safe_reply(update, "⚠️ بريد غير صحيح. حاول مرة أخرى:", reply_markup=_cancel_keyboard())
+            await safe_reply(
+                update,
+                "⚠️ بريد غير صحيح. حاول مرة أخرى:",
+                reply_markup=_cancel_keyboard(),
+            )
             return
 
         try:
             from .database import auth_db
+
             user = await auth_db.get_user_by_email_unverified(email)
 
             if not user:
-                await safe_reply(update, "❌ لا يوجد حساب بهذا البريد. سجّل من الموقع أولاً.", reply_markup=_verify_method_keyboard())
+                await safe_reply(
+                    update,
+                    "❌ لا يوجد حساب بهذا البريد. سجّل من الموقع أولاً.",
+                    reply_markup=_verify_method_keyboard(),
+                )
                 VERIFY_STATE.pop(chat_id, None)
                 return
 
             if user.get("is_verified"):
-                await safe_reply(update, "✅ حسابك مُفعّل بالفعل!", reply_markup=_main_keyboard())
+                await safe_reply(
+                    update, "✅ حسابك مُفعّل بالفعل!", reply_markup=_main_keyboard()
+                )
                 VERIFY_STATE.pop(chat_id, None)
                 return
 
@@ -311,14 +365,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             VERIFY_STATE[chat_id] = state
             await handle_message(update, context)
         else:
-            await safe_reply(update, "📱 اضغط زر مشاركة الرقم أو اكتب بريدك.", reply_markup=_phone_share_keyboard())
+            await safe_reply(
+                update,
+                "📱 اضغط زر مشاركة الرقم أو اكتب بريدك.",
+                reply_markup=_phone_share_keyboard(),
+            )
         return
 
     # Awaiting OTP (manual entry)
     if state["step"] == "awaiting_otp":
         code = message.strip()
         if not code.isdigit() or len(code) != 6:
-            await safe_reply(update, "⚠️ الكود 6 أرقام. حاول مرة أخرى:", reply_markup=_cancel_keyboard())
+            await safe_reply(
+                update,
+                "⚠️ الكود 6 أرقام. حاول مرة أخرى:",
+                reply_markup=_cancel_keyboard(),
+            )
             return
         await _do_verify(update.message, chat_id, state, code)
         return
@@ -328,9 +390,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # 🔧 HELPERS
 # ═══════════════════════════════════════════════════════════════
 
+
 async def _send_otp(message, chat_id: str, state: dict):
     try:
         from .database import auth_db
+
         otp = str(random.randint(100000, 999999))
         await auth_db.store_otp(state["user_id"], otp, "telegram_verify", minutes=10)
 
@@ -350,7 +414,9 @@ async def _send_otp(message, chat_id: str, state: dict):
 
 اضغط <b>✅ تأكيد</b> للتفعيل الفوري 👇"""
 
-        await message.reply_text(msg, parse_mode="HTML", reply_markup=_confirm_otp_keyboard(otp))
+        await message.reply_text(
+            msg, parse_mode="HTML", reply_markup=_confirm_otp_keyboard(otp)
+        )
 
     except Exception as e:
         logger.error(f"OTP error: {e}", exc_info=True)
@@ -361,6 +427,7 @@ async def _send_otp(message, chat_id: str, state: dict):
 async def _do_verify(message, chat_id: str, state: dict, code: str):
     try:
         from .database import auth_db
+
         valid = await auth_db.verify_otp(state["user_id"], code, "telegram_verify")
 
         if valid:
@@ -368,7 +435,8 @@ async def _do_verify(message, chat_id: str, state: dict, code: str):
             VERIFY_STATE.pop(chat_id, None)
             await message.reply_text(
                 "🎉 <b>تم تفعيل حسابك بنجاح!</b>\n\n✅ سجّل دخولك من الموقع الآن.",
-                parse_mode="HTML", reply_markup=_main_keyboard(),
+                parse_mode="HTML",
+                reply_markup=_main_keyboard(),
             )
         else:
             VERIFY_STATE.pop(chat_id, None)
@@ -386,6 +454,7 @@ async def _do_verify(message, chat_id: str, state: dict, code: str):
 # ═══════════════════════════════════════════════════════════════
 # 🚀 APP FACTORY
 # ═══════════════════════════════════════════════════════════════
+
 
 def create_verify_telegram_app(token: str = None):
     """Create a standalone Telegram bot app for account verification."""

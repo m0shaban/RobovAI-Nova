@@ -164,7 +164,9 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Permissions-Policy"] = "camera=(), microphone=(self), geolocation=()"
+    response.headers["Permissions-Policy"] = (
+        "camera=(), microphone=(self), geolocation=()"
+    )
     if _is_prod_env:
         response.headers["Strict-Transport-Security"] = (
             "max-age=63072000; includeSubDomains; preload"
@@ -676,9 +678,11 @@ async def handle_audio_webhook(
             audio_url = None
             try:
                 from backend.tools.audio import synthesize_speech
+
                 # Extract just the reply part for TTS
                 reply_match = None
                 import re
+
                 m = re.search(r"💬\s*\*?\*?الرد\*?\*?:\s*([\s\S]*?)$", response)
                 tts_text = m.group(1).strip() if m else response
                 # Limit TTS to 500 chars to keep audio short
@@ -705,7 +709,11 @@ async def handle_audio_webhook(
 
     except Exception as e:
         logger.error(f"Error processing audio: {e}")
-        return {"status": "error", "message": "فشل معالجة الصوت", "response": "❌ خطأ في معالجة الصوت. حاول مرة أخرى."}
+        return {
+            "status": "error",
+            "message": "فشل معالجة الصوت",
+            "response": "❌ خطأ في معالجة الصوت. حاول مرة أخرى.",
+        }
 
 
 class TtsRequest(BaseModel):
@@ -724,6 +732,7 @@ async def text_to_speech(body: TtsRequest):
 
     try:
         from backend.tools.audio import synthesize_speech, TTS_VOICES
+
         voice = TTS_VOICES.get(body.voice) if body.voice else None
         filepath = await synthesize_speech(body.text.strip(), voice=voice)
         audio_url = f"/uploads/files/{os.path.basename(filepath)}"
@@ -741,12 +750,35 @@ async def upload_file(
     Generic file upload for multimodal interactions (auth required)
     """
     _UPLOAD_ALLOWED_EXT = {
-        ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
-        ".txt", ".csv", ".json", ".xml", ".md",
-        ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp",
-        ".mp3", ".wav", ".ogg", ".m4a",
-        ".mp4", ".webm", ".mov",
-        ".zip", ".rar", ".7z",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".ppt",
+        ".pptx",
+        ".txt",
+        ".csv",
+        ".json",
+        ".xml",
+        ".md",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".svg",
+        ".bmp",
+        ".mp3",
+        ".wav",
+        ".ogg",
+        ".m4a",
+        ".mp4",
+        ".webm",
+        ".mov",
+        ".zip",
+        ".rar",
+        ".7z",
     }
     try:
         # Validate file extension
@@ -1392,7 +1424,11 @@ async def run_agent_endpoint(
 
     except Exception as e:
         logger.error(f"❌ Agent error: {e}", exc_info=True)
-        return {"status": "error", "response": "❌ حدث خطأ أثناء التنفيذ. حاول مرة أخرى.", "error": "internal_error"}
+        return {
+            "status": "error",
+            "response": "❌ حدث خطأ أثناء التنفيذ. حاول مرة أخرى.",
+            "error": "internal_error",
+        }
 
 
 @app.post("/agent/stream", tags=["Agent"])
@@ -1932,18 +1968,22 @@ async def set_user_role(body: SetRoleBody, admin: dict = Depends(require_admin))
     ok = await db_client.update_user_role(body.user_id, body.role)
     if not ok:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"status": "success", "message": f"User {body.user_id} role set to {body.role}"}
+    return {
+        "status": "success",
+        "message": f"User {body.user_id} role set to {body.role}",
+    }
 
 
 @app.post("/admin/add-tokens", tags=["Admin"])
-async def admin_add_tokens(
-    body: AddTokensBody, admin: dict = Depends(require_admin)
-):
+async def admin_add_tokens(body: AddTokensBody, admin: dict = Depends(require_admin)):
     """إضافة توكنز لمستخدم — للمسؤولين فقط"""
     ok = await db_client.add_tokens(str(body.user_id), body.amount)
     if not ok:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"status": "success", "message": f"Added {body.amount} tokens to user {body.user_id}"}
+    return {
+        "status": "success",
+        "message": f"Added {body.amount} tokens to user {body.user_id}",
+    }
 
 
 @app.get("/admin/logs", tags=["Admin"])
@@ -2219,10 +2259,14 @@ class DeleteAccountBody(BaseModel):
 
 
 @app.delete("/account", tags=["User"])
-async def delete_account(body: DeleteAccountBody, current_user: dict = Depends(get_current_user)):
+async def delete_account(
+    body: DeleteAccountBody, current_user: dict = Depends(get_current_user)
+):
     """حذف الحساب نهائياً — يتطلب تأكيد البريد الإلكتروني"""
     if body.confirm != current_user.get("email"):
-        raise HTTPException(status_code=400, detail="التأكيد غير مطابق للبريد الإلكتروني")
+        raise HTTPException(
+            status_code=400, detail="التأكيد غير مطابق للبريد الإلكتروني"
+        )
     deleted = await db_client.delete_user_account(current_user["id"])
     if not deleted:
         raise HTTPException(status_code=404, detail="لم يتم العثور على الحساب")
@@ -2316,6 +2360,67 @@ async def check_verified(email: str):
     if not user:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
     return {"verified": bool(user.get("is_verified"))}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🌐 EXTERNAL APP VERIFICATION (Centralized Telegram Bot)
+# ═══════════════════════════════════════════════════════════════════════════
+
+_EXTERNAL_API_KEY = os.getenv("EXTERNAL_API_KEY", "")
+
+
+def _check_external_api_key(request: Request):
+    """Validate the external app API key."""
+    key = request.headers.get("X-API-Key", "") or request.query_params.get("api_key", "")
+    if not _EXTERNAL_API_KEY:
+        raise HTTPException(status_code=503, detail="External API not configured on server")
+    if key != _EXTERNAL_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+
+class ExternalOTPRequest(BaseModel):
+    email: str
+    code: str
+    app_id: str = "default"
+    minutes: int = 10
+
+
+@app.post("/api/external/push-otp", tags=["External"])
+@_rl("20/minute")
+async def external_push_otp(request: Request, body: ExternalOTPRequest):
+    """Receive OTP from an external app and store it for Telegram bot delivery.
+
+    The external app generates an OTP, stores it locally, then pushes it here.
+    When the user visits @robovainova_bot → /verify → enters email,
+    the bot finds this OTP and sends it to the user via Telegram.
+    """
+    _check_external_api_key(request)
+
+    email = body.email.strip().lower()
+    if "@" not in email or "." not in email:
+        raise HTTPException(status_code=400, detail="البريد الإلكتروني غير صحيح")
+
+    await db_client.store_external_otp(email, body.code, body.app_id, body.minutes)
+    logger.info(f"📩 External OTP stored for {email} (app: {body.app_id})")
+
+    return {
+        "status": "success",
+        "message": "OTP stored. User should open @robovainova_bot → /verify",
+        "bot": "@robovainova_bot",
+    }
+
+
+@app.get("/api/external/check-verified", tags=["External"])
+async def external_check_verified(request: Request, email: str):
+    """Check if an email was verified via the centralized Telegram bot.
+
+    External apps poll this endpoint after the user visits the bot.
+    """
+    _check_external_api_key(request)
+
+    email = email.strip().lower()
+    verified = await db_client.check_external_verified(email)
+    return {"email": email, "verified": verified}
 
 
 # ═══════════════════════════════════════════════════════════════════════════

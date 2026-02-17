@@ -30,6 +30,7 @@ def _load_or_create_secret() -> str:
     )
     if is_production:
         import sys
+
         print(
             "❌ CRITICAL: JWT_SECRET_KEY not set (min 32 chars). "
             "Sessions will break on redeploy!",

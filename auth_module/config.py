@@ -18,13 +18,18 @@ class AuthSettings(BaseSettings):
     # Database
     DATABASE_PATH: str = os.getenv("DATABASE_PATH", "users.db")
 
-    # Telegram
+    # Telegram (only needed if running your own bot)
     TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
     # App
     EXTERNAL_URL: str = os.getenv(
         "EXTERNAL_URL", os.getenv("RENDER_EXTERNAL_URL", "https://robovai.com")
     )
+
+    # Centralized Nova Bot (for verification via @robovainova_bot)
+    NOVA_API_URL: str = os.getenv("NOVA_API_URL", "")  # e.g. https://robovai-nova.onrender.com
+    NOVA_API_KEY: str = os.getenv("NOVA_API_KEY", "")   # Shared secret with Nova
+    APP_ID: str = os.getenv("APP_ID", "default")        # Your app identifier
 
     class Config:
         env_file = ".env"

@@ -15,17 +15,20 @@ logger = logging.getLogger(__name__)
 
 _GROQ_KEYS: list = []
 
+
 def _get_groq_keys() -> list:
     """Return all available GROQ_API_KEYs for failover."""
     global _GROQ_KEYS
     if not _GROQ_KEYS:
         _GROQ_KEYS = [
-            k for k in [
+            k
+            for k in [
                 settings.GROQ_API_KEY,
                 settings.GROQ_API_KEY_2,
                 settings.GROQ_API_KEY_3,
                 settings.GROQ_API_KEY_4,
-            ] if k
+            ]
+            if k
         ]
     return _GROQ_KEYS
 
@@ -44,8 +47,12 @@ async def transcribe_audio(file_path: str, language: str = "ar") -> Dict[str, An
     # Detect mime by extension
     ext = os.path.splitext(file_path)[1].lower()
     mime_map = {
-        ".webm": "audio/webm", ".wav": "audio/wav", ".mp3": "audio/mpeg",
-        ".ogg": "audio/ogg", ".m4a": "audio/mp4", ".flac": "audio/flac",
+        ".webm": "audio/webm",
+        ".wav": "audio/wav",
+        ".mp3": "audio/mpeg",
+        ".ogg": "audio/ogg",
+        ".m4a": "audio/mp4",
+        ".flac": "audio/flac",
     }
     content_type = mime_map.get(ext, "audio/webm")
     filename = f"audio{ext}" if ext else "audio.webm"
@@ -81,14 +88,16 @@ async def transcribe_audio(file_path: str, language: str = "ar") -> Dict[str, An
 
 # Arabic-friendly voices
 TTS_VOICES = {
-    "ar": "ar-EG-SalmaNeural",       # Arabic female (Egypt)
+    "ar": "ar-EG-SalmaNeural",  # Arabic female (Egypt)
     "ar-male": "ar-EG-ShakirNeural",  # Arabic male (Egypt)
-    "en": "en-US-AriaNeural",         # English female
-    "en-male": "en-US-GuyNeural",     # English male
+    "en": "en-US-AriaNeural",  # English female
+    "en-male": "en-US-GuyNeural",  # English male
 }
 
 
-async def synthesize_speech(text: str, voice: str | None = None, output_dir: str = "uploads/files") -> str:
+async def synthesize_speech(
+    text: str, voice: str | None = None, output_dir: str = "uploads/files"
+) -> str:
     """
     Convert text to speech using edge-tts.
     Returns the path to the generated .mp3 file.
@@ -97,7 +106,7 @@ async def synthesize_speech(text: str, voice: str | None = None, output_dir: str
 
     if not voice:
         # Auto-detect: if text is mostly Arabic, use Arabic voice
-        arabic_chars = sum(1 for c in text if "\u0600" <= c <= "\u06FF")
+        arabic_chars = sum(1 for c in text if "\u0600" <= c <= "\u06ff")
         voice = TTS_VOICES["ar"] if arabic_chars > len(text) * 0.3 else TTS_VOICES["en"]
 
     os.makedirs(output_dir, exist_ok=True)
@@ -112,13 +121,19 @@ async def synthesize_speech(text: str, voice: str | None = None, output_dir: str
 
 # --- Voice & Audio Tools ---
 
+
 class VoiceNoteTool(BaseTool):
     @property
-    def name(self): return "/voice_note"
+    def name(self):
+        return "/voice_note"
+
     @property
-    def description(self): return "تحويل فويس نوت لنص + رد ذكي"
+    def description(self):
+        return "تحويل فويس نوت لنص + رد ذكي"
+
     @property
-    def cost(self): return 5
+    def cost(self):
+        return 5
 
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         """
@@ -134,8 +149,14 @@ class VoiceNoteTool(BaseTool):
 
         try:
             # Check if input is an audio file path
-            is_file = any(user_input.endswith(ext) for ext in (".webm", ".wav", ".mp3", ".ogg", ".m4a", ".flac")) \
-                       or "/" in user_input or "\\" in user_input
+            is_file = (
+                any(
+                    user_input.endswith(ext)
+                    for ext in (".webm", ".wav", ".mp3", ".ogg", ".m4a", ".flac")
+                )
+                or "/" in user_input
+                or "\\" in user_input
+            )
 
             if is_file and os.path.isfile(user_input):
                 result = await transcribe_audio(user_input)
@@ -159,12 +180,20 @@ class VoiceNoteTool(BaseTool):
 📝 **النص:** {transcribed_text}
 
 💬 **الرد:** {reply}"""
-                return {"status": "success", "output": output, "tokens_deducted": self.cost}
+                return {
+                    "status": "success",
+                    "output": output,
+                    "tokens_deducted": self.cost,
+                }
 
             else:
                 # نص عادي ← رد مباشر
                 output = await llm_client.generate(user_input, provider="auto")
-                return {"status": "success", "output": output, "tokens_deducted": self.cost}
+                return {
+                    "status": "success",
+                    "output": output,
+                    "tokens_deducted": self.cost,
+                }
 
         except Exception as e:
             logger.error(f"VoiceNoteTool error: {e}", exc_info=True)
@@ -177,11 +206,16 @@ class VoiceNoteTool(BaseTool):
 
 class TtsCustomTool(BaseTool):
     @property
-    def name(self): return "/tts_custom"
+    def name(self):
+        return "/tts_custom"
+
     @property
-    def description(self): return "تحويل نص لصوت (عربي / إنجليزي)"
+    def description(self):
+        return "تحويل نص لصوت (عربي / إنجليزي)"
+
     @property
-    def cost(self): return 3
+    def cost(self):
+        return 3
 
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         """
@@ -189,7 +223,11 @@ class TtsCustomTool(BaseTool):
         user_input: النص المراد تحويله لصوت (optionally: text | voice_key)
         """
         if not user_input or not user_input.strip():
-            return {"status": "error", "output": "❌ أرسل النص المراد تحويله لصوت", "tokens_deducted": 0}
+            return {
+                "status": "error",
+                "output": "❌ أرسل النص المراد تحويله لصوت",
+                "tokens_deducted": 0,
+            }
 
         try:
             parts = user_input.split("|", 1)
@@ -209,16 +247,25 @@ class TtsCustomTool(BaseTool):
             }
         except Exception as e:
             logger.error(f"TTS error: {e}", exc_info=True)
-            return {"status": "error", "output": f"❌ خطأ في تحويل النص لصوت: {str(e)}", "tokens_deducted": 0}
+            return {
+                "status": "error",
+                "output": f"❌ خطأ في تحويل النص لصوت: {str(e)}",
+                "tokens_deducted": 0,
+            }
 
 
 class CleanAudioTool(BaseTool):
     @property
-    def name(self): return "/clean_audio"
+    def name(self):
+        return "/clean_audio"
+
     @property
-    def description(self): return "تحسين جودة التسجيلات الصوتية"
+    def description(self):
+        return "تحسين جودة التسجيلات الصوتية"
+
     @property
-    def cost(self): return 3
+    def cost(self):
+        return 3
 
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         return {
@@ -230,11 +277,16 @@ class CleanAudioTool(BaseTool):
 
 class MeetingNotesTool(BaseTool):
     @property
-    def name(self): return "/meeting_notes"
+    def name(self):
+        return "/meeting_notes"
+
     @property
-    def description(self): return "تفريغ الاجتماعات + Action Items"
+    def description(self):
+        return "تفريغ الاجتماعات + Action Items"
+
     @property
-    def cost(self): return 10
+    def cost(self):
+        return 10
 
     async def execute(self, user_input: str, user_id: str) -> Dict[str, Any]:
         """Transcribe a meeting audio file using Whisper, then summarize."""
@@ -255,8 +307,16 @@ class MeetingNotesTool(BaseTool):
                 provider="auto",
                 system_prompt="You are a meeting assistant. Extract structured information in Arabic.",
             )
-            return {"status": "success", "output": f"📝 Meeting Notes:\n\n{output}", "tokens_deducted": self.cost}
+            return {
+                "status": "success",
+                "output": f"📝 Meeting Notes:\n\n{output}",
+                "tokens_deducted": self.cost,
+            }
 
         except Exception as e:
             logger.error(f"MeetingNotesTool error: {e}", exc_info=True)
-            return {"status": "error", "output": f"❌ خطأ: {str(e)}", "tokens_deducted": 0}
+            return {
+                "status": "error",
+                "output": f"❌ خطأ: {str(e)}",
+                "tokens_deducted": 0,
+            }

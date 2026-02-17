@@ -196,6 +196,26 @@ class Database:
             """
             )
 
+            # ── External Verifications Table (for centralized bot) ──
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS external_verifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL,
+                    code TEXT NOT NULL,
+                    app_id TEXT DEFAULT 'default',
+                    expires_at TIMESTAMP,
+                    used INTEGER DEFAULT 0,
+                    verified INTEGER DEFAULT 0,
+                    telegram_chat_id TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """
+            )
+            c.execute(
+                "CREATE INDEX IF NOT EXISTS idx_ext_verify_email ON external_verifications(email, used, expires_at)"
+            )
+
             conn.commit()
             logger.info("✅ Database initialized with roles, indexes, and billing")
 
@@ -668,6 +688,75 @@ class Database:
             c.execute("DELETE FROM users WHERE id = ?", (user_id,))
             conn.commit()
             return c.rowcount > 0
+
+    # ═══════════════════════════════════════════════════════════════
+    # 🌐 EXTERNAL VERIFICATIONS (Centralized Bot)
+    # ═══════════════════════════════════════════════════════════════
+
+    async def store_external_otp(
+        self, email: str, code: str, app_id: str = "default", minutes: int = 10
+    ):
+        """Store OTP from an external app for centralized Telegram verification."""
+        expires_at = (
+            datetime.now() + __import__("datetime").timedelta(minutes=minutes)
+        ).isoformat()
+        email = _normalize_email(email)
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            # Invalidate old unused codes for this email+app
+            c.execute(
+                "UPDATE external_verifications SET used = 1 WHERE email = ? AND app_id = ? AND used = 0",
+                (email, app_id),
+            )
+            c.execute(
+                "INSERT INTO external_verifications (email, code, app_id, expires_at) VALUES (?, ?, ?, ?)",
+                (email, code, app_id, expires_at),
+            )
+            conn.commit()
+
+    async def get_external_otp(
+        self, email: str
+    ) -> Optional[Dict[str, Any]]:
+        """Get pending external OTP for an email (used by Telegram bot)."""
+        email = _normalize_email(email)
+        now = datetime.now().isoformat()
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT id, email, code, app_id, expires_at FROM external_verifications "
+                "WHERE email = ? AND used = 0 AND verified = 0 AND expires_at > ? "
+                "ORDER BY id DESC LIMIT 1",
+                (email, now),
+            )
+            row = c.fetchone()
+            return dict(row) if row else None
+
+    async def mark_external_verified(
+        self, email: str, telegram_chat_id: str = None
+    ) -> bool:
+        """Mark an external verification as verified (called after bot sends OTP)."""
+        email = _normalize_email(email)
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            c.execute(
+                "UPDATE external_verifications SET verified = 1, used = 1, telegram_chat_id = ? "
+                "WHERE email = ? AND used = 0",
+                (telegram_chat_id, email),
+            )
+            conn.commit()
+            return c.rowcount > 0
+
+    async def check_external_verified(self, email: str) -> bool:
+        """Check if an email was verified via the centralized bot."""
+        email = _normalize_email(email)
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            c.execute(
+                "SELECT COUNT(*) FROM external_verifications WHERE email = ? AND verified = 1",
+                (email,),
+            )
+            return c.fetchone()[0] > 0
 
 
 db_client = Database()

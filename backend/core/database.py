@@ -69,6 +69,7 @@ class Database:
                 ("updated_at", "TIMESTAMP"),
                 ("is_verified", "INTEGER DEFAULT 0"),
                 ("telegram_chat_id", "TEXT"),
+                ("phone", "TEXT"),
             ]:
                 try:
                     c.execute(f"ALTER TABLE users ADD COLUMN {col} {defn}")
@@ -589,6 +590,43 @@ class Database:
             )
             user = c.fetchone()
             return dict(user) if user else None
+
+    async def get_user_by_telegram_or_phone(
+        self, telegram_chat_id: str, phone: str
+    ) -> Optional[Dict[str, Any]]:
+        """Find a user by Telegram chat ID or phone number (for phone-based verification).
+        Phone is matched against the email column as a fallback, and also against
+        a phone column if it exists."""
+        with self._get_conn() as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+
+            # First, try matching by telegram_chat_id (already linked)
+            c.execute(
+                "SELECT id, email, full_name, is_verified FROM users WHERE telegram_chat_id = ?",
+                (telegram_chat_id,),
+            )
+            user = c.fetchone()
+            if user:
+                return dict(user)
+
+            # Check if 'phone' column exists
+            c.execute("PRAGMA table_info(users)")
+            cols = {row["name"] for row in c.fetchall()}
+
+            if "phone" in cols:
+                # Normalize: try with and without leading +
+                phone_clean = phone.lstrip("+")
+                c.execute(
+                    "SELECT id, email, full_name, is_verified FROM users "
+                    "WHERE phone = ? OR phone = ? OR phone = ?",
+                    (phone, "+" + phone_clean, phone_clean),
+                )
+                user = c.fetchone()
+                if user:
+                    return dict(user)
+
+            return None
 
     # ═══════════════════════════════════════════════════════════════
     # 📊 Admin Stats

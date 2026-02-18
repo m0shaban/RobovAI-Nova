@@ -1,4 +1,9 @@
+import logging
+
 from backend.tools.registry import ToolRegistry
+
+
+logger = logging.getLogger("robovai.tools.loader")
 
 # Import all tool modules to trigger registration
 from backend.tools.fun import (
@@ -315,4 +320,6 @@ def register_all_tools():
         ToolRegistry.register(t)
         count += 1
 
-    print(f"✅ Successfully Registered {count} Tools (Manus-Level Agent Ready! 🚀).")
+    logger.info(
+        "Successfully registered %s tools (Manus-Level Agent Ready).", count
+    )

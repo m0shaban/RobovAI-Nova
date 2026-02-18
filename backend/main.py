@@ -2393,9 +2393,13 @@ _EXTERNAL_API_KEY = os.getenv("EXTERNAL_API_KEY", "")
 
 def _check_external_api_key(request: Request):
     """Validate the external app API key."""
-    key = request.headers.get("X-API-Key", "") or request.query_params.get("api_key", "")
+    key = request.headers.get("X-API-Key", "") or request.query_params.get(
+        "api_key", ""
+    )
     if not _EXTERNAL_API_KEY:
-        raise HTTPException(status_code=503, detail="External API not configured on server")
+        raise HTTPException(
+            status_code=503, detail="External API not configured on server"
+        )
     if key != _EXTERNAL_API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
 

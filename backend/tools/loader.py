@@ -320,6 +320,4 @@ def register_all_tools():
         ToolRegistry.register(t)
         count += 1
 
-    logger.info(
-        "Successfully registered %s tools (Manus-Level Agent Ready).", count
-    )
+    logger.info("Successfully registered %s tools (Manus-Level Agent Ready).", count)

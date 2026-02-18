@@ -468,6 +468,10 @@ async def login(
 async def logout(response: Response, request: Request):
     """Logout and revoke session"""
     token = request.cookies.get("access_token")
+    if not token:
+        auth_header = request.headers.get("Authorization", "").strip()
+        if auth_header.lower().startswith("bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
     if token:
         if token.startswith("Bearer "):
             token = token.split(" ")[1]

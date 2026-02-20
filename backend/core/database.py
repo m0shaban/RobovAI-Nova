@@ -179,19 +179,71 @@ class Database:
             ]:
                 c.execute(idx)
 
-            # ── Custom Bots Table ──
+            # ── Custom Bots Tables (Chatbot Builder) ──
             c.execute(
                 """
-                CREATE TABLE IF NOT EXISTS custom_bots (
+                CREATE TABLE IF NOT EXISTS user_chatbots (
                     id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
                     name TEXT NOT NULL,
                     description TEXT DEFAULT '',
+                    bot_type TEXT DEFAULT 'hybrid', -- ai_only, rules_only, hybrid
                     system_prompt TEXT NOT NULL,
-                    avatar_emoji TEXT DEFAULT '🤖',
-                    tools TEXT DEFAULT '[]',
-                    greeting TEXT DEFAULT 'مرحباً!',
+                    temperature REAL DEFAULT 0.7,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """
+            )
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS chatbot_integrations (
+                    id TEXT PRIMARY KEY,
+                    bot_id TEXT NOT NULL,
+                    platform TEXT NOT NULL,
+                    access_token TEXT,
+                    webhook_url TEXT,
+                    is_active INTEGER DEFAULT 1,
+                    FOREIGN KEY(bot_id) REFERENCES user_chatbots(id) ON DELETE CASCADE
+                )
+            """
+            )
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS crm_contacts (
+                    id TEXT PRIMARY KEY,
+                    bot_id TEXT NOT NULL,
+                    platform_user_id TEXT NOT NULL,
+                    name TEXT,
+                    phone TEXT,
+                    interactions_count INTEGER DEFAULT 0,
+                    last_interaction TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(bot_id) REFERENCES user_chatbots(id) ON DELETE CASCADE
+                )
+            """
+            )
+
+            # ── Smart Agent Tables (ContentOrbit) ──
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS content_campaigns (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    ai_persona TEXT NOT NULL,
+                    is_active INTEGER DEFAULT 1,
+                    schedule_cron TEXT DEFAULT '0 * * * *',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """
+            )
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS content_sources (
+                    id TEXT PRIMARY KEY,
+                    campaign_id TEXT NOT NULL,
+                    source_type TEXT NOT NULL,
+                    source_url TEXT NOT NULL,
+                    FOREIGN KEY(campaign_id) REFERENCES content_campaigns(id) ON DELETE CASCADE
                 )
             """
             )

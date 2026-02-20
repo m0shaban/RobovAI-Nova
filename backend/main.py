@@ -120,6 +120,10 @@ async def on_startup():
                 logger.warning(f"Cleanup task error: {e}")
 
     asyncio.create_task(_periodic_cleanup())
+    
+    # ── Start Smart Agents Background Scheduler ──
+    from backend.agents.scheduler import start_scheduler
+    asyncio.create_task(start_scheduler())
 
 
 @app.on_event("shutdown")
@@ -247,6 +251,8 @@ _ALLOWED_PAGES = {
     "settings",
     "developers",
     "index",
+    "chatbot_builder",
+    "smart_agents",
 }
 
 
@@ -268,6 +274,15 @@ async def serve_html_page(page: str):
 # ═══════════════════════════════════════════════════════════════════════════
 # 🔐 AUTHENTICATION & SECURITY
 # ═══════════════════════════════════════════════════════════════════════════
+
+from backend.chatbots.builder import router as chatbot_builder_router
+from backend.chatbots.integrations import router as integrations_router
+from backend.agents.campaigns import router as agents_campaigns_router
+
+app.include_router(chatbot_builder_router)
+app.include_router(integrations_router)
+app.include_router(agents_campaigns_router)
+
 from fastapi import Depends, status, Response, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import RedirectResponse

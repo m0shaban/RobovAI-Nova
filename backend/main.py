@@ -189,7 +189,25 @@ try:
     from slowapi.util import get_remote_address
     from slowapi.errors import RateLimitExceeded
 
-    limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
+    def _client_ip_for_rate_limit(request: Request) -> str:
+        x_client_ip = (request.headers.get("x-client-ip") or "").strip()
+        if x_client_ip:
+            return x_client_ip
+
+        x_forwarded_for = (request.headers.get("x-forwarded-for") or "").strip()
+        if x_forwarded_for:
+            return x_forwarded_for.split(",", 1)[0].strip()
+
+        x_real_ip = (request.headers.get("x-real-ip") or "").strip()
+        if x_real_ip:
+            return x_real_ip
+
+        return get_remote_address(request)
+
+    limiter = Limiter(
+        key_func=_client_ip_for_rate_limit,
+        default_limits=["120/minute"],
+    )
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     _has_limiter = True
@@ -378,7 +396,7 @@ def _rl(limit_str: str):
 
 
 @app.post("/auth/register", tags=["Auth"])
-@_rl("5/minute")
+@_rl("20/minute")
 async def register(request: Request, user: UserCreate, response: Response):
     """Register a new user — account needs Telegram OTP verification."""
     logger.info(
@@ -422,7 +440,7 @@ async def register(request: Request, user: UserCreate, response: Response):
 
 
 @app.post("/auth/login", tags=["Auth"])
-@_rl("10/minute")
+@_rl("30/minute")
 async def login(
     request: Request,
     response: Response,
@@ -2312,7 +2330,7 @@ class OTPVerify(BaseModel):
 
 
 @app.post("/auth/request-otp", tags=["Auth"])
-@_rl("5/minute")
+@_rl("15/minute")
 async def request_telegram_otp(request: Request, req: OTPRequest):
     """Generate OTP for a registered-but-unverified user.
     The user then opens @robovainova_bot → /verify → receives the code."""
@@ -2337,7 +2355,7 @@ async def request_telegram_otp(request: Request, req: OTPRequest):
 
 
 @app.post("/auth/verify-otp", tags=["Auth"])
-@_rl("10/minute")
+@_rl("30/minute")
 async def verify_otp_endpoint(request: Request, req: OTPVerify):
     """Verify OTP code and activate the account."""
     email = req.email.strip().lower()

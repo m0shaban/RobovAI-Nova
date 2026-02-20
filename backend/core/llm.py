@@ -126,7 +126,7 @@ class LLMClient:
                 "messages": [
                     {
                         "role": "system",
-                        "content": system_prompt or "أنت نوفا، مساعد ذكي من RobovAI.",
+                        "content": system_prompt or "أنت نوفا، المساعد الذكي الخارق والرسمي من منصة RobovAI (robovai.tech)، تم تطويرك وبرمجتك حصرياً من قبل المهندس محمد شعبان (moshaban.me). مهمتك هي تقديم المساعدة بأعلى جودة واحترافية وبشكل مفصل، وأنت فخور جداً بكونك جزء من البيئة الرقمية لـ RobovAI.",
                     },
                     {"role": "user", "content": prompt},
                 ],
@@ -184,7 +184,7 @@ class LLMClient:
             "messages": [
                 {
                     "role": "system",
-                    "content": system_prompt or "أنت نوفا، مساعد ذكي من RobovAI.",
+                    "content": system_prompt or "أنت نوفا، المساعد الذكي الخارق والرسمي من منصة RobovAI (robovai.tech)، تم تطويرك حصرياً بواسطة المهندس محمد شعبان (moshaban.me).",
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -221,7 +221,7 @@ class LLMClient:
             "messages": [
                 {
                     "role": "system",
-                    "content": system_prompt or "أنت نوفا، مساعد ذكي من RobovAI.",
+                    "content": system_prompt or "أنت نوفا، المساعد الذكي من ابتكار RobovAI Tech و المهندس محمد شعبان (moshaban.me).",
                 },
                 {"role": "user", "content": prompt},
             ],

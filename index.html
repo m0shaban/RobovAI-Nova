@@ -124,6 +124,7 @@
       }
       .nav.stuck {
         background: rgba(5, 5, 16, 0.92);
+        -webkit-backdrop-filter: blur(24px) saturate(1.4);
         backdrop-filter: blur(24px) saturate(1.4);
         box-shadow: 0 1px 40px rgba(0, 0, 0, 0.4);
       }
@@ -134,11 +135,23 @@
         justify-content: space-between;
         align-items: center;
       }
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        text-decoration: none;
+      /* Brand specific styling for V3 */
+      .brand-dot {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: grid;
+        place-items: center;
+        font-size: 20px;
+        box-shadow: 0 0 15px var(--primary-dim);
+      }
+      .brand-name {
+        font-size: 1.4rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #fff, #a5b4fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
       .brand-dot {
         width: 40px;
@@ -207,6 +220,7 @@
         position: fixed;
         inset: 0;
         background: rgba(5, 5, 16, 0.97);
+        -webkit-backdrop-filter: blur(20px);
         backdrop-filter: blur(20px);
         z-index: 2000;
         flex-direction: column;
@@ -723,6 +737,90 @@
         color: var(--green);
       }
 
+      /* ═════════════ V3 SHOWCASE ═════════════ */
+      .showcase-section {
+        padding: 100px 24px;
+        background: rgba(5, 5, 16, 0.4);
+        position: relative;
+        overflow: hidden;
+      }
+      .showcase-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+      }
+      .showcase-content h2 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #fff, var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .showcase-content p {
+        color: var(--muted);
+        font-size: 1.1rem;
+        line-height: 1.8;
+        margin-bottom: 30px;
+      }
+      .showcase-img-wrap {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.05);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 40px var(--primary-dim);
+        transform: perspective(1000px) rotateY(-5deg);
+        transition: transform 0.5s ease;
+      }
+      .showcase-img-wrap:hover {
+        transform: perspective(1000px) rotateY(0deg) scale(1.02);
+      }
+      .showcase-img-wrap img {
+        width: 100%;
+        display: block;
+        transition: opacity 0.3s;
+      }
+      .showcase-reverse {
+        margin-top: 100px;
+        direction: rtl; /* Reset logic for flex order but keep text RTL */
+      }
+      .showcase-reverse .showcase-inner {
+        direction: rtl; 
+      }
+      .showcase-reverse .showcase-img-wrap {
+        transform: perspective(1000px) rotateY(5deg);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 40px rgba(168, 85, 247, 0.15);
+      }
+      .showcase-reverse .showcase-img-wrap:hover {
+        transform: perspective(1000px) rotateY(0deg) scale(1.02);
+      }
+      .feat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface);
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        border: 1px solid var(--border);
+        margin-bottom: 12px;
+        margin-left: 10px;
+      }
+      .feat-pill i { color: var(--primary); }
+
+      /* Animations */
+      @keyframes floatUp {
+        0% { transform: translateY(30px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+      }
+      .animate-on-scroll {
+        animation: floatUp 0.8s ease forwards;
+        opacity: 0;
+      }
+
       /* ═════════════ PRICING ═════════════ */
       .price-section {
         padding: 80px 24px;
@@ -1069,6 +1167,54 @@
             <div class="counter-val" data-target="99">0</div>
             <div class="counter-label">% وقت تشغيل</div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW V3 SHOWCASE SECTION -->
+    <section class="showcase-section" id="v3-features">
+      <div class="showcase-inner animate-on-scroll" style="animation-delay: 0.2s;">
+        <div class="showcase-content">
+          <span class="sec-badge" style="margin-bottom: 15px;">🚀 الجيل الثالث (V3)</span>
+          <h2>وكلاء أذكياء يديرون السوشيال ميديا بالذكاء الاصطناعي</h2>
+          <p>
+            لا تضيع وقتك في صناعة المحتوى. يوفر Nova الآن ميزة <strong>الوكلاء الأذكياء (Smart Social Agents)</strong> 
+            الذين يقومون بقراءة الأخبار من مصادرك المفضلة (RSS)، صياغتها بأسلوبك الخاص، ونشرها تلقائياً على 
+            حساباتك في Facebook و X (Twitter) دون أي تدخل منك.
+          </p>
+          <div class="feat-pills">
+            <div class="feat-pill">🤖 جدولة تلقائية ذكية</div>
+            <div class="feat-pill">🌍 إعادة صياغة بذكاء اصطناعي</div>
+            <div class="feat-pill">🔗 نشر مباشر عبر API</div>
+          </div>
+          <a href="/smart_agents.html" class="btn-hero btn-ghost" style="margin-top: 20px">استكشف الوكلاء المخصصين &rarr;</a>
+        </div>
+        <div class="showcase-image">
+          <div class="showcase-img-wrap">
+            <img src="/public/assets/img/nova_smart_agents.png" alt="RobovAI Smart Social Agents Dashboard">
+          </div>
+        </div>
+      </div>
+
+      <div class="showcase-inner animate-on-scroll showcase-reverse" style="animation-delay: 0.4s;">
+        <div class="showcase-image">
+          <div class="showcase-img-wrap" style="border-color: rgba(168, 85, 247, 0.3);">
+            <img src="/public/assets/img/nova_omnichannel_bots.png" alt="RobovAI Omni-Channel Chatbots">
+          </div>
+        </div>
+        <div class="showcase-content">
+          <span class="sec-badge" style="margin-bottom: 15px; color: #c084fc; border-color: rgba(192, 132, 252, 0.3); background: rgba(192, 132, 252, 0.1);">🧠 منصة Custom Chatbots</span>
+          <h2 style="background: linear-gradient(135deg, #fff, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">روبوتات دردشة تتحدث بإسم شركتك من موقعك مباشرة</h2>
+          <p>
+            تتيح لك منصة Nova الجديدة بناء <strong>شات بوت مخصص (Custom Chatbot)</strong> في ثوانٍ. 
+            فقط أدخل رابط موقعك الإلكتروني (URL)، وسيقوم مٌحرك الذكاء الاصطناعي بمسحه بالكامل وتدريب الروبوت 
+            ليُجيب على أسئلة عملائك بدقة متناهية (RAG Engine). متوافق للربط مع تليجرام وأي منصة ويب!
+          </p>
+          <div class="feat-pills">
+            <div class="feat-pill"><span style="color: #c084fc;">🌐</span> تدريب لحظي من رابط الموقع (Scraping)</div>
+            <div class="feat-pill"><span style="color: #c084fc;">💬</span> ربط متعدد المنصات (Omni-channel)</div>
+          </div>
+          <a href="/chatbot_builder.html" class="btn-hero btn-ghost" style="margin-top: 20px; border-color: rgba(192, 132, 252, 0.3); color: #c084fc;">اصنع أول بوت لك مجاناً &rarr;</a>
         </div>
       </div>
     </section>
@@ -1527,9 +1673,20 @@
         <a href="/account">حسابي</a>
         <a href="/developers">API للمطورين</a>
       </div>
-      <small
-        >&copy; 2026 RobovAI Solutions &mdash; Built with &#10084; in
-        Egypt</small
+      
+      <div class="creator-identity" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
+        <small style="color: rgba(255, 255, 255, 0.4); font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+          مُبتكر ومُصمم بكل شغف في مختبرات 
+          <a href="https://robovai.tech" target="_blank" style="color: var(--primary); font-weight: 700; text-decoration: none;">RobovAI Solutions</a>
+        </small>
+        <small style="color: rgba(255, 255, 255, 0.35); font-size: 0.75rem;">
+          المعمارية البرمجية والهندسة من قبل 
+          <a href="https://moshaban.me" target="_blank" style="color: var(--muted); text-decoration: underline; text-decoration-color: rgba(255,255,255,0.2);">المهندس محمد شعبان</a>
+        </small>
+      </div>
+      
+      <small style="display: block; margin-top: 20px;"
+        >&copy; 2026 RobovAI Tech &mdash; All Rights Reserved.</small
       >
     </footer>
 
@@ -1594,6 +1751,21 @@
           var t = document.querySelector(a.getAttribute('href'));
           if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+      });
+
+      /* ===== SCROLL ANIMATIONS ===== */
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.animationPlayState = 'running';
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.animate-on-scroll').forEach(el => {
+        el.style.animationPlayState = 'paused';
+        observer.observe(el);
       });
 
       /* ===== COUNTER ANIMATION ===== */

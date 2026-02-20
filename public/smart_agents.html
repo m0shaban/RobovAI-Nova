@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RobovAI Nova - الوكلاء الأذكياء (النشر التلقائي)</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: "#0F172A",
+                        darker: "#020617",
+                        primary: "#8B5CF6", // Purple theme for agents
+                        primaryHover: "#7C3AED",
+                        secondary: "#EC4899", // Pink secondary
+                        surface: "rgba(30, 41, 59, 0.7)",
+                    },
+                    fontFamily: {
+                        sans: ['"Tajawal"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Tajawal', sans-serif; background-color: #020617; color: white; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.6);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-hidden flex flex-col">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[120px]"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="glass-panel mx-4 mt-4 px-6 py-4 flex justify-between items-center relative z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">
+                <i class="fa-solid fa-satellite-dish"></i>
+            </div>
+            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-l from-white to-gray-400">
+                RobovAI Nova
+            </span>
+        </div>
+        <div class="flex gap-4">
+             <a href="account.html" class="text-gray-300 hover:text-white transition-colors duration-200">
+                <i class="fa-solid fa-arrow-right ml-2"></i> العودة للوحة التحكم
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 relative z-10 z-[1] max-w-6xl">
+        <div class="mb-8 text-center">
+            <h1 class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">الوكلاء الأذكياء (ContentOrbit)</h1>
+            <p class="text-gray-400 text-lg">أتمتة جلب المحتوى من المصادر وإعادة صياغته بالذكاء الاصطناعي ونشره عبر قنواتك</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Form Section -->
+            <div class="lg:col-span-2 glass-panel p-6">
+                <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-2 flex justify-between">
+                    <span><i class="fa-solid fa-pen-nib text-primary ml-2"></i>إعداد الحملة (الوكيل)</span>
+                    <button onclick="newCampaign()" class="text-sm bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded text-gray-300 transition-colors"><i class="fa-solid fa-plus ml-1"></i>حملة جديدة</button>
+                </h2>
+                
+                <form id="campaignForm" class="space-y-6">
+                    <div>
+                        <label class="block text-gray-300 mb-2 font-medium">اسم الحملة (موضوع النشر)</label>
+                        <input type="text" id="campName" required class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors" placeholder="مثال: أخبار الذكاء الاصطناعي اليومية">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-300 mb-2 font-medium">جدول النشر (CRON)</label>
+                        <input type="text" id="campCron" required value="0 * * * *" class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary font-mono text-left" dir="ltr" placeholder="0 * * * * (كل ساعة)">
+                        <p class="text-xs text-gray-500 mt-1">الافتراضي: 0 * * * * (نشر كل ساعة). راجع صيغ CRON للتحكم.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-300 mb-2 font-medium">شخصية النشر (AI Persona)</label>
+                        <textarea id="campPersona" rows="4" required class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors resize-none" placeholder="اكتب الأخبار بأسلوب مشوق ومثير وتقني..."></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-pink-600 text-white font-bold py-3 px-6 rounded-lg transition-transform transform hover:scale-[1.02] shadow-lg shadow-primary/20">
+                        <i class="fa-solid fa-rocket ml-2"></i> حفظ الحملة
+                    </button>
+                </form>
+
+                <!-- Sources Section (visible only when editing) -->
+                <div id="sourcesSection" class="mt-8 pt-8 border-t border-gray-700 hidden">
+                    <h3 class="text-xl font-bold mb-4 text-gray-200"><i class="fa-solid fa-rss text-orange-500 ml-2"></i>مصادر المحتوى (RSS)</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input type="url" id="newSourceUrl" class="flex-grow bg-darker border border-gray-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none text-sm" placeholder="https://example.com/feed">
+                        <button onclick="addSource()" type="button" class="bg-primary hover:bg-primaryHover text-white px-4 rounded-lg text-sm font-bold transition-colors">إضافة مصدر</button>
+                    </div>
+                    <ul id="sourcesList" class="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
+                        <!-- Sources injected here -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Side Panel -->
+            <div class="space-y-6">
+                <!-- My Campaigns List -->
+                <div class="glass-panel p-6">
+                    <h2 class="text-xl font-bold mb-4 flex justify-between items-center border-b border-gray-700 pb-2">
+                        <span><i class="fa-solid fa-layer-group text-secondary ml-2"></i>حملاتي النشطة</span>
+                        <button onclick="loadCampaigns()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-rotate-right"></i></button>
+                    </h2>
+                    <div id="campaignsList" class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        <!-- Items injected here by JS -->
+                        <div class="text-center text-gray-500 py-4">جاري التحميل...</div>
+                    </div>
+                </div>
+                
+                <div class="glass-panel p-6 bg-gradient-to-br from-dark to-darker border-primary/20">
+                    <h3 class="font-bold text-gray-200 mb-2"><i class="fa-solid fa-circle-info text-primary ml-2"></i>كيفية العمل</h3>
+                    <ul class="text-sm text-gray-400 space-y-2 list-disc list-inside">
+                        <li>أضف روابط RSS למصادر الأخبار.</li>
+                        <li>سيقوم الوكيل بجلبها وتلخيصها.</li>
+                        <li>يتم تحويلها لبوست جذاب.</li>
+                        <li>(قريباً) تنشر تلقائياً لتيليجرام/اكس/فيسبوك.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = '/api/agents';
+        let currentCampId = null;
+
+        // Custom styling for scrollbars
+        const style = document.createElement('style');
+        style.textContent = `
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.5); border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.8); }
+        `;
+        document.head.appendChild(style);
+
+        // Fetch user campaigns
+        async function loadCampaigns() {
+            try {
+                const res = await fetch(API_URL, {
+                    headers: { 'Authorization': `Bearer ${getCookie('access_token')}` }
+                });
+                
+                if (res.status === 401) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                const campaigns = await res.json();
+                const list = document.getElementById('campaignsList');
+                list.innerHTML = '';
+                
+                if (campaigns.length === 0) {
+                    list.innerHTML = '<div class="text-center text-gray-500 py-4 text-sm">لا توجد حملات بعد. ابدأ إنشاء وكيلك الذكي!</div>';
+                    return;
+                }
+                
+                campaigns.forEach(camp => {
+                    const statusIcon = camp.is_active ? '<i class="fa-solid fa-circle text-green-500 text-[8px]"></i> نشط' : '<i class="fa-solid fa-circle text-gray-500 text-[8px]"></i> متوقف';
+                    list.innerHTML += `
+                        <div onclick="selectCampaign('${camp.id}')" class="p-3 rounded-lg bg-darker/50 border border-gray-800 hover:border-primary/50 cursor-pointer transition-colors flex items-center justify-between group">
+                            <div>
+                                <div class="font-bold text-sm text-gray-200">${escapeHtml(camp.name)}</div>
+                                <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">${statusIcon}</div>
+                            </div>
+                            <i class="fa-solid fa-chevron-left text-gray-600 group-hover:text-primary transition-colors text-xs"></i>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function selectCampaign(id) {
+            currentCampId = id;
+            try {
+                const res = await fetch(`${API_URL}/${id}`, {
+                    headers: { 'Authorization': `Bearer ${getCookie('access_token')}` }
+                });
+                const camp = await res.json();
+                
+                // Populate Form
+                document.getElementById('campName').value = camp.name || '';
+                document.getElementById('campCron').value = camp.schedule_cron || '0 * * * *';
+                document.getElementById('campPersona').value = camp.ai_persona || '';
+                
+                // Show Sources
+                document.getElementById('sourcesSection').style.display = 'block';
+                renderSourcesList(camp.sources);
+                
+            } catch (e) { console.error(e); }
+        }
+
+        function newCampaign() {
+            currentCampId = null;
+            document.getElementById('campaignForm').reset();
+            document.getElementById('sourcesSection').style.display = 'none';
+        }
+
+        // Form Submit
+        document.getElementById('campaignForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('campName').value,
+                schedule_cron: document.getElementById('campCron').value,
+                ai_persona: document.getElementById('campPersona').value
+            };
+            
+            const method = currentCampId ? 'PUT' : 'POST';
+            const url = currentCampId ? `${API_URL}/${currentCampId}` : API_URL;
+            
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getCookie('access_token')}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (res.ok) {
+                    alert('تم الحفظ بنجاح!');
+                    loadCampaigns();
+                    if(!currentCampId) {
+                        const data = await res.json();
+                        selectCampaign(data.id);
+                    }
+                } else {
+                    alert('حدث خطأ أثناء الحفظ');
+                }
+            } catch(err) {
+                console.error(err);
+                alert('خطأ في الاتصال');
+            }
+        });
+
+        async function addSource() {
+            if(!currentCampId) return;
+            const urlInput = document.getElementById('newSourceUrl');
+            const sourceUrl = urlInput.value.trim();
+            if(!sourceUrl) return;
+            
+            try {
+                const res = await fetch(`${API_URL}/${currentCampId}/sources`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getCookie('access_token')}`
+                    },
+                    body: JSON.stringify({ source_type: 'rss', source_url: sourceUrl })
+                });
+                
+                if(res.ok) {
+                    urlInput.value = '';
+                    selectCampaign(currentCampId); // reload
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function deleteSource(sourceId) {
+            if(!currentCampId || !confirm('هل أنت متأكد من حذف هذا المصدر؟')) return;
+            try {
+                const res = await fetch(`${API_URL}/${currentCampId}/sources/${sourceId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${getCookie('access_token')}` }
+                });
+                if(res.ok) {
+                    selectCampaign(currentCampId); // reload
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function renderSourcesList(sources) {
+            const list = document.getElementById('sourcesList');
+            list.innerHTML = '';
+            if(!sources || sources.length === 0) {
+                list.innerHTML = '<li class="text-sm text-gray-500 py-2">لم تتم إضافة أي مصادر حتى الآن.</li>';
+                return;
+            }
+            
+            sources.forEach(src => {
+                list.innerHTML += `
+                    <li class="flex justify-between items-center bg-black/40 p-2 rounded border border-gray-800">
+                        <span class="text-sm text-gray-300 truncate pl-2" dir="ltr">${escapeHtml(src.source_url)}</span>
+                        <button onclick="deleteSource('${src.id}')" class="text-red-500 hover:text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </li>
+                `;
+            });
+        }
+
+        function getCookie(name) {
+            let val = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+            return val ? val.pop() : '';
+        }
+
+        function escapeHtml(unsafe) {
+            return (unsafe||"").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', loadCampaigns);
+    </script>
+</body>
+</html>

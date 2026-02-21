@@ -8,6 +8,8 @@
       href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap"
       rel="stylesheet"
     />
+    <!-- ApexCharts Open Source Library -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
       :root {
         --bg: #0a0a1a;
@@ -83,6 +85,54 @@
         50% {
           transform: translate(30px, 30px) scale(1.1);
         }
+      }
+
+      /* Card Entrance Animations */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(25px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .stat-card,
+      .card {
+        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .stat-card:nth-child(1),
+      .card:nth-child(1) {
+        animation-delay: 0.05s;
+      }
+      .stat-card:nth-child(2),
+      .card:nth-child(2) {
+        animation-delay: 0.1s;
+      }
+      .stat-card:nth-child(3),
+      .card:nth-child(3) {
+        animation-delay: 0.15s;
+      }
+      .stat-card:nth-child(4),
+      .card:nth-child(4) {
+        animation-delay: 0.2s;
+      }
+      .stat-card:nth-child(5),
+      .card:nth-child(5) {
+        animation-delay: 0.25s;
+      }
+      .stat-card:nth-child(6),
+      .card:nth-child(6) {
+        animation-delay: 0.3s;
+      }
+
+      .admin-copyright {
+        text-align: center;
+        padding: 1.5rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        opacity: 0.5;
       }
 
       /* 📱 Layout */
@@ -481,10 +531,62 @@
       .tools-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1rem;
-        max-height: 400px;
-        overflow-y: auto;
-        padding: 0.5rem;
+        gap: 1.5rem;
+      }
+
+      /* 📊 Charts Grid (Super Admin) */
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .chart-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary), transparent);
+        opacity: 0.5;
+      }
+
+      .chart-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      /* ApexCharts Text Color Override */
+      .apexcharts-text {
+        fill: var(--text-muted) !important;
+        font-family: 'Cairo', sans-serif !important;
+      }
+      .apexcharts-tooltip {
+        background: var(--surface-2) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+        color: #fff !important;
+      }
+      .apexcharts-tooltip-title {
+        background: var(--surface) !important;
+        border-bottom: 1px solid var(--border) !important;
+        font-family: 'Cairo', sans-serif !important;
       }
 
       .tool-card {
@@ -691,8 +793,12 @@
           <span>📊</span> لوحة التحكم
         </a>
         <a href="/chat.html" class="nav-link"> <span>💬</span> الشات </a>
-        <a href="/chatbot_builder.html" class="nav-link"> <span>🤖</span> منصة البوتات </a>
-        <a href="/smart_agents.html" class="nav-link"> <span>📡</span> الوكلاء الأذكياء </a>
+        <a href="/chatbot-builder" class="nav-link">
+          <span>🤖</span> منصة البوتات
+        </a>
+        <a href="/smart-agents" class="nav-link">
+          <span>📡</span> الوكلاء الأذكياء
+        </a>
         <a href="/" class="nav-link"> <span>🏠</span> الصفحة الرئيسية </a>
       </div>
 
@@ -749,13 +855,23 @@
           <div class="label">أداة مسجلة</div>
         </div>
         <div class="stat-card">
-          <div class="icon" style="background: rgba(139, 92, 246, 0.1)">🧠</div>
-          <div class="value">4</div>
-          <div class="label">Agents نشطة</div>
+          <div class="icon" style="background: rgba(139, 92, 246, 0.1)">👥</div>
+          <div class="value" id="usersCount">-</div>
+          <div class="label">مستخدم مسجل</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon" style="background: rgba(34, 197, 94, 0.1)">🤖</div>
+          <div class="value" id="botsCount">-</div>
+          <div class="label">بوت مخصص</div>
         </div>
         <div class="stat-card">
           <span class="change up">+25%</span>
-          <div class="icon" style="background: rgba(34, 197, 94, 0.1)">📊</div>
+          <div class="icon" style="background: rgba(245, 158, 11, 0.1)">💬</div>
+          <div class="value" id="messagesCount">-</div>
+          <div class="label">رسالة</div>
+        </div>
+        <div class="stat-card">
+          <div class="icon" style="background: rgba(236, 72, 153, 0.1)">📊</div>
           <div class="value" id="categoriesCount">-</div>
           <div class="label">تصنيف أدوات</div>
         </div>
@@ -770,45 +886,23 @@
       <div class="charts-grid">
         <div class="chart-card">
           <div class="chart-header">
-            <span class="chart-title">📈 نشاط الـ Agent (آخر 7 أيام)</span>
+            <span class="chart-title">📈 استهلاك التوكنات (آخر 7 أيام)</span>
           </div>
-          <div class="activity-bars" id="activityChart">
-            <div
-              class="activity-bar"
-              style="height: 40%"
-              data-value="120"
-            ></div>
-            <div
-              class="activity-bar"
-              style="height: 60%"
-              data-value="180"
-            ></div>
-            <div
-              class="activity-bar"
-              style="height: 80%"
-              data-value="240"
-            ></div>
-            <div
-              class="activity-bar"
-              style="height: 55%"
-              data-value="165"
-            ></div>
-            <div
-              class="activity-bar"
-              style="height: 90%"
-              data-value="270"
-            ></div>
-            <div
-              class="activity-bar"
-              style="height: 70%"
-              data-value="210"
-            ></div>
-            <div
-              class="activity-bar"
-              style="height: 100%"
-              data-value="300"
-            ></div>
+          <div id="tokenChart"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">👥 نمو المستخدمين</span>
           </div>
+          <div id="userChart"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">🛠️ أكثر الأدوات استخداماً</span>
+          </div>
+          <div id="toolsChart"></div>
         </div>
 
         <div class="chart-card">
@@ -844,6 +938,38 @@
         </div>
         <div class="tools-grid" id="toolsGrid">
           <div class="loading"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+
+      <!-- Memory Section -->
+      <div class="tools-section" id="memory">
+        <div class="tools-header">
+          <h2 class="section-title">🧠 ذاكرة النظام</h2>
+          <button class="btn btn-outline" onclick="loadMemoryStats()">
+            🔄 تحديث
+          </button>
+        </div>
+        <div id="memoryContent" style="padding: 20px">
+          <div class="stats-grid" style="margin-bottom: 20px">
+            <div class="stat-card">
+              <div class="icon" style="background: rgba(139, 92, 246, 0.1)">
+                🧠
+              </div>
+              <div class="value" id="memorySessionsCount">-</div>
+              <div class="label">جلسة محفوظة</div>
+            </div>
+            <div class="stat-card">
+              <div class="icon" style="background: rgba(34, 197, 94, 0.1)">
+                📝
+              </div>
+              <div class="value" id="memoryFactsCount">-</div>
+              <div class="label">حقيقة مخزنة</div>
+            </div>
+          </div>
+          <p style="color: #9ca3af; font-size: 0.9rem">
+            الذاكرة طويلة المدى تحفظ السياق والحقائق المهمة عن كل مستخدم لتقديم
+            تجربة شخصية أفضل.
+          </p>
         </div>
       </div>
 
@@ -919,21 +1045,140 @@
 
             // Update categories count
             const categories = Object.keys(stats.tools.by_category || {});
-            document.getElementById('categoriesCount').textContent =
-              categories.length;
+
+            // Render specific components safely, since HTML was changed
+            if (document.getElementById('categoriesCount')) {
+              document.getElementById('categoriesCount').textContent =
+                categories.length;
+            }
+            if (document.getElementById('systemStatus')) {
+              document.getElementById('systemStatus').textContent =
+                'النظام يعمل ✓';
+            }
 
             // Update category list
             updateCategoryList(stats.tools.by_category, stats.tools.total);
 
-            // Update status
-            document.getElementById('systemStatus').textContent =
-              'النظام يعمل ✓';
+            // Load Analytics for charts
+            await loadAnalytics();
           }
         } catch (e) {
           console.error('Error loading stats:', e);
-          document.getElementById('systemStatus').textContent =
-            'خطأ في الاتصال';
+          if (document.getElementById('systemStatus')) {
+            document.getElementById('systemStatus').textContent =
+              'خطأ في الاتصال';
+          }
         }
+      }
+
+      // 📊 Charts instances to destroy before re-render
+      let tokenChartInstance = null;
+      let userChartInstance = null;
+      let toolsChartInstance = null;
+
+      async function loadAnalytics() {
+        try {
+          const res = await fetch(`${API}/admin/analytics`, {
+            headers: authHeaders,
+          });
+          const result = await res.json();
+
+          if (result.status === 'success') {
+            const data = result.data;
+
+            // Update dashboard counters
+            document.getElementById('usersCount').textContent =
+              data.user_growth.reduce((acc, curr) => acc + curr.count, 0) ||
+              '0';
+            document.getElementById('botsCount').textContent =
+              data.total_bots || '0';
+            document.getElementById('messagesCount').textContent =
+              data.total_messages || '0';
+
+            renderCharts(data);
+          }
+        } catch (e) {
+          console.error('Error loading analytics:', e);
+        }
+      }
+
+      function renderCharts(data) {
+        // Common Options
+        const commonOptions = {
+          chart: {
+            foreColor: '#6b7280',
+            toolbar: { show: false },
+            background: 'transparent',
+          },
+          theme: { mode: 'dark' },
+          grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
+        };
+
+        // 1. Token Chart
+        if (tokenChartInstance) tokenChartInstance.destroy();
+        const tokenOptions = {
+          ...commonOptions,
+          chart: { ...commonOptions.chart, type: 'area', height: 280 },
+          series: [
+            { name: 'Tokens', data: data.token_usage.map((d) => d.tokens) },
+          ],
+          xaxis: { categories: data.token_usage.map((d) => d.date) },
+          colors: ['#00f0ff'],
+          fill: {
+            type: 'gradient',
+            gradient: {
+              shadeIntensity: 1,
+              opacityFrom: 0.4,
+              opacityTo: 0.05,
+              stops: [0, 100],
+            },
+          },
+          dataLabels: { enabled: false },
+          stroke: { curve: 'smooth', width: 2 },
+        };
+        tokenChartInstance = new ApexCharts(
+          document.querySelector('#tokenChart'),
+          tokenOptions,
+        );
+        tokenChartInstance.render();
+
+        // 2. User Growth Chart
+        if (userChartInstance) userChartInstance.destroy();
+        const userOptions = {
+          ...commonOptions,
+          chart: { ...commonOptions.chart, type: 'bar', height: 280 },
+          series: [
+            { name: 'Signups', data: data.user_growth.map((d) => d.count) },
+          ],
+          xaxis: { categories: data.user_growth.map((d) => d.date) },
+          colors: ['#8b5cf6'],
+          plotOptions: { bar: { borderRadius: 4, horizontal: false } },
+          dataLabels: { enabled: false },
+        };
+        userChartInstance = new ApexCharts(
+          document.querySelector('#userChart'),
+          userOptions,
+        );
+        userChartInstance.render();
+
+        // 3. Top Tools Chart
+        if (toolsChartInstance) toolsChartInstance.destroy();
+        const toolsOptions = {
+          ...commonOptions,
+          chart: { ...commonOptions.chart, type: 'bar', height: 280 },
+          series: [{ name: 'Usage', data: data.top_tools.map((d) => d.count) }],
+          xaxis: { categories: data.top_tools.map((d) => d.name) },
+          colors: ['#22c55e'],
+          plotOptions: {
+            bar: { borderRadius: 4, horizontal: true, distributed: true },
+          },
+          dataLabels: { enabled: true },
+        };
+        toolsChartInstance = new ApexCharts(
+          document.querySelector('#toolsChart'),
+          toolsOptions,
+        );
+        toolsChartInstance.render();
       }
 
       function updateCategoryList(categories, total) {
@@ -1100,10 +1345,40 @@
         loadStats();
         loadTools();
         loadLogs();
+        loadMemoryStats();
+      }
+
+      async function loadMemoryStats() {
+        try {
+          const res = await fetch(`${API}/admin/stats`, {
+            headers: authHeaders,
+          });
+          const data = await res.json();
+          if (data.status === 'success') {
+            const s = data.stats;
+            document.getElementById('memorySessionsCount').textContent =
+              s.active_sessions || s.users?.total || '0';
+            document.getElementById('memoryFactsCount').textContent =
+              s.memory_facts || s.tools?.total || '0';
+          }
+        } catch (e) {
+          console.error('Error loading memory stats:', e);
+        }
       }
 
       // Auto-refresh every 30 seconds
       setInterval(refreshData, 30000);
+
+      // Add copyright footer
+      document.addEventListener('DOMContentLoaded', () => {
+        const main = document.querySelector('.main-content');
+        if (main) {
+          const f = document.createElement('div');
+          f.className = 'admin-copyright';
+          f.innerHTML = '&copy; 2026 RobovAI Solutions';
+          main.appendChild(f);
+        }
+      });
     </script>
   </body>
 </html>

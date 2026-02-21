@@ -10,9 +10,9 @@ from backend.agents.publisher import publish_content
 logger = logging.getLogger(__name__)
 scheduler = AsyncIOScheduler()
 
-async def run_campaign(campaign_id: str, user_id: str, ai_persona: str):
+async def _run_campaign_logic(campaign_id: str, user_id: str, ai_persona: str):
     """
-    Executes the fetching, generation, and publishing pipeline for a specific campaign.
+    Core logic for fetching, generation, and publishing pipeline.
     """
     logger.info(f"Starting execution for campaign {campaign_id}")
     try:
@@ -60,7 +60,55 @@ async def run_campaign(campaign_id: str, user_id: str, ai_persona: str):
                          pass
 
     except Exception as e:
-        logger.error(f"Error executing campaign {campaign_id}: {e}")
+        logger.error(f"Error executing logic for campaign {campaign_id}: {e}")
+        raise # Reraise to trigger retry
+
+async def run_campaign(campaign_id: str, user_id: str, ai_persona: str):
+    """
+    Wrapper with robust Retry Logic for the campaign pipeline.
+    """
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            await _run_campaign_logic(campaign_id, user_id, ai_persona)
+            return # Success
+        except Exception as e:
+            if attempt == max_retries:
+                logger.error(f"Failed campaign {campaign_id} after {max_retries} attempts: {e}")
+            else:
+                logger.warning(f"Campaign {campaign_id} attempt {attempt} failed. Retrying in 60s: {e}")
+                await asyncio.sleep(60)
+
+async def reload_campaign(campaign_id: str, user_id: str = None):
+    """
+    Dynamically reloads a specific campaign into the running APScheduler without restarting the server.
+    """
+    try:
+        camp = await db_client.execute(
+            "SELECT id, user_id, schedule_cron, ai_persona FROM content_campaigns WHERE id = ? AND is_active = 1",
+            (campaign_id,)
+        )
+        if camp:
+            c = camp[0]
+            scheduler.add_job(
+                run_campaign,
+                CronTrigger.from_crontab(c["schedule_cron"]),
+                args=[c["id"], c["user_id"], c["ai_persona"]],
+                id=f"camp_{c['id']}",
+                replace_existing=True
+            )
+            logger.info(f"Dynamically loaded campaign {c['id']} with cron {c['schedule_cron']}")
+        else:
+            remove_campaign(campaign_id)
+    except Exception as e:
+        logger.error(f"Failed to reload campaign {campaign_id}: {e}")
+
+def remove_campaign(campaign_id: str):
+    """Removes a campaign's job from the scheduler if it exists."""
+    job_id = f"camp_{campaign_id}"
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
+        logger.info(f"Removed campaign {campaign_id} from scheduler")
 
 async def start_scheduler():
     """

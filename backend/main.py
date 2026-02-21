@@ -45,7 +45,7 @@ _tags_metadata = [
     {"name": "History", "description": "المحادثات والرسائل"},
     {"name": "Admin", "description": "لوحة تحكم المسؤولين"},
     {"name": "Payments", "description": "المدفوعات والاشتراكات"},
-    {"name": "Webhooks", "description": "Telegram / WhatsApp / Messenger"},
+    {"name": "Webhooks", "description": "Telegram / WhatsApp / Messenger / Discord"},
     {"name": "Bots", "description": "إنشاء بوتات مخصصة"},
     {"name": "Files", "description": "رفع الملفات والصور"},
     {"name": "Pages", "description": "صفحات الواجهة"},
@@ -70,7 +70,8 @@ register_all_tools()
 try:
     from backend.telegram_bot import create_telegram_app
 
-    telegram_app = create_telegram_app()
+    # Temporarily disabled to avoid hanging locally
+    telegram_app = None # create_telegram_app()
     if telegram_app:
         logger.info("✅ Telegram bot enabled")
     else:
@@ -141,7 +142,8 @@ async def on_shutdown():
 
 # ── CORS: restrict to known origins ──
 _allowed_origins = [
-    os.getenv("FRONTEND_URL", "https://robovai-nova.onrender.com"),
+    os.getenv("FRONTEND_URL", "https://robovainova.onrender.com"),
+    "https://robovai-nova.onrender.com",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://localhost:3000",
@@ -284,7 +286,7 @@ app.include_router(integrations_router)
 app.include_router(agents_campaigns_router)
 
 from fastapi import Depends, status, Response, Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import RedirectResponse
 from backend.core.database import db_client
 from backend.core.security import (
@@ -292,8 +294,12 @@ from backend.core.security import (
     decode_access_token,
     validate_password_strength,
 )
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+from backend.core.deps import (
+    oauth2_scheme,
+    get_current_user,
+    get_current_user_from_cookie,
+    require_admin,
+)
 
 
 class UserCreate(BaseModel):
@@ -325,77 +331,8 @@ class AddTokensBody(BaseModel):
     amount: int
 
 
-async def get_current_user_from_cookie(request: Request):
-    token = request.cookies.get("access_token")
-    if not token:
-        return None
-
-    # Remove 'Bearer ' prefix if present
-    if token.startswith("Bearer "):
-        token = token.split(" ")[1]
-
-    # Check Session in DB (Server-Side Revocation)
-    session = await db_client.get_session(token)
-    if not session:
-        return None
-
-    payload = decode_access_token(token)
-    if not payload:
-        return None
-
-    user = await db_client.get_user_by_email(payload.get("sub"))
-    return user
-
-
-async def get_current_user(
-    token: str = Depends(oauth2_scheme), request: Request = None
-):
-    """
-    Robust Auth Dependency:
-    1. Checks Authorization Header (Bearer Token)
-    2. Checks 'access_token' Cookie
-    3. Validates against Active Sessions DB
-    """
-    # 1. Try Token from Header
-    if not token and request:
-        token = request.cookies.get("access_token")
-        if token and token.startswith("Bearer "):
-            token = token.split(" ")[1]
-
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Check Session (Revocation Check)
-    session = await db_client.get_session(token)
-    if not session:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired or revoked",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    payload = decode_access_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    user = await db_client.get_user_by_email(payload.get("sub"))
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-    return user
-
-
-async def require_admin(current_user: dict = Depends(get_current_user)):
-    """Dependency that requires admin role."""
-    if current_user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="⛔ صلاحيات المسؤول مطلوبة")
-    return current_user
+# get_current_user, get_current_user_from_cookie, require_admin, oauth2_scheme
+# are now imported from backend.core.deps (avoids circular imports)
 
 
 # ── Rate limiting helper: no-op decorator when slowapi is missing ──
@@ -985,6 +922,21 @@ async def serve_admin():
     return FileResponse("admin.html")
 
 
+@app.get("/settings", tags=["Pages"])
+async def serve_settings():
+    return FileResponse("settings.html")
+
+
+@app.get("/chatbot-builder", tags=["Pages"])
+async def serve_chatbot_builder():
+    return FileResponse("public/chatbot_builder.html")
+
+
+@app.get("/smart-agents", tags=["Pages"])
+async def serve_smart_agents():
+    return FileResponse("public/smart_agents.html")
+
+
 @app.get("/tools", tags=["System"])
 async def get_tools():
     """
@@ -996,6 +948,12 @@ async def get_tools():
         "grouped": ToolRegistry.get_tools_by_category(),
         "count": len(ToolRegistry.list_tools()),
     }
+
+
+@app.get("/tools/list", tags=["System"])
+async def get_tools_list():
+    """Alias for /tools — backwards compatibility for API docs."""
+    return await get_tools()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1012,11 +970,33 @@ async def get_tools():
 async def whatsapp_webhook(request: Request):
     """
     WhatsApp Business API Webhook
+
+    Features:
+    - HMAC SHA-256 signature verification (Meta X-Hub-Signature-256 header)
+    - Adapter-based message parsing
+    - Smart routing through SmartToolRouter
+    - Conversation tracking via db_client
     """
     try:
+        import hmac as _hmac
+        import hashlib as _hashlib
+
+        raw_body = await request.body()
+
+        # ── Signature verification (Meta sends X-Hub-Signature-256) ──
+        app_secret = os.getenv("WHATSAPP_APP_SECRET", "")
+        sig_header = request.headers.get("X-Hub-Signature-256", "")
+        if app_secret and sig_header:
+            expected = "sha256=" + _hmac.new(
+                app_secret.encode(), raw_body, _hashlib.sha256
+            ).hexdigest()
+            if not _hmac.compare_digest(expected, sig_header):
+                logger.warning("WhatsApp webhook signature mismatch — rejecting")
+                raise HTTPException(status_code=403, detail="Invalid signature")
+
         from backend.adapters.platforms import WhatsAppAdapter, OutgoingMessage
 
-        payload = await request.json()
+        payload = json.loads(raw_body)
         access_token = os.getenv("WHATSAPP_ACCESS_TOKEN", "")
         phone_id = os.getenv("WHATSAPP_PHONE_ID", "")
 
@@ -1029,6 +1009,16 @@ async def whatsapp_webhook(request: Request):
 
         if not message:
             return {"status": "ok"}
+
+        # ── Track conversation in DB ──
+        try:
+            await db_client.save_message(
+                user_id=0,  # Platform user — no DB user id yet
+                role="user",
+                content=f"[whatsapp:{message.user_id}] {message.text}",
+            )
+        except Exception:
+            pass  # Non-critical — don't block webhook
 
         # Route message
         from backend.core.smart_router import SmartToolRouter
@@ -1056,6 +1046,8 @@ async def whatsapp_webhook(request: Request):
 
         return {"status": "ok"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"WhatsApp webhook error: {e}")
         return {"status": "ok"}
@@ -1071,7 +1063,8 @@ async def whatsapp_verify(request: Request):
     verify_token = os.getenv("WHATSAPP_VERIFY_TOKEN", "robovai_verify")
 
     if mode == "subscribe" and token == verify_token:
-        return int(challenge)
+        from starlette.responses import PlainTextResponse
+        return PlainTextResponse(str(challenge))
 
     raise HTTPException(status_code=403, detail="Verification failed")
 
@@ -1080,11 +1073,33 @@ async def whatsapp_verify(request: Request):
 async def messenger_webhook(request: Request):
     """
     Facebook Messenger Webhook
+
+    Features:
+    - HMAC SHA-256 signature verification (Meta X-Hub-Signature-256 header)
+    - Adapter-based message parsing
+    - Smart routing through SmartToolRouter
+    - Conversation tracking via db_client
     """
     try:
+        import hmac as _hmac
+        import hashlib as _hashlib
+
+        raw_body = await request.body()
+
+        # ── Signature verification (Meta sends X-Hub-Signature-256) ──
+        app_secret = os.getenv("MESSENGER_APP_SECRET", "")
+        sig_header = request.headers.get("X-Hub-Signature-256", "")
+        if app_secret and sig_header:
+            expected = "sha256=" + _hmac.new(
+                app_secret.encode(), raw_body, _hashlib.sha256
+            ).hexdigest()
+            if not _hmac.compare_digest(expected, sig_header):
+                logger.warning("Messenger webhook signature mismatch — rejecting")
+                raise HTTPException(status_code=403, detail="Invalid signature")
+
         from backend.adapters.platforms import MessengerAdapter, OutgoingMessage
 
-        payload = await request.json()
+        payload = json.loads(raw_body)
         page_token = os.getenv("MESSENGER_PAGE_TOKEN", "")
 
         if not page_token:
@@ -1097,10 +1112,20 @@ async def messenger_webhook(request: Request):
         if not message:
             return {"status": "ok"}
 
-        # Send typing
+        # ── Track conversation in DB ──
+        try:
+            await db_client.save_message(
+                user_id=0,  # Platform user — no DB user id yet
+                role="user",
+                content=f"[messenger:{message.user_id}] {message.text}",
+            )
+        except Exception:
+            pass  # Non-critical — don't block webhook
+
+        # Send typing indicator
         await adapter.send_typing(message.chat_id)
 
-        # Route message
+        # Route message through SmartToolRouter
         from backend.core.smart_router import SmartToolRouter
 
         routing_result = await SmartToolRouter.route_message(
@@ -1119,6 +1144,16 @@ async def messenger_webhook(request: Request):
                 system_prompt="أنت RobovAI Nova Agent - مساعد ذكي مصري ودود. رد بالمصري العامي.",
             )
 
+        # ── Track assistant response ──
+        try:
+            await db_client.save_message(
+                user_id=0,
+                role="assistant",
+                content=f"[messenger:{message.chat_id}] {response[:500]}",
+            )
+        except Exception:
+            pass
+
         # Send response
         await adapter.send_message(
             OutgoingMessage(
@@ -1128,6 +1163,8 @@ async def messenger_webhook(request: Request):
 
         return {"status": "ok"}
 
+    except HTTPException:
+        raise  # Re-raise signature verification failures
     except Exception as e:
         logger.error(f"Messenger webhook error: {e}")
         return {"status": "ok"}
@@ -1146,6 +1183,158 @@ async def messenger_verify(request: Request):
         return challenge
 
     raise HTTPException(status_code=403, detail="Verification failed")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎮 DISCORD WEBHOOK
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _verify_discord_signature(
+    raw_body: bytes, signature: str, timestamp: str, public_key: str
+) -> bool:
+    """Verify Discord interaction signature using Ed25519."""
+    try:
+        from nacl.signing import VerifyKey
+        from nacl.exceptions import BadSignatureError
+
+        verify_key = VerifyKey(bytes.fromhex(public_key))
+        verify_key.verify(timestamp.encode() + raw_body, bytes.fromhex(signature))
+        return True
+    except (BadSignatureError, Exception):
+        return False
+
+
+@app.post("/discord_webhook", tags=["Webhooks"])
+async def discord_webhook(request: Request):
+    """
+    Discord Interactions Webhook
+
+    Handles:
+    - Ping verification (type 1)
+    - Slash commands (type 2)
+    - Message components (type 3)
+
+    Setup:
+    1. Create app at https://discord.com/developers/applications
+    2. Set Interactions Endpoint URL to: YOUR_URL/discord_webhook
+    3. Create slash commands via Discord API
+    """
+    try:
+        import hmac
+
+        raw_body = await request.body()
+        payload = json.loads(raw_body)
+
+        # ── Signature verification ──
+        public_key = os.getenv("DISCORD_PUBLIC_KEY", "")
+        signature = request.headers.get("X-Signature-Ed25519", "")
+        timestamp = request.headers.get("X-Signature-Timestamp", "")
+
+        if public_key and signature and timestamp:
+            if not _verify_discord_signature(raw_body, signature, timestamp, public_key):
+                raise HTTPException(status_code=401, detail="Invalid request signature")
+
+        # ── Type 1: Ping (Discord verification handshake) ──
+        if payload.get("type") == 1:
+            return {"type": 1}
+
+        # ── Type 2+3: Application commands / components ──
+        from backend.adapters.platforms import DiscordAdapter, OutgoingMessage
+
+        bot_token = os.getenv("DISCORD_BOT_TOKEN", "")
+        app_id = os.getenv("DISCORD_APPLICATION_ID", "")
+
+        if not bot_token:
+            logger.error("DISCORD_BOT_TOKEN not set")
+            return {"type": 4, "data": {"content": "❌ Bot not configured"}}
+
+        adapter = DiscordAdapter(bot_token, app_id)
+        message = await adapter.parse_webhook(payload)
+
+        if not message:
+            return {"type": 4, "data": {"content": "❓ Couldn't parse that interaction"}}
+
+        # ── Route message through SmartToolRouter ──
+        from backend.core.smart_router import SmartToolRouter
+
+        routing_result = await SmartToolRouter.route_message(
+            message.text, message.user_id, platform="discord"
+        )
+
+        if routing_result["type"] == "tool":
+            response = routing_result["result"].get("output", "تم التنفيذ ✅")
+        else:
+            from backend.core.llm import llm_client
+
+            response = await llm_client.generate(
+                message.text,
+                provider="auto",
+                system_prompt="You are RobovAI Nova Agent — a helpful AI assistant on Discord. Be concise and friendly.",
+            )
+
+        # Discord Interaction Response (type 4 = Channel Message with Source)
+        return {
+            "type": 4,
+            "data": {"content": response[:2000]}  # Discord 2000 char limit
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Discord webhook error: {e}")
+        return {
+            "type": 4,
+            "data": {"content": "❌ An error occurred processing your request."}
+        }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 📊 WEBHOOK STATUS & PLATFORM MANAGEMENT
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@app.get("/webhooks/status", tags=["Webhooks"])
+async def webhooks_status():
+    """
+    Returns configuration status for all supported webhook platforms.
+    Useful for admin dashboards and health checks.
+    """
+    platforms = {
+        "telegram": {
+            "configured": bool(os.getenv("TELEGRAM_BOT_TOKEN")),
+            "endpoint": "/telegram-webhook",
+            "verify_endpoint": None,
+            "docs": "https://core.telegram.org/bots/webhooks",
+        },
+        "whatsapp": {
+            "configured": bool(os.getenv("WHATSAPP_ACCESS_TOKEN") and os.getenv("WHATSAPP_PHONE_ID")),
+            "endpoint": "/whatsapp_webhook",
+            "verify_endpoint": "GET /whatsapp_webhook",
+            "docs": "https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks",
+        },
+        "messenger": {
+            "configured": bool(os.getenv("MESSENGER_PAGE_TOKEN")),
+            "endpoint": "/messenger_webhook",
+            "verify_endpoint": "GET /messenger_webhook",
+            "docs": "https://developers.facebook.com/docs/messenger-platform/webhooks",
+        },
+        "discord": {
+            "configured": bool(os.getenv("DISCORD_BOT_TOKEN")),
+            "endpoint": "/discord_webhook",
+            "verify_endpoint": None,
+            "docs": "https://discord.com/developers/docs/interactions/receiving-and-responding",
+        },
+    }
+
+    configured_count = sum(1 for p in platforms.values() if p["configured"])
+
+    return {
+        "status": "success",
+        "total_platforms": len(platforms),
+        "configured": configured_count,
+        "platforms": platforms,
+    }
 
 
 @app.get("/user_stats/{user_id}", tags=["Admin"])
@@ -1920,7 +2109,65 @@ async def export_conversation(
 
 
 # ═══════════════════════════════════════════════════════════════
-# 📊 ADMIN & ANALYTICS ENDPOINTS
+# �️ USER DATA MANAGEMENT ENDPOINTS
+# ═══════════════════════════════════════════════════════════════
+
+
+@app.delete("/conversations/{user_id}", tags=["History"])
+async def delete_all_conversations(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """حذف جميع محادثات المستخدم"""
+    try:
+        from backend.history.manager import get_conversation_manager
+
+        manager = get_conversation_manager()
+        all_convs = manager.list_conversations(user_id, include_archived=True)
+        deleted_count = 0
+        for conv in all_convs:
+            conv_id = conv.get("id", "")
+            if conv_id and manager.delete_conversation(user_id, conv_id):
+                deleted_count += 1
+        logger.info(f"🗑️ Deleted {deleted_count} conversations for user {user_id[:8]}...")
+        return {"status": "success", "deleted": deleted_count}
+    except Exception as e:
+        logger.error(f"Error deleting conversations: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+@app.delete("/memory/{user_id}", tags=["Memory"])
+async def delete_user_memory(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """مسح جميع ذاكرة المستخدم (short-term + long-term)"""
+    try:
+        from backend.agent.memory import get_memory_manager
+
+        manager = get_memory_manager()
+        # مسح الذاكرة القصيرة
+        session_id = f"session_{user_id}"
+        manager.clear_session(session_id)
+        # مسح الذكريات (long-term memories file)
+        memories_path = manager.long_term._get_memories_path(user_id)
+        if memories_path.exists():
+            os.remove(memories_path)
+        # مسح الملف الشخصي
+        profile_path = manager.long_term._get_profile_path(user_id)
+        if profile_path.exists():
+            os.remove(profile_path)
+        # مسح الكاش
+        manager.long_term._cache.pop(user_id, None)
+        logger.info(f"🧹 Cleared all memory for user {user_id[:8]}...")
+        return {"status": "success", "message": "تم مسح جميع الذاكرة"}
+    except Exception as e:
+        logger.error(f"Error clearing memory: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+# ═══════════════════════════════════════════════════════════════
+# �📊 ADMIN & ANALYTICS ENDPOINTS
 # ═══════════════════════════════════════════════════════════════
 
 
@@ -1982,6 +2229,18 @@ async def get_tools_detailed(admin: dict = Depends(require_admin)):
                 pass
 
         return {"status": "success", "tools": detailed, "total": len(detailed)}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+@app.get("/admin/analytics", tags=["Admin"])
+async def get_admin_analytics_data(admin: dict = Depends(require_admin)):
+    """بيانات تحليلية متقدمة لرسم المخططات البيانية (Super Admin)"""
+    try:
+        analytics_data = await db_client.get_admin_analytics()
+        return {
+            "status": "success",
+            "data": analytics_data
+        }
     except Exception as e:
         return {"status": "error", "error": str(e)}
 

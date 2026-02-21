@@ -3,7 +3,7 @@ from typing import List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from backend.core.database import db_client
-from backend.main import get_current_user
+from backend.core.deps import get_current_user
 import uuid
 from backend.chatbots.rag_engine import RAGEngine
 

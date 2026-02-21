@@ -1,547 +1,816 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RobovAI Nova - API Documentation</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        :root {
-            --bg-void: #050505;
-            --bg-dark: #0a0a0c;
-            --bg-code: #161b22;
-            --border: #30363d;
-            --primary: #00f0ff;
-            --secondary: #8b5cf6;
-            --text-main: #f0f6fc;
-            --text-muted: #8b949e;
-            --success: #238636;
-            --accent: #1f6feb;
-        }
+      :root {
+        --bg-void: #050505;
+        --bg-dark: #0a0a0c;
+        --bg-code: #161b22;
+        --border: #30363d;
+        --primary: #00f0ff;
+        --secondary: #8b5cf6;
+        --text-main: #f0f6fc;
+        --text-muted: #8b949e;
+        --success: #238636;
+        --accent: #1f6feb;
+      }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: var(--bg-void);
-            color: var(--text-main);
-            line-height: 1.6;
-            display: flex;
-            min-height: 100vh;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        /* Sidebar */
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--bg-void);
+        color: var(--text-main);
+        line-height: 1.6;
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 280px;
+        background: var(--bg-dark);
+        border-right: 1px solid var(--border);
+        padding: 2rem;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 3rem;
+        text-decoration: none;
+        color: var(--text-main);
+      }
+
+      .brand-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+      }
+
+      .nav-group {
+        margin-bottom: 2rem;
+      }
+      .nav-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        font-weight: 600;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 0.5rem 0;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color 0.2s;
+        font-size: 0.95rem;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        color: var(--primary);
+      }
+
+      /* Main Content */
+      .main {
+        margin-left: 280px;
+        padding: 4rem 6rem;
+        max-width: 1000px;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: 1.8rem;
+        margin: 3rem 0 1rem;
+        letter-spacing: -0.01em;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.5rem;
+      }
+      h3 {
+        font-size: 1.25rem;
+        margin: 2rem 0 1rem;
+        color: var(--text-main);
+      }
+      p {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+      }
+
+      /* Code Blocks */
+      .code-block {
+        background: var(--bg-code);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        overflow-x: auto;
+        position: relative;
+      }
+
+      .code-block code {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.9rem;
+        color: #e6edf3;
+      }
+
+      .code-block .keyword {
+        color: #ff7b72;
+      }
+      .code-block .string {
+        color: #a5d6ff;
+      }
+      .code-block .function {
+        color: #d2a8ff;
+      }
+
+      /* API Badge */
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        font-family: 'Fira Code', monospace;
+        margin-right: 8px;
+      }
+      .badge.post {
+        background: rgba(46, 160, 67, 0.2);
+        color: #3fb950;
+        border: 1px solid rgba(46, 160, 67, 0.4);
+      }
+      .badge.get {
+        background: rgba(56, 139, 253, 0.2);
+        color: #58a6ff;
+        border: 1px solid rgba(56, 139, 253, 0.4);
+      }
+
+      /* Table */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2rem 0;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 1rem;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        font-weight: 500;
+      }
+      td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-main);
+      }
+      td code {
+        background: rgba(110, 118, 129, 0.4);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85em;
+      }
+
+      .note {
+        background: rgba(56, 139, 253, 0.1);
+        border-left: 4px solid #1f6feb;
+        padding: 1rem 1.5rem;
+        border-radius: 0 6px 6px 0;
+        margin: 2rem 0;
+        color: var(--text-main);
+      }
+
+      /* Hamburger Button */
+      .hamburger {
+        display: none;
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 1100;
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-dark);
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 5px;
+        padding: 10px;
+        transition: background 0.2s;
+      }
+      .hamburger:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .hamburger span {
+        display: block;
+        width: 22px;
+        height: 2px;
+        background: var(--text-main);
+        border-radius: 2px;
+        transition:
+          transform 0.3s ease,
+          opacity 0.3s ease;
+      }
+      .hamburger.active span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+      }
+      .hamburger.active span:nth-child(2) {
+        opacity: 0;
+      }
+      .hamburger.active span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+      }
+
+      /* Sidebar overlay (mobile) */
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+      }
+      .sidebar-overlay.visible {
+        display: block;
+      }
+
+      @media (max-width: 1024px) {
+        .hamburger {
+          display: flex;
+        }
         .sidebar {
-            width: 280px;
-            background: var(--bg-dark);
-            border-right: 1px solid var(--border);
-            padding: 2rem;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
+          transform: translateX(-100%);
+          transition: transform 0.3s ease;
+          z-index: 1000;
         }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 3rem;
-            text-decoration: none;
-            color: var(--text-main);
+        .sidebar.open {
+          transform: translateX(0);
         }
-
-        .brand-icon {
-            width: 32px; height: 32px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 8px;
-            display: grid; place-items: center;
-        }
-
-        .nav-group { margin-bottom: 2rem; }
-        .nav-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-muted);
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-
-        .nav-link {
-            display: block;
-            padding: 0.5rem 0;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.2s;
-            font-size: 0.95rem;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            color: var(--primary);
-        }
-
-        /* Main Content */
         .main {
-            margin-left: 280px;
-            padding: 4rem 6rem;
-            max-width: 1000px;
-            width: 100%;
+          margin-left: 0;
+          padding: 2rem;
+          padding-top: 4rem;
         }
-
-        h1 { font-size: 2.5rem; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
-        h2 { font-size: 1.8rem; margin: 3rem 0 1rem; letter-spacing: -0.01em; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-        h3 { font-size: 1.25rem; margin: 2rem 0 1rem; color: var(--text-main); }
-        p { color: var(--text-muted); margin-bottom: 1.5rem; }
-
-        /* Code Blocks */
-        .code-block {
-            background: var(--bg-code);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            overflow-x: auto;
-            position: relative;
-        }
-
-        .code-block code {
-            font-family: 'Fira Code', monospace;
-            font-size: 0.9rem;
-            color: #e6edf3;
-        }
-        
-        .code-block .keyword { color: #ff7b72; }
-        .code-block .string { color: #a5d6ff; }
-        .code-block .function { color: #d2a8ff; }
-
-        /* API Badge */
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            font-family: 'Fira Code', monospace;
-            margin-right: 8px;
-        }
-        .badge.post { background: rgba(46, 160, 67, 0.2); color: #3fb950; border: 1px solid rgba(46, 160, 67, 0.4); }
-        .badge.get { background: rgba(56, 139, 253, 0.2); color: #58a6ff; border: 1px solid rgba(56, 139, 253, 0.4); }
-
-        /* Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 2rem 0;
-            font-size: 0.9rem;
-        }
-        th { text-align: left; padding: 1rem; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 500; }
-        td { padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text-main); }
-        td code { background: rgba(110, 118, 129, 0.4); padding: 2px 6px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.85em; }
-
-        .note {
-            background: rgba(56, 139, 253, 0.1);
-            border-left: 4px solid #1f6feb;
-            padding: 1rem 1.5rem;
-            border-radius: 0 6px 6px 0;
-            margin: 2rem 0;
-            color: var(--text-main);
-        }
-
-        @media (max-width: 1024px) {
-            .sidebar { display: none; }
-            .main { margin-left: 0; padding: 2rem; }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <!-- Hamburger Menu (mobile) -->
+    <button class="hamburger" id="menuToggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <nav class="sidebar">
-        <a href="/" class="brand">
-            <div class="brand-icon"><img src="public/assets/logo.png" alt="Logo" style="width: 80%; height: 80%; object-fit: contain;"></div>
-            <span style="font-weight: 700;">Nova API</span>
-        </a>
-        
-        <div class="nav-group">
-            <div class="nav-title">Overview</div>
-            <a href="#intro" class="nav-link active">Introduction</a>
-            <a href="#auth" class="nav-link">Authentication</a>
-            <a href="#errors" class="nav-link">Error Handling</a>
-            <a href="#rate-limits" class="nav-link">Rate Limits</a>
+    <nav class="sidebar" id="sidebar">
+      <a href="/" class="brand">
+        <div class="brand-icon">
+          <img
+            src="public/assets/logo.png"
+            alt="Logo"
+            style="width: 80%; height: 80%; object-fit: contain"
+          />
         </div>
-        
-        <div class="nav-group">
-            <div class="nav-title">Endpoints</div>
-            <a href="#webhook" class="nav-link">Webhook (Chat)</a>
-            <a href="#tools" class="nav-link">List Tools</a>
-        </div>
-        
-        <div class="nav-group">
-            <div class="nav-title">SDKs & Examples</div>
-            <a href="#python" class="nav-link">Python SDK</a>
-            <a href="#nodejs" class="nav-link">Node.js SDK</a>
-            <a href="#curl" class="nav-link">cURL Examples</a>
-        </div>
-        
-        <div class="nav-group">
-            <div class="nav-title">Integration Guides</div>
-            <a href="#telegram" class="nav-link">Telegram Bot</a>
-            <a href="#whatsapp" class="nav-link">WhatsApp API</a>
-        </div>
+        <span style="font-weight: 700">Nova API</span>
+      </a>
+
+      <div class="nav-group">
+        <div class="nav-title">Overview</div>
+        <a href="#intro" class="nav-link active">Introduction</a>
+        <a href="#auth" class="nav-link">Authentication</a>
+        <a href="#errors" class="nav-link">Error Handling</a>
+        <a href="#rate-limits" class="nav-link">Rate Limits</a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Endpoints</div>
+        <a href="#webhook" class="nav-link">Webhook (Chat)</a>
+        <a href="#tools" class="nav-link">List Tools</a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">SDKs & Examples</div>
+        <a href="#python" class="nav-link">Python SDK</a>
+        <a href="#nodejs" class="nav-link">Node.js SDK</a>
+        <a href="#curl" class="nav-link">cURL Examples</a>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">Integration Guides</div>
+        <a href="#telegram" class="nav-link">Telegram Bot</a>
+        <a href="#whatsapp" class="nav-link">WhatsApp API</a>
+      </div>
     </nav>
 
     <main class="main">
-        <section id="intro">
-            <h1>API Documentation</h1>
-            <p>Welcome to the RobovAI Nova API. Build powerful AI agents, automate workflows, and integrate 100+ tools into your applications with a single unified interface.</p>
-            
-            <div class="note">
-                <strong>Base URL:</strong> <code>https://robovai-nova.onrender.com</code>
-            </div>
-        </section>
+      <section id="intro">
+        <h1>API Documentation</h1>
+        <p>
+          Welcome to the RobovAI Nova API. Build powerful AI agents, automate
+          workflows, and integrate 100+ tools into your applications with a
+          single unified interface.
+        </p>
 
-        <section id="auth">
-            <h2>Authentication</h2>
-            <p>Currently, the API is open for public Webhook integrations in beta. For production use, please obtain an API Key.</p>
-            <div class="code-block">
-                <code>Authorization: Bearer YOUR_API_KEY</code>
-            </div>
-        </section>
+        <div class="note">
+          <strong>Base URL:</strong>
+          <code>https://robovainova.onrender.com</code>
+        </div>
+      </section>
 
-        <section id="webhook">
-            <h2>Chat Webhook</h2>
-            <p>Send messages and get AI responses. The Smart Router will automatically detect intent and execute tools if needed.</p>
-            
-            <h3><span class="badge post">POST</span> /webhook</h3>
-            
-            <div class="code-block">
-<code><span class="keyword">import</span> requests
+      <section id="auth">
+        <h2>Authentication</h2>
+        <p>
+          Currently, the API is open for public Webhook integrations in beta.
+          For production use, please obtain an API Key.
+        </p>
+        <div class="code-block">
+          <code>Authorization: Bearer YOUR_API_KEY</code>
+        </div>
+      </section>
 
-url = <span class="string">"https://robovai-nova.onrender.com/webhook"</span>
-payload = {
-    <span class="string">"user_id"</span>: <span class="string">"user_123"</span>,
-    <span class="string">"message"</span>: <span class="string">"/weather Cairo"</span>,
-    <span class="string">"platform"</span>: <span class="string">"web"</span>
-}
+      <section id="webhook">
+        <h2>Chat Webhook</h2>
+        <p>
+          Send messages and get AI responses. The Smart Router will
+          automatically detect intent and execute tools if needed.
+        </p>
 
-response = requests.post(url, json=payload)
-print(response.json())</code>
-            </div>
+        <h3><span class="badge post">POST</span> /webhook</h3>
 
-            <h3>Parameters</h3>
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Description</th>
-                </tr>
-                <tr>
-                    <td><code>user_id</code></td>
-                    <td>string</td>
-                    <td>Unique identifier for the user session</td>
-                </tr>
-                <tr>
-                    <td><code>message</code></td>
-                    <td>string</td>
-                    <td>The user's input text or command</td>
-                </tr>
-                <tr>
-                    <td><code>platform</code></td>
-                    <td>string</td>
-                    <td>Origin platform (web, telegram, whatsapp)</td>
-                </tr>
-            </table>
-        </section>
+        <div class="code-block">
+          <code
+            ><span class="keyword">import</span> requests url =
+            <span class="string"
+              >"https://robovainova.onrender.com/webhook"</span
+            >
+            payload = {
+            <span class="string">"user_id"</span>:
+            <span class="string">"user_123"</span>,
+            <span class="string">"message"</span>:
+            <span class="string">"/weather Cairo"</span>,
+            <span class="string">"platform"</span>:
+            <span class="string">"web"</span> } response = requests.post(url,
+            json=payload) print(response.json())</code
+          >
+        </div>
 
-        <section id="python">
-            <h2>Python Integration</h2>
-            <p>The easiest way to integrate Nova is using our Python snippet.</p>
-            
-            <div class="code-block">
-<code><span class="keyword">class</span> <span class="function">NovaClient</span>:
-    <span class="keyword">def</span> <span class="function">__init__</span>(self, base_url):
-        self.base_url = base_url
+        <h3>Parameters</h3>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td><code>user_id</code></td>
+            <td>string</td>
+            <td>Unique identifier for the user session</td>
+          </tr>
+          <tr>
+            <td><code>message</code></td>
+            <td>string</td>
+            <td>The user's input text or command</td>
+          </tr>
+          <tr>
+            <td><code>platform</code></td>
+            <td>string</td>
+            <td>Origin platform (web, telegram, whatsapp)</td>
+          </tr>
+        </table>
+      </section>
 
-    <span class="keyword">def</span> <span class="function">chat</span>(self, user_id, message):
-        resp = requests.post(
-            f<span class="string">"{self.base_url}/webhook"</span>,
-            json={<span class="string">"user_id"</span>: user_id, <span class="string">"message"</span>: message, <span class="string">"platform"</span>: <span class="string">"api"</span>}
-        )
-        <span class="keyword">return</span> resp.json().get(<span class="string">"response"</span>)
+      <section id="python">
+        <h2>Python Integration</h2>
+        <p>The easiest way to integrate Nova is using our Python snippet.</p>
 
-<span class="comment"># Usage</span>
-client = NovaClient(<span class="string">"https://robovai-nova.onrender.com"</span>)
-reply = client.chat(<span class="string">"user1"</span>, <span class="string">"Generate a QR code for my website"</span>)
-print(reply)</code>
-            </div>
-        </section>
+        <div class="code-block">
+          <code
+            ><span class="keyword">class</span>
+            <span class="function">NovaClient</span>:
+            <span class="keyword">def</span>
+            <span class="function">__init__</span>(self, base_url):
+            self.base_url = base_url
 
-        <section id="errors">
-            <h2>Error Handling</h2>
-            <p>All API errors follow a consistent JSON format with HTTP status codes.</p>
-            
-            <h3>Response Format</h3>
-            <div class="code-block">
-<code>{
-    <span class="string">"error"</span>: <span class="string">"error_type"</span>,
-    <span class="string">"message"</span>: <span class="string">"Human-readable error description"</span>,
-    <span class="string">"status"</span>: <span class="string">400</span>
-}</code>
-            </div>
+            <span class="keyword">def</span>
+            <span class="function">chat</span>(self, user_id, message): resp =
+            requests.post( f<span class="string">"{self.base_url}/webhook"</span
+            >, json={<span class="string">"user_id"</span>: user_id,
+            <span class="string">"message"</span>: message,
+            <span class="string">"platform"</span>:
+            <span class="string">"api"</span>} )
+            <span class="keyword">return</span> resp.json().get(<span
+              class="string"
+              >"response"</span
+            >)
 
-            <h3>Common Error Codes</h3>
-            <table>
-                <tr>
-                    <th>Status</th>
-                    <th>Error Type</th>
-                    <th>Description</th>
-                </tr>
-                <tr>
-                    <td><code>400</code></td>
-                    <td>Bad Request</td>
-                    <td>Missing required parameters or invalid input</td>
-                </tr>
-                <tr>
-                    <td><code>401</code></td>
-                    <td>Unauthorized</td>
-                    <td>Invalid or missing API key</td>
-                </tr>
-                <tr>
-                    <td><code>429</code></td>
-                    <td>Rate Limit</td>
-                    <td>Too many requests (see rate limits below)</td>
-                </tr>
-                <tr>
-                    <td><code>500</code></td>
-                    <td>Server Error</td>
-                    <td>Internal processing error</td>
-                </tr>
-            </table>
-        </section>
+            <span class="comment"># Usage</span>
+            client = NovaClient(<span class="string"
+              >"https://robovainova.onrender.com"</span
+            >) reply = client.chat(<span class="string">"user1"</span>,
+            <span class="string">"Generate a QR code for my website"</span>)
+            print(reply)</code
+          >
+        </div>
+      </section>
 
-        <section id="tools">
-            <h2>List Available Tools</h2>
-            <p>Get a complete list of all 100+ tools available in the Nova platform.</p>
-            
-            <h3><span class="badge get">GET</span> /tools/list</h3>
-            
-            <div class="code-block">
-<code><span class="keyword">import</span> requests
+      <section id="errors">
+        <h2>Error Handling</h2>
+        <p>
+          All API errors follow a consistent JSON format with HTTP status codes.
+        </p>
 
-url = <span class="string">"https://robovai-nova.onrender.com/tools/list"</span>
-response = requests.get(url)
+        <h3>Response Format</h3>
+        <div class="code-block">
+          <code
+            >{ <span class="string">"error"</span>:
+            <span class="string">"error_type"</span>,
+            <span class="string">"message"</span>:
+            <span class="string">"Human-readable error description"</span>,
+            <span class="string">"status"</span>:
+            <span class="string">400</span> }</code
+          >
+        </div>
 
-tools = response.json()
-<span class="keyword">for</span> tool <span class="keyword">in</span> tools:
-    <span class="keyword">print</span>(f<span class="string">"{tool['name']}: {tool['description']}"</span>)</code>
-            </div>
+        <h3>Common Error Codes</h3>
+        <table>
+          <tr>
+            <th>Status</th>
+            <th>Error Type</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td><code>400</code></td>
+            <td>Bad Request</td>
+            <td>Missing required parameters or invalid input</td>
+          </tr>
+          <tr>
+            <td><code>401</code></td>
+            <td>Unauthorized</td>
+            <td>Invalid or missing API key</td>
+          </tr>
+          <tr>
+            <td><code>429</code></td>
+            <td>Rate Limit</td>
+            <td>Too many requests (see rate limits below)</td>
+          </tr>
+          <tr>
+            <td><code>500</code></td>
+            <td>Server Error</td>
+            <td>Internal processing error</td>
+          </tr>
+        </table>
+      </section>
 
-            <h3>Response Schema</h3>
-            <div class="code-block">
-<code>[
-    {
-        <span class="string">"command"</span>: <span class="string">"/weather"</span>,
-        <span class="string">"name"</span>: <span class="string">"Weather Check"</span>,
-        <span class="string">"description"</span>: <span class="string">"Get current weather for any city"</span>,
-        <span class="string">"category"</span>: <span class="string">"web"</span>
-    },
-    ...
-]</code>
-            </div>
-        </section>
+      <section id="tools">
+        <h2>List Available Tools</h2>
+        <p>
+          Get a complete list of all 100+ tools available in the Nova platform.
+        </p>
 
-        <section id="rate-limits">
-            <h2>Rate Limits & Pricing</h2>
-            
-            <div class="note">
-                <strong>Beta Access:</strong> During the beta phase, all endpoints are free with the following limits:
-            </div>
+        <h3><span class="badge get">GET</span> /tools/list</h3>
 
-            <table>
-                <tr>
-                    <th>Tier</th>
-                    <th>Requests/Minute</th>
-                    <th>Daily Limit</th>
-                    <th>Price</th>
-                </tr>
-                <tr>
-                    <td><strong>Free (Beta)</strong></td>
-                    <td>20 requests/min</td>
-                    <td>1,000 requests/day</td>
-                    <td>$0</td>
-                </tr>
-                <tr>
-                    <td><strong>Pro</strong></td>
-                    <td>100 requests/min</td>
-                    <td>10,000 requests/day</td>
-                    <td>$29/month</td>
-                </tr>
-                <tr>
-                    <td><strong>Enterprise</strong></td>
-                    <td>Custom</td>
-                    <td>Unlimited</td>
-                    <td>Contact sales</td>
-                </tr>
-            </table>
-        </section>
+        <div class="code-block">
+          <code
+            ><span class="keyword">import</span> requests url =
+            <span class="string"
+              >"https://robovainova.onrender.com/tools/list"</span
+            >
+            response = requests.get(url) tools = response.json()
+            <span class="keyword">for</span> tool
+            <span class="keyword">in</span> tools:
+            <span class="keyword">print</span>(f<span class="string"
+              >"{tool['name']}: {tool['description']}"</span
+            >)</code
+          >
+        </div>
 
-        <section id="nodejs">
-            <h2>Node.js SDK</h2>
-            <p>Quick integration for Node.js applications.</p>
+        <h3>Response Schema</h3>
+        <div class="code-block">
+          <code
+            >[ { <span class="string">"command"</span>:
+            <span class="string">"/weather"</span>,
+            <span class="string">"name"</span>:
+            <span class="string">"Weather Check"</span>,
+            <span class="string">"description"</span>:
+            <span class="string">"Get current weather for any city"</span>,
+            <span class="string">"category"</span>:
+            <span class="string">"web"</span> }, ... ]</code
+          >
+        </div>
+      </section>
 
-            <h3>Installation</h3>
-            <div class="code-block">
-<code>npm install axios</code>
-            </div>
+      <section id="rate-limits">
+        <h2>Rate Limits & Pricing</h2>
 
-            <h3>Usage</h3>
-            <div class="code-block">
-<code><span class="keyword">const</span> axios = <span class="function">require</span>(<span class="string">'axios'</span>);
+        <div class="note">
+          <strong>Beta Access:</strong> During the beta phase, all endpoints are
+          free with the following limits:
+        </div>
 
-<span class="keyword">class</span> <span class="function">NovaClient</span> {
-    <span class="function">constructor</span>(baseURL = <span class="string">'https://robovai-nova.onrender.com'</span>) {
-        <span class="keyword">this</span>.client = axios.create({ baseURL });
-    }
+        <table>
+          <tr>
+            <th>Tier</th>
+            <th>Requests/Minute</th>
+            <th>Daily Limit</th>
+            <th>Price</th>
+          </tr>
+          <tr>
+            <td><strong>Free (Beta)</strong></td>
+            <td>20 requests/min</td>
+            <td>1,000 requests/day</td>
+            <td>$0</td>
+          </tr>
+          <tr>
+            <td><strong>Pro</strong></td>
+            <td>100 requests/min</td>
+            <td>10,000 requests/day</td>
+            <td>$29/month</td>
+          </tr>
+          <tr>
+            <td><strong>Enterprise</strong></td>
+            <td>Custom</td>
+            <td>Unlimited</td>
+            <td>Contact sales</td>
+          </tr>
+        </table>
+      </section>
 
-    <span class="keyword">async</span> <span class="function">chat</span>(userId, message, platform = <span class="string">'api'</span>) {
-        <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="keyword">this</span>.client.post(<span class="string">'/webhook'</span>, {
-            user_id: userId,
-            message: message,
-            platform: platform
-        });
-        <span class="keyword">return</span> response.data;
-    }
+      <section id="nodejs">
+        <h2>Node.js SDK</h2>
+        <p>Quick integration for Node.js applications.</p>
 
-    <span class="keyword">async</span> <span class="function">listTools</span>() {
-        <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="keyword">this</span>.client.get(<span class="string">'/tools/list'</span>);
-        <span class="keyword">return</span> response.data;
-    }
-}
+        <h3>Installation</h3>
+        <div class="code-block">
+          <code>npm install axios</code>
+        </div>
 
-<span class="comment">// Example usage</span>
-<span class="keyword">const</span> nova = <span class="keyword">new</span> NovaClient();
-nova.chat(<span class="string">'user123'</span>, <span class="string">'/weather Cairo'</span>)
-    .then(data => console.log(data.response))
-    .catch(err => console.error(err));</code>
-            </div>
-        </section>
+        <h3>Usage</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">const</span> axios =
+            <span class="function">require</span>(<span class="string"
+              >'axios'</span
+            >);
 
-        <section id="curl">
-            <h2>cURL Examples</h2>
-            <p>Quick testing with command-line tools.</p>
+            <span class="keyword">class</span>
+            <span class="function">NovaClient</span> {
+            <span class="function">constructor</span>(baseURL =
+            <span class="string">'https://robovainova.onrender.com'</span>) {
+            <span class="keyword">this</span>.client = axios.create({ baseURL
+            }); }
 
-            <h3>Chat Request</h3>
-            <div class="code-block">
-<code>curl -X POST https://robovai-nova.onrender.com/webhook \
-  -H <span class="string">"Content-Type: application/json"</span> \
-  -d <span class="string">'{
-    "user_id": "user_456",
-    "message": "/search latest AI news",
-    "platform": "api"
-  }'</span></code>
-            </div>
+            <span class="keyword">async</span>
+            <span class="function">chat</span>(userId, message, platform =
+            <span class="string">'api'</span>) {
+            <span class="keyword">const</span> response =
+            <span class="keyword">await</span>
+            <span class="keyword">this</span>.client.post(<span class="string"
+              >'/webhook'</span
+            >, { user_id: userId, message: message, platform: platform });
+            <span class="keyword">return</span> response.data; }
 
-            <h3>List Tools</h3>
-            <div class="code-block">
-<code>curl -X GET https://robovai-nova.onrender.com/tools/list</code>
-            </div>
+            <span class="keyword">async</span>
+            <span class="function">listTools</span>() {
+            <span class="keyword">const</span> response =
+            <span class="keyword">await</span>
+            <span class="keyword">this</span>.client.get(<span class="string"
+              >'/tools/list'</span
+            >); <span class="keyword">return</span> response.data; } }
 
-            <h3>With Authentication (Production)</h3>
-            <div class="code-block">
-<code>curl -X POST https://robovai-nova.onrender.com/webhook \
-  -H <span class="string">"Authorization: Bearer YOUR_API_KEY"</span> \
-  -H <span class="string">"Content-Type: application/json"</span> \
-  -d <span class="string">'{"user_id":"user1","message":"Hello"}'</span></code>
-            </div>
-        </section>
+            <span class="comment">// Example usage</span>
+            <span class="keyword">const</span> nova =
+            <span class="keyword">new</span> NovaClient(); nova.chat(<span
+              class="string"
+              >'user123'</span
+            >, <span class="string">'/weather Cairo'</span>) .then(data =>
+            console.log(data.response)) .catch(err => console.error(err));</code
+          >
+        </div>
+      </section>
 
-        <section id="telegram">
-            <h2>Telegram Bot Integration</h2>
-            <p>Connect Nova to your Telegram bot in minutes.</p>
+      <section id="curl">
+        <h2>cURL Examples</h2>
+        <p>Quick testing with command-line tools.</p>
 
-            <h3>Setup Steps</h3>
-            <ol style="color: var(--text-muted); line-height: 2;">
-                <li>Create a bot via <a href="https://t.me/BotFather" style="color: var(--primary);">@BotFather</a> and get your token</li>
-                <li>Set up a webhook pointing to Nova's endpoint</li>
-                <li>Configure environment variables</li>
-                <li>Deploy and test</li>
-            </ol>
+        <h3>Chat Request</h3>
+        <div class="code-block">
+          <code
+            >curl -X POST https://robovainova.onrender.com/webhook \ -H
+            <span class="string">"Content-Type: application/json"</span> \ -d
+            <span class="string"
+              >'{ "user_id": "user_456", "message": "/search latest AI news",
+              "platform": "api" }'</span
+            ></code
+          >
+        </div>
 
-            <h3>Webhook Configuration</h3>
-            <div class="code-block">
-<code><span class="keyword">import</span> requests
-<span class="keyword">from</span> telegram <span class="keyword">import</span> Update, Bot
-<span class="keyword">from</span> telegram.ext <span class="keyword">import</span> Application, MessageHandler, filters
+        <h3>List Tools</h3>
+        <div class="code-block">
+          <code>curl -X GET https://robovainova.onrender.com/tools/list</code>
+        </div>
 
-BOT_TOKEN = <span class="string">"YOUR_TELEGRAM_BOT_TOKEN"</span>
-NOVA_URL = <span class="string">"https://robovai-nova.onrender.com/webhook"</span>
+        <h3>With Authentication (Production)</h3>
+        <div class="code-block">
+          <code
+            >curl -X POST https://robovainova.onrender.com/webhook \ -H
+            <span class="string">"Authorization: Bearer YOUR_API_KEY"</span> \
+            -H <span class="string">"Content-Type: application/json"</span> \ -d
+            <span class="string"
+              >'{"user_id":"user1","message":"Hello"}'</span
+            ></code
+          >
+        </div>
+      </section>
 
-<span class="keyword">async def</span> <span class="function">handle_message</span>(update: Update, context):
-    user_id = str(update.effective_user.id)
-    message = update.message.text
-    
-    <span class="comment"># Forward to Nova</span>
-    response = requests.post(NOVA_URL, json={
-        <span class="string">"user_id"</span>: user_id,
-        <span class="string">"message"</span>: message,
-        <span class="string">"platform"</span>: <span class="string">"telegram"</span>
-    })
-    
-    reply = response.json().get(<span class="string">"response"</span>, <span class="string">"Error"</span>)
-    <span class="keyword">await</span> update.message.reply_text(reply)
+      <section id="telegram">
+        <h2>Telegram Bot Integration</h2>
+        <p>Connect Nova to your Telegram bot in minutes.</p>
 
-<span class="comment"># Setup</span>
-app = Application.builder().token(BOT_TOKEN).build()
-app.add_handler(MessageHandler(filters.TEXT, handle_message))
-app.run_polling()</code>
-            </div>
-        </section>
+        <h3>Setup Steps</h3>
+        <ol style="color: var(--text-muted); line-height: 2">
+          <li>
+            Create a bot via
+            <a href="https://t.me/BotFather" style="color: var(--primary)"
+              >@BotFather</a
+            >
+            and get your token
+          </li>
+          <li>Set up a webhook pointing to Nova's endpoint</li>
+          <li>Configure environment variables</li>
+          <li>Deploy and test</li>
+        </ol>
 
-        <section id="whatsapp">
-            <h2>WhatsApp API Integration</h2>
-            <p>Integrate Nova with WhatsApp Business API or Twilio.</p>
+        <h3>Webhook Configuration</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">import</span> requests
+            <span class="keyword">from</span> telegram
+            <span class="keyword">import</span> Update, Bot
+            <span class="keyword">from</span> telegram.ext
+            <span class="keyword">import</span> Application, MessageHandler,
+            filters BOT_TOKEN =
+            <span class="string">"YOUR_TELEGRAM_BOT_TOKEN"</span> NOVA_URL =
+            <span class="string"
+              >"https://robovainova.onrender.com/webhook"</span
+            >
 
-            <h3>Using Twilio</h3>
-            <div class="code-block">
-<code><span class="keyword">from</span> flask <span class="keyword">import</span> Flask, request
-<span class="keyword">from</span> twilio.twiml.messaging_response <span class="keyword">import</span> MessagingResponse
-<span class="keyword">import</span> requests
+            <span class="keyword">async def</span>
+            <span class="function">handle_message</span>(update: Update,
+            context): user_id = str(update.effective_user.id) message =
+            update.message.text
 
-app = Flask(__name__)
-NOVA_URL = <span class="string">"https://robovai-nova.onrender.com/webhook"</span>
+            <span class="comment"># Forward to Nova</span>
+            response = requests.post(NOVA_URL, json={
+            <span class="string">"user_id"</span>: user_id,
+            <span class="string">"message"</span>: message,
+            <span class="string">"platform"</span>:
+            <span class="string">"telegram"</span> }) reply =
+            response.json().get(<span class="string">"response"</span>,
+            <span class="string">"Error"</span>)
+            <span class="keyword">await</span> update.message.reply_text(reply)
 
-<span class="keyword">@app.route</span>(<span class="string">"/whatsapp"</span>, methods=[<span class="string">'POST'</span>])
-<span class="keyword">def</span> <span class="function">whatsapp_webhook</span>():
-    incoming_msg = request.values.get(<span class="string">'Body'</span>, <span class="string">''</span>)
-    sender = request.values.get(<span class="string">'From'</span>, <span class="string">''</span>)
-    
-    <span class="comment"># Call Nova</span>
-    nova_response = requests.post(NOVA_URL, json={
-        <span class="string">"user_id"</span>: sender,
-        <span class="string">"message"</span>: incoming_msg,
-        <span class="string">"platform"</span>: <span class="string">"whatsapp"</span>
-    })
-    
-    reply_text = nova_response.json().get(<span class="string">"response"</span>, <span class="string">"Error"</span>)
-    
-    <span class="comment"># Send back via Twilio</span>
-    resp = MessagingResponse()
-    resp.message(reply_text)
-    <span class="keyword">return</span> str(resp)
+            <span class="comment"># Setup</span>
+            app = Application.builder().token(BOT_TOKEN).build()
+            app.add_handler(MessageHandler(filters.TEXT, handle_message))
+            app.run_polling()</code
+          >
+        </div>
+      </section>
 
-<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
-    app.run(debug=<span class="keyword">True</span>)</code>
-            </div>
+      <section id="whatsapp">
+        <h2>WhatsApp API Integration</h2>
+        <p>Integrate Nova with WhatsApp Business API or Twilio.</p>
 
-            <div class="note">
-                <strong>Note:</strong> You'll need a Twilio account and WhatsApp Business API approval. 
-                For testing, use the Twilio Sandbox for WhatsApp.
-            </div>
-        </section>
-        
-        <footer style="margin-top: 5rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.9rem;">
-            © 2025 RobovAI Solutions. All rights reserved. <a href="/" style="color: var(--primary); text-decoration: none; margin-left: 10px;">Back to Home</a>
-        </footer>
+        <h3>Using Twilio</h3>
+        <div class="code-block">
+          <code
+            ><span class="keyword">from</span> flask
+            <span class="keyword">import</span> Flask, request
+            <span class="keyword">from</span> twilio.twiml.messaging_response
+            <span class="keyword">import</span> MessagingResponse
+            <span class="keyword">import</span> requests app = Flask(__name__)
+            NOVA_URL =
+            <span class="string"
+              >"https://robovainova.onrender.com/webhook"</span
+            >
+
+            <span class="keyword">@app.route</span>(<span class="string"
+              >"/whatsapp"</span
+            >, methods=[<span class="string">'POST'</span>])
+            <span class="keyword">def</span>
+            <span class="function">whatsapp_webhook</span>(): incoming_msg =
+            request.values.get(<span class="string">'Body'</span>,
+            <span class="string">''</span>) sender = request.values.get(<span
+              class="string"
+              >'From'</span
+            >, <span class="string">''</span>)
+
+            <span class="comment"># Call Nova</span>
+            nova_response = requests.post(NOVA_URL, json={
+            <span class="string">"user_id"</span>: sender,
+            <span class="string">"message"</span>: incoming_msg,
+            <span class="string">"platform"</span>:
+            <span class="string">"whatsapp"</span> }) reply_text =
+            nova_response.json().get(<span class="string">"response"</span>,
+            <span class="string">"Error"</span>)
+
+            <span class="comment"># Send back via Twilio</span>
+            resp = MessagingResponse() resp.message(reply_text)
+            <span class="keyword">return</span> str(resp)
+
+            <span class="keyword">if</span> __name__ ==
+            <span class="string">"__main__"</span>: app.run(debug=<span
+              class="keyword"
+              >True</span
+            >)</code
+          >
+        </div>
+
+        <div class="note">
+          <strong>Note:</strong> You'll need a Twilio account and WhatsApp
+          Business API approval. For testing, use the Twilio Sandbox for
+          WhatsApp.
+        </div>
+      </section>
+
+      <footer
+        style="
+          margin-top: 5rem;
+          padding-top: 2rem;
+          border-top: 1px solid var(--border);
+          color: var(--text-muted);
+          font-size: 0.9rem;
+        "
+      >
+        © 2026 RobovAI Solutions. All rights reserved.
+        <a
+          href="/"
+          style="
+            color: var(--primary);
+            text-decoration: none;
+            margin-left: 10px;
+          "
+          >Back to Home</a
+        >
+      </footer>
     </main>
 
-</body>
+    <script>
+      (function () {
+        const toggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+          sidebar.classList.add('open');
+          overlay.classList.add('visible');
+          toggle.classList.add('active');
+        }
+        function closeSidebar() {
+          sidebar.classList.remove('open');
+          overlay.classList.remove('visible');
+          toggle.classList.remove('active');
+        }
+
+        toggle.addEventListener('click', () =>
+          sidebar.classList.contains('open') ? closeSidebar() : openSidebar(),
+        );
+        overlay.addEventListener('click', closeSidebar);
+
+        // Close sidebar when a nav link is clicked (mobile)
+        sidebar.querySelectorAll('.nav-link').forEach((link) => {
+          link.addEventListener('click', () => {
+            if (window.innerWidth <= 1024) closeSidebar();
+          });
+        });
+      })();
+    </script>
+  </body>
 </html>

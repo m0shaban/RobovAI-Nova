@@ -34,6 +34,20 @@
       href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Three.js — 3D WebGL hero scene -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+      defer
+    ></script>
+    <!-- GSAP + ScrollTrigger — cinematic scroll animations -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"
+      defer
+    ></script>
     <style>
       :root {
         --bg: #050510;
@@ -90,6 +104,12 @@
       .cosmos canvas {
         width: 100%;
         height: 100%;
+      }
+      #threeCanvas {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
       }
       .cosmos-grad {
         position: fixed;
@@ -770,8 +790,10 @@
         position: relative;
         border-radius: 20px;
         overflow: hidden;
-        border: 1px solid rgba(255,255,255,0.05);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 40px var(--primary-dim);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow:
+          0 20px 50px rgba(0, 0, 0, 0.5),
+          0 0 40px var(--primary-dim);
         transform: perspective(1000px) rotateY(-5deg);
         transition: transform 0.5s ease;
       }
@@ -788,11 +810,13 @@
         direction: rtl; /* Reset logic for flex order but keep text RTL */
       }
       .showcase-reverse .showcase-inner {
-        direction: rtl; 
+        direction: rtl;
       }
       .showcase-reverse .showcase-img-wrap {
         transform: perspective(1000px) rotateY(5deg);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 40px rgba(168, 85, 247, 0.15);
+        box-shadow:
+          0 20px 50px rgba(0, 0, 0, 0.5),
+          0 0 40px rgba(168, 85, 247, 0.15);
       }
       .showcase-reverse .showcase-img-wrap:hover {
         transform: perspective(1000px) rotateY(0deg) scale(1.02);
@@ -809,16 +833,408 @@
         margin-bottom: 12px;
         margin-left: 10px;
       }
-      .feat-pill i { color: var(--primary); }
-
-      /* Animations */
-      @keyframes floatUp {
-        0% { transform: translateY(30px); opacity: 0; }
-        100% { transform: translateY(0); opacity: 1; }
+      .feat-pill i {
+        color: var(--primary);
       }
+
+      /* ═════════════ PROFESSIONAL ANIMATIONS ═════════════ */
+
+      /* Hero entrance animations */
+      @keyframes heroFadeUp {
+        0% {
+          transform: translateY(60px);
+          opacity: 0;
+          filter: blur(10px);
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+          filter: blur(0);
+        }
+      }
+      @keyframes heroScale {
+        0% {
+          transform: scale(0.85) translateY(40px);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1) translateY(0);
+          opacity: 1;
+        }
+      }
+      @keyframes heroSlideRight {
+        0% {
+          transform: translateX(80px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes heroSlideLeft {
+        0% {
+          transform: translateX(-80px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .hero-chip {
+        animation: heroFadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+      }
+      .hero h1 {
+        animation: heroFadeUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+      }
+      .hero-sub {
+        animation: heroFadeUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+      }
+      .hero-actions {
+        animation: heroFadeUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.8s both;
+      }
+      .counters {
+        animation: heroFadeUp 0.9s cubic-bezier(0.22, 1, 0.36, 1) 1s both;
+      }
+
+      /* Floating & glow keyframes */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      @keyframes floatUp {
+        0% {
+          transform: translateY(30px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      @keyframes glowPulse {
+        0%,
+        100% {
+          box-shadow:
+            0 0 20px rgba(0, 212, 255, 0.15),
+            0 0 60px rgba(0, 212, 255, 0.05);
+        }
+        50% {
+          box-shadow:
+            0 0 30px rgba(0, 212, 255, 0.3),
+            0 0 80px rgba(0, 212, 255, 0.1);
+        }
+      }
+      @keyframes borderGlow {
+        0%,
+        100% {
+          border-color: var(--border);
+        }
+        50% {
+          border-color: rgba(0, 212, 255, 0.4);
+        }
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: -200% center;
+        }
+        100% {
+          background-position: 200% center;
+        }
+      }
+      @keyframes rotateGlow {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes slideInStagger {
+        0% {
+          transform: translateY(40px) scale(0.95);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+      @keyframes fadeInScale {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      @keyframes ripple {
+        0% {
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+        100% {
+          transform: scale(2.5);
+          opacity: 0;
+        }
+      }
+      @keyframes textGlow {
+        0%,
+        100% {
+          text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+        50% {
+          text-shadow:
+            0 0 25px rgba(0, 212, 255, 0.6),
+            0 0 50px rgba(168, 85, 247, 0.3);
+        }
+      }
+
+      /* Scroll-triggered reveal system */
+      .reveal {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .reveal.from-left {
+        transform: translateX(-60px);
+      }
+      .reveal.from-right {
+        transform: translateX(60px);
+      }
+      .reveal.from-scale {
+        transform: scale(0.85);
+      }
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0) translateX(0) scale(1);
+      }
+
+      /* Stagger children animation */
+      .stagger-children .reveal {
+        transition-delay: calc(var(--i, 0) * 0.1s);
+      }
+
+      /* 3D Card tilt effect */
+      .tilt-card {
+        transform-style: preserve-3d;
+        perspective: 1000px;
+        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .tilt-card:hover {
+        transform: perspective(1000px) rotateX(var(--rx, 0deg))
+          rotateY(var(--ry, 0deg));
+      }
+      .tilt-card .tilt-inner {
+        transform: translateZ(30px);
+        transition: transform 0.4s ease;
+      }
+
+      /* Glassmorphism hover effect */
+      .glass-hover {
+        position: relative;
+        overflow: hidden;
+      }
+      .glass-hover::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          ellipse at center,
+          rgba(0, 212, 255, 0.08),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        pointer-events: none;
+      }
+      .glass-hover:hover::after {
+        opacity: 1;
+      }
+
+      /* Animated gradient border */
+      .gradient-border {
+        position: relative;
+      }
+      .gradient-border::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: calc(var(--radius) + 2px);
+        background: conic-gradient(
+          from var(--angle, 0deg),
+          var(--primary),
+          var(--secondary),
+          var(--accent),
+          var(--gold),
+          var(--primary)
+        );
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        z-index: -1;
+        animation: rotateGlow 4s linear infinite;
+      }
+      .gradient-border:hover::before {
+        opacity: 1;
+      }
+
+      /* Button ripple effect */
+      .btn-ripple {
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-ripple::after {
+        content: '';
+        position: absolute;
+        width: 300%;
+        height: 300%;
+        top: 50%;
+        left: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.2),
+          transparent 60%
+        );
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+        transition:
+          transform 0.6s ease,
+          opacity 0.6s ease;
+        pointer-events: none;
+      }
+      .btn-ripple:hover::after {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+
+      /* Particle system canvas */
+      #particleCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* Section badge animation */
+      .sec-badge {
+        animation: fadeInScale 0.6s ease both;
+      }
+
+      /* Smooth section transitions */
+      section {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Counter glow animation */
+      .counter-val {
+        animation: textGlow 3s ease-in-out infinite;
+      }
+
+      /* CTA floating animation */
+      .cta-box {
+        animation: float 6s ease-in-out infinite;
+      }
+
+      /* Animated underline effect */
+      .nav-menu a {
+        position: relative;
+      }
+      .nav-menu a::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        right: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        transition: width 0.3s ease;
+        border-radius: 2px;
+      }
+      .nav-menu a:hover::after {
+        width: 100%;
+      }
+
+      /* Showcase image float animation */
+      .showcase-img-wrap {
+        animation: float 5s ease-in-out infinite;
+      }
+      .showcase-reverse .showcase-img-wrap {
+        animation-delay: 2.5s;
+      }
+
+      /* Pricing card glow on hover */
+      .price-card:hover {
+        box-shadow:
+          0 20px 60px rgba(0, 212, 255, 0.1),
+          0 0 30px rgba(0, 212, 255, 0.05);
+      }
+      .price-card.pop:hover {
+        box-shadow:
+          0 20px 60px rgba(250, 204, 21, 0.15),
+          0 0 40px rgba(250, 204, 21, 0.08);
+      }
+
+      /* Platform card animate */
+      .plat-card {
+        transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .plat-card:hover {
+        transform: scale(1.08) translateY(-8px);
+        box-shadow: 0 12px 40px rgba(0, 212, 255, 0.1);
+      }
+
+      /* Animated background mesh for sections */
+      .mesh-bg {
+        position: relative;
+      }
+      .mesh-bg::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            ellipse 600px 600px at 20% 50%,
+            rgba(0, 212, 255, 0.04),
+            transparent
+          ),
+          radial-gradient(
+            ellipse 500px 500px at 80% 50%,
+            rgba(168, 85, 247, 0.04),
+            transparent
+          );
+        pointer-events: none;
+        z-index: -1;
+      }
+
       .animate-on-scroll {
         animation: floatUp 0.8s ease forwards;
         opacity: 0;
+      }
+
+      /* Reduced motion preference */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
       }
 
       /* ═════════════ PRICING ═════════════ */
@@ -1085,7 +1501,9 @@
     </style>
   </head>
   <body>
-    <div class="cosmos"><canvas id="starCanvas"></canvas></div>
+    <div class="cosmos">
+      <canvas id="starCanvas"></canvas><canvas id="threeCanvas"></canvas>
+    </div>
     <div class="cosmos-grad"></div>
 
     <!-- Mobile Overlay -->
@@ -1113,13 +1531,13 @@
           <span class="brand-name">RobovAI Nova</span>
         </a>
         <ul class="nav-menu">
-        <li><a href="#features">المميزات</a></li>
-        <li><a href="#tools">تصنيفات الأدوات</a></li>
-        <li><a href="#how-it-works">كيف تعمل</a></li>
-        <li><a href="#pricing">الباقات</a></li>
-        <li><a href="/chatbot_builder.html">منصة البوتات المخصصة</a></li>
-        <li><a href="/smart_agents.html">الوكلاء الأذكياء</a></li>
-        <li><a href="/account">حسابي</a></li>
+          <li><a href="#features">المميزات</a></li>
+          <li><a href="#tools">تصنيفات الأدوات</a></li>
+          <li><a href="#how-it-works">كيف تعمل</a></li>
+          <li><a href="#pricing">الباقات</a></li>
+          <li><a href="/chatbot-builder">منصة البوتات المخصصة</a></li>
+          <li><a href="/smart-agents">الوكلاء الأذكياء</a></li>
+          <li><a href="/account">حسابي</a></li>
         </ul>
         <a href="/chat" class="nav-cta">&#128640; جرب Nova</a>
         <button class="burger" onclick="openMob()">&#9776;</button>
@@ -1143,7 +1561,7 @@
           جاهزة &mdash; كل ذلك في ثوان&#1613;.
         </p>
         <div class="hero-actions">
-          <a href="/chat" class="btn-hero btn-glow"
+          <a href="/chat" class="btn-hero btn-glow btn-ripple"
             >&#128640; جرب مجانا&#769; الآن</a
           >
           <a href="#architecture" class="btn-hero btn-ghost"
@@ -1173,54 +1591,112 @@
 
     <!-- NEW V3 SHOWCASE SECTION -->
     <section class="showcase-section" id="v3-features">
-      <div class="showcase-inner animate-on-scroll" style="animation-delay: 0.2s;">
+      <div
+        class="showcase-inner animate-on-scroll"
+        style="animation-delay: 0.2s"
+      >
         <div class="showcase-content">
-          <span class="sec-badge" style="margin-bottom: 15px;">🚀 الجيل الثالث (V3)</span>
+          <span class="sec-badge" style="margin-bottom: 15px"
+            >🚀 الجيل الثالث (V3)</span
+          >
           <h2>وكلاء أذكياء يديرون السوشيال ميديا بالذكاء الاصطناعي</h2>
           <p>
-            لا تضيع وقتك في صناعة المحتوى. يوفر Nova الآن ميزة <strong>الوكلاء الأذكياء (Smart Social Agents)</strong> 
-            الذين يقومون بقراءة الأخبار من مصادرك المفضلة (RSS)، صياغتها بأسلوبك الخاص، ونشرها تلقائياً على 
-            حساباتك في Facebook و X (Twitter) دون أي تدخل منك.
+            لا تضيع وقتك في صناعة المحتوى. يوفر Nova الآن ميزة
+            <strong>الوكلاء الأذكياء (Smart Social Agents)</strong>
+            الذين يقومون بقراءة الأخبار من مصادرك المفضلة (RSS)، صياغتها بأسلوبك
+            الخاص، ونشرها تلقائياً على حساباتك في Facebook و X (Twitter) دون أي
+            تدخل منك.
           </p>
           <div class="feat-pills">
             <div class="feat-pill">🤖 جدولة تلقائية ذكية</div>
             <div class="feat-pill">🌍 إعادة صياغة بذكاء اصطناعي</div>
             <div class="feat-pill">🔗 نشر مباشر عبر API</div>
           </div>
-          <a href="/smart_agents.html" class="btn-hero btn-ghost" style="margin-top: 20px">استكشف الوكلاء المخصصين &rarr;</a>
+          <a
+            href="/smart-agents"
+            class="btn-hero btn-ghost"
+            style="margin-top: 20px"
+            >استكشف الوكلاء المخصصين &rarr;</a
+          >
         </div>
         <div class="showcase-image">
           <div class="showcase-img-wrap">
-            <img src="/public/assets/img/nova_smart_agents.png" alt="RobovAI Smart Social Agents Dashboard">
+            <img
+              src="/public/assets/img/nova_smart_agents.png"
+              alt="RobovAI Smart Social Agents Dashboard"
+            />
           </div>
         </div>
       </div>
 
-      <div class="showcase-inner animate-on-scroll showcase-reverse" style="animation-delay: 0.4s;">
+      <div
+        class="showcase-inner animate-on-scroll showcase-reverse"
+        style="animation-delay: 0.4s"
+      >
         <div class="showcase-image">
-          <div class="showcase-img-wrap" style="border-color: rgba(168, 85, 247, 0.3);">
-            <img src="/public/assets/img/nova_omnichannel_bots.png" alt="RobovAI Omni-Channel Chatbots">
+          <div
+            class="showcase-img-wrap"
+            style="border-color: rgba(168, 85, 247, 0.3)"
+          >
+            <img
+              src="/public/assets/img/nova_omnichannel_bots.png"
+              alt="RobovAI Omni-Channel Chatbots"
+            />
           </div>
         </div>
         <div class="showcase-content">
-          <span class="sec-badge" style="margin-bottom: 15px; color: #c084fc; border-color: rgba(192, 132, 252, 0.3); background: rgba(192, 132, 252, 0.1);">🧠 منصة Custom Chatbots</span>
-          <h2 style="background: linear-gradient(135deg, #fff, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">روبوتات دردشة تتحدث بإسم شركتك من موقعك مباشرة</h2>
+          <span
+            class="sec-badge"
+            style="
+              margin-bottom: 15px;
+              color: #c084fc;
+              border-color: rgba(192, 132, 252, 0.3);
+              background: rgba(192, 132, 252, 0.1);
+            "
+            >🧠 منصة Custom Chatbots</span
+          >
+          <h2
+            style="
+              background: linear-gradient(135deg, #fff, #c084fc);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+            "
+          >
+            روبوتات دردشة تتحدث بإسم شركتك من موقعك مباشرة
+          </h2>
           <p>
-            تتيح لك منصة Nova الجديدة بناء <strong>شات بوت مخصص (Custom Chatbot)</strong> في ثوانٍ. 
-            فقط أدخل رابط موقعك الإلكتروني (URL)، وسيقوم مٌحرك الذكاء الاصطناعي بمسحه بالكامل وتدريب الروبوت 
-            ليُجيب على أسئلة عملائك بدقة متناهية (RAG Engine). متوافق للربط مع تليجرام وأي منصة ويب!
+            تتيح لك منصة Nova الجديدة بناء
+            <strong>شات بوت مخصص (Custom Chatbot)</strong> في ثوانٍ. فقط أدخل
+            رابط موقعك الإلكتروني (URL)، وسيقوم مٌحرك الذكاء الاصطناعي بمسحه
+            بالكامل وتدريب الروبوت ليُجيب على أسئلة عملائك بدقة متناهية (RAG
+            Engine). متوافق للربط مع تليجرام وأي منصة ويب!
           </p>
           <div class="feat-pills">
-            <div class="feat-pill"><span style="color: #c084fc;">🌐</span> تدريب لحظي من رابط الموقع (Scraping)</div>
-            <div class="feat-pill"><span style="color: #c084fc;">💬</span> ربط متعدد المنصات (Omni-channel)</div>
+            <div class="feat-pill">
+              <span style="color: #c084fc">🌐</span> تدريب لحظي من رابط الموقع
+              (Scraping)
+            </div>
+            <div class="feat-pill">
+              <span style="color: #c084fc">💬</span> ربط متعدد المنصات
+              (Omni-channel)
+            </div>
           </div>
-          <a href="/chatbot_builder.html" class="btn-hero btn-ghost" style="margin-top: 20px; border-color: rgba(192, 132, 252, 0.3); color: #c084fc;">اصنع أول بوت لك مجاناً &rarr;</a>
+          <a
+            href="/chatbot-builder"
+            class="btn-hero btn-ghost"
+            style="
+              margin-top: 20px;
+              border-color: rgba(192, 132, 252, 0.3);
+              color: #c084fc;
+            "
+            >اصنع أول بوت لك مجاناً &rarr;</a
+          >
         </div>
       </div>
     </section>
 
     <!-- AGENT ARCHITECTURE -->
-    <section class="arch-section" id="architecture">
+    <section class="arch-section mesh-bg" id="architecture">
       <div class="arch-inner sec-center">
         <span class="sec-badge">&#129504; كيف يعمل Nova</span>
         <h2 class="sec-title">من الطلب إلى النتيجة في 4 خطوات</h2>
@@ -1264,7 +1740,7 @@
     </section>
 
     <!-- TOOLS GRID -->
-    <section class="tools-section" id="tools">
+    <section class="tools-section mesh-bg" id="tools">
       <div class="tools-inner sec-center">
         <span class="sec-badge">&#128736; 124+ حل ذكي</span>
         <h2 class="sec-title">حلول جاهزة لكل تحدي في عملك</h2>
@@ -1465,7 +1941,7 @@
     </section>
 
     <!-- AGENT FEATURES -->
-    <section class="feats-section" id="features">
+    <section class="feats-section mesh-bg" id="features">
       <div class="feats-inner sec-center">
         <span class="sec-badge">&#9889; لماذا Nova</span>
         <h2 class="sec-title">ميزات تنافسية حقيقية</h2>
@@ -1568,17 +2044,17 @@
           <div class="plat-card">
             <div class="plat-icon">&#128172;</div>
             <div class="plat-name">WhatsApp</div>
-            <div class="plat-status">&#10004; متاح</div>
+            <div class="plat-status">🔜 قريباً</div>
           </div>
           <div class="plat-card">
             <div class="plat-icon">&#128216;</div>
             <div class="plat-name">Messenger</div>
-            <div class="plat-status">&#10004; متاح</div>
+            <div class="plat-status">🔜 قريباً</div>
           </div>
           <div class="plat-card">
             <div class="plat-icon">&#127918;</div>
             <div class="plat-name">Discord</div>
-            <div class="plat-status">&#10004; متاح</div>
+            <div class="plat-status">🔜 قريباً</div>
           </div>
           <div class="plat-card">
             <div class="plat-icon">&#9889;</div>
@@ -1657,7 +2133,10 @@
           ابدأ مجانا&#769; &mdash; لا حاجة لبطاقة ائتمان. اكتب ما تحتاجه
           وخل&#769; Nova ينجزه لك.
         </p>
-        <a href="/chat" class="btn-hero btn-glow" style="display: inline-flex"
+        <a
+          href="/chat"
+          class="btn-hero btn-glow btn-ripple"
+          style="display: inline-flex"
           >&#128640; جرب Nova الآن</a
         >
       </div>
@@ -1673,57 +2152,351 @@
         <a href="/account">حسابي</a>
         <a href="/developers">API للمطورين</a>
       </div>
-      
-      <div class="creator-identity" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;">
-        <small style="color: rgba(255, 255, 255, 0.4); font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
-          مُبتكر ومُصمم بكل شغف في مختبرات 
-          <a href="https://robovai.tech" target="_blank" style="color: var(--primary); font-weight: 700; text-decoration: none;">RobovAI Solutions</a>
+
+      <div
+        class="creator-identity"
+        style="
+          margin-top: 30px;
+          padding-top: 20px;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        "
+      >
+        <small
+          style="
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          "
+        >
+          مُبتكر ومُصمم بكل شغف في مختبرات
+          <a
+            href="https://robovai.tech"
+            target="_blank"
+            style="
+              color: var(--primary);
+              font-weight: 700;
+              text-decoration: none;
+            "
+            >RobovAI Solutions</a
+          >
         </small>
-        <small style="color: rgba(255, 255, 255, 0.35); font-size: 0.75rem;">
-          المعمارية البرمجية والهندسة من قبل 
-          <a href="https://moshaban.me" target="_blank" style="color: var(--muted); text-decoration: underline; text-decoration-color: rgba(255,255,255,0.2);">المهندس محمد شعبان</a>
+        <small style="color: rgba(255, 255, 255, 0.35); font-size: 0.75rem">
+          المعمارية البرمجية والهندسة من قبل
+          <a
+            href="https://moshaban.me"
+            target="_blank"
+            style="
+              color: var(--muted);
+              text-decoration: underline;
+              text-decoration-color: rgba(255, 255, 255, 0.2);
+            "
+            >المهندس محمد شعبان</a
+          >
         </small>
       </div>
-      
-      <small style="display: block; margin-top: 20px;"
-        >&copy; 2026 RobovAI Tech &mdash; All Rights Reserved.</small
+
+      <small style="display: block; margin-top: 20px"
+        >&copy; 2026 RobovAI Solutions &mdash; All Rights Reserved.</small
       >
     </footer>
 
     <script>
-      /* ===== STARS CANVAS ===== */
+      /* ═══════════════════════════════════════════════════════════════════
+       *  THREE.JS — 3D NEURAL NETWORK HERO SCENE
+       *  Floating nodes, dynamic connections, orbiting ring, mouse parallax
+       * ═══════════════════════════════════════════════════════════════════ */
+      (function () {
+        if (typeof THREE === 'undefined') return; // Graceful fallback
+
+        var canvas = document.getElementById('threeCanvas');
+        var renderer = new THREE.WebGLRenderer({
+          canvas: canvas,
+          alpha: true,
+          antialias: true,
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(
+          60,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000,
+        );
+        camera.position.set(0, 0, 30);
+
+        var mouse = { x: 0, y: 0, tx: 0, ty: 0 };
+
+        // ── Color palette ──
+        var CYAN = new THREE.Color(0x00d4ff);
+        var PURPLE = new THREE.Color(0xa855f7);
+        var ROSE = new THREE.Color(0xf43f5e);
+
+        // ── Create neural network nodes ──
+        var NODE_COUNT = 55;
+        var nodeGeo = new THREE.SphereGeometry(0.12, 12, 12);
+        var nodes = [];
+        var nodeGroup = new THREE.Group();
+
+        for (var i = 0; i < NODE_COUNT; i++) {
+          var colors = [CYAN, PURPLE, ROSE];
+          var col = colors[Math.floor(Math.random() * colors.length)];
+          var mat = new THREE.MeshBasicMaterial({
+            color: col,
+            transparent: true,
+            opacity: 0.6 + Math.random() * 0.4,
+          });
+          var mesh = new THREE.Mesh(nodeGeo, mat);
+          var spread = 22;
+          mesh.position.set(
+            (Math.random() - 0.5) * spread,
+            (Math.random() - 0.5) * spread,
+            (Math.random() - 0.5) * spread * 0.6,
+          );
+          mesh.userData = {
+            vx: (Math.random() - 0.5) * 0.008,
+            vy: (Math.random() - 0.5) * 0.008,
+            vz: (Math.random() - 0.5) * 0.004,
+            baseScale: 0.6 + Math.random() * 0.8,
+            phase: Math.random() * Math.PI * 2,
+          };
+          mesh.scale.setScalar(mesh.userData.baseScale);
+          nodes.push(mesh);
+          nodeGroup.add(mesh);
+        }
+        scene.add(nodeGroup);
+
+        // ── Glow sprites for nodes ──
+        var glowCanvas = document.createElement('canvas');
+        glowCanvas.width = 64;
+        glowCanvas.height = 64;
+        var gCtx = glowCanvas.getContext('2d');
+        var gradient = gCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gradient.addColorStop(0, 'rgba(255,255,255,0.5)');
+        gradient.addColorStop(0.3, 'rgba(0,212,255,0.15)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        gCtx.fillStyle = gradient;
+        gCtx.fillRect(0, 0, 64, 64);
+        var glowTex = new THREE.CanvasTexture(glowCanvas);
+
+        var glowMat = new THREE.SpriteMaterial({
+          map: glowTex,
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          opacity: 0.4,
+        });
+
+        nodes.forEach(function (n) {
+          var sprite = new THREE.Sprite(glowMat.clone());
+          sprite.scale.setScalar(n.userData.baseScale * 2.0);
+          n.add(sprite);
+        });
+
+        // ── Dynamic connection lines ──
+        var MAX_CONNECTIONS = 90;
+        var CONNECTION_DIST = 7;
+        var lineGeo = new THREE.BufferGeometry();
+        var linePositions = new Float32Array(MAX_CONNECTIONS * 6);
+        var lineColors = new Float32Array(MAX_CONNECTIONS * 6);
+        lineGeo.setAttribute(
+          'position',
+          new THREE.BufferAttribute(linePositions, 3),
+        );
+        lineGeo.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
+        lineGeo.setDrawRange(0, 0);
+
+        var lineMat = new THREE.LineBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.25,
+          blending: THREE.AdditiveBlending,
+        });
+        var linesMesh = new THREE.LineSegments(lineGeo, lineMat);
+        scene.add(linesMesh);
+
+        // ── Orbiting ring ──
+        var ringGeo = new THREE.TorusGeometry(14, 0.04, 8, 100);
+        var ringMat = new THREE.MeshBasicMaterial({
+          color: CYAN,
+          transparent: true,
+          opacity: 0.12,
+        });
+        var ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI * 0.4;
+        scene.add(ring);
+
+        // Second ring
+        var ring2 = new THREE.Mesh(
+          new THREE.TorusGeometry(16, 0.03, 8, 120),
+          new THREE.MeshBasicMaterial({
+            color: PURPLE,
+            transparent: true,
+            opacity: 0.08,
+          }),
+        );
+        ring2.rotation.x = Math.PI * 0.6;
+        ring2.rotation.y = Math.PI * 0.3;
+        scene.add(ring2);
+
+        // ── Central core ──
+        var coreGeo = new THREE.IcosahedronGeometry(1.2, 1);
+        var coreMat = new THREE.MeshBasicMaterial({
+          color: CYAN,
+          transparent: true,
+          opacity: 0.15,
+          wireframe: true,
+        });
+        var core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        // ── Animation loop ──
+        var clock = new THREE.Clock();
+
+        function animate() {
+          requestAnimationFrame(animate);
+          var t = clock.getElapsedTime();
+
+          // Smooth mouse follow
+          mouse.tx += (mouse.x - mouse.tx) * 0.05;
+          mouse.ty += (mouse.y - mouse.ty) * 0.05;
+
+          // Camera subtle movement
+          camera.position.x = mouse.tx * 2;
+          camera.position.y = -mouse.ty * 2;
+          camera.lookAt(0, 0, 0);
+
+          // Animate nodes
+          for (var i = 0; i < nodes.length; i++) {
+            var n = nodes[i];
+            var d = n.userData;
+            n.position.x += d.vx;
+            n.position.y += d.vy;
+            n.position.z += d.vz;
+
+            // Boundary soft bounce
+            if (Math.abs(n.position.x) > 12) d.vx *= -1;
+            if (Math.abs(n.position.y) > 12) d.vy *= -1;
+            if (Math.abs(n.position.z) > 6) d.vz *= -1;
+
+            // Pulse scale
+            var pulse = 1 + Math.sin(t * 1.5 + d.phase) * 0.15;
+            n.scale.setScalar(d.baseScale * pulse);
+          }
+
+          // Update connection lines
+          var ci = 0;
+          for (var i = 0; i < nodes.length && ci < MAX_CONNECTIONS; i++) {
+            for (var j = i + 1; j < nodes.length && ci < MAX_CONNECTIONS; j++) {
+              var dx = nodes[i].position.x - nodes[j].position.x;
+              var dy = nodes[i].position.y - nodes[j].position.y;
+              var dz = nodes[i].position.z - nodes[j].position.z;
+              var dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+              if (dist < CONNECTION_DIST) {
+                var idx = ci * 6;
+                linePositions[idx] = nodes[i].position.x;
+                linePositions[idx + 1] = nodes[i].position.y;
+                linePositions[idx + 2] = nodes[i].position.z;
+                linePositions[idx + 3] = nodes[j].position.x;
+                linePositions[idx + 4] = nodes[j].position.y;
+                linePositions[idx + 5] = nodes[j].position.z;
+
+                var alpha = 1 - dist / CONNECTION_DIST;
+                var mixColor = CYAN.clone().lerp(PURPLE, alpha);
+                lineColors[idx] = mixColor.r;
+                lineColors[idx + 1] = mixColor.g;
+                lineColors[idx + 2] = mixColor.b;
+                lineColors[idx + 3] = mixColor.r;
+                lineColors[idx + 4] = mixColor.g;
+                lineColors[idx + 5] = mixColor.b;
+                ci++;
+              }
+            }
+          }
+          lineGeo.setDrawRange(0, ci * 2);
+          lineGeo.attributes.position.needsUpdate = true;
+          lineGeo.attributes.color.needsUpdate = true;
+
+          // Rotate rings & core
+          ring.rotation.z = t * 0.08;
+          ring2.rotation.z = -t * 0.06;
+          core.rotation.x = t * 0.2;
+          core.rotation.y = t * 0.15;
+          core.scale.setScalar(1 + Math.sin(t * 0.8) * 0.08);
+
+          // Whole group gentle rotation
+          nodeGroup.rotation.y = t * 0.03 + mouse.tx * 0.3;
+          nodeGroup.rotation.x = mouse.ty * 0.15;
+
+          renderer.render(scene, camera);
+        }
+
+        animate();
+
+        window.addEventListener('resize', function () {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('mousemove', function (e) {
+          mouse.x = (e.clientX / window.innerWidth - 0.5) * 2;
+          mouse.y = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+      })();
+
+      /* ═══════════════════════════════════════════════════════════════════
+       *  2D STARFIELD CANVAS (background layer — kept for depth)
+       * ═══════════════════════════════════════════════════════════════════ */
       (function () {
         var c = document.getElementById('starCanvas'),
           x = c.getContext('2d');
         var W,
           H,
           stars = [];
+
         function resize() {
           W = c.width = innerWidth;
           H = c.height = innerHeight;
           stars = [];
-          for (var i = 0; i < 140; i++)
+          for (var i = 0; i < 120; i++)
             stars.push({
               x: Math.random() * W,
               y: Math.random() * H,
-              r: Math.random() * 1.2 + 0.3,
+              r: Math.random() * 1.2 + 0.15,
               a: Math.random(),
-              s: Math.random() * 0.0008 + 0.0003,
+              s: Math.random() * 0.001 + 0.0003,
+              color:
+                Math.random() > 0.7
+                  ? [0, 212, 255]
+                  : Math.random() > 0.5
+                    ? [168, 85, 247]
+                    : [180, 200, 255],
             });
         }
+
         function draw() {
           x.clearRect(0, 0, W, H);
           for (var i = 0; i < stars.length; i++) {
             var s = stars[i];
             s.a += s.s;
-            var o = 0.3 + Math.abs(Math.sin(s.a)) * 0.7;
+            var o = 0.15 + Math.abs(Math.sin(s.a)) * 0.6;
             x.beginPath();
             x.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-            x.fillStyle = 'rgba(180,200,255,' + o + ')';
+            x.fillStyle = 'rgba(' + s.color.join(',') + ',' + o + ')';
             x.fill();
           }
           requestAnimationFrame(draw);
         }
+
         resize();
         draw();
         window.addEventListener('resize', resize);
@@ -1753,70 +2526,374 @@
         });
       });
 
-      /* ===== SCROLL ANIMATIONS ===== */
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.style.animationPlayState = 'running';
-            observer.unobserve(entry.target);
+      /* ═══════════════════════════════════════════════════════════════════
+       *  GSAP + SCROLLTRIGGER — Cinematic Scroll Animations
+       * ═══════════════════════════════════════════════════════════════════ */
+      (function () {
+        if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined')
+          return;
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        // ── Hero entrance (override CSS animation with GSAP timeline) ──
+        var heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+        heroTl
+          .from('.hero-chip', {
+            y: 50,
+            opacity: 0,
+            filter: 'blur(8px)',
+            duration: 0.9,
+            delay: 0.3,
+          })
+          .from(
+            '.hero h1',
+            { y: 60, opacity: 0, filter: 'blur(10px)', duration: 1 },
+            '-=0.5',
+          )
+          .from('.hero-sub', { y: 40, opacity: 0, duration: 0.9 }, '-=0.55')
+          .from(
+            '.hero-actions',
+            { y: 30, opacity: 0, scale: 0.95, duration: 0.8 },
+            '-=0.45',
+          )
+          .from('.counters', { y: 40, opacity: 0, duration: 0.8 }, '-=0.35');
+
+        // ── Hero parallax fade on scroll ──
+        gsap.to('.hero-content', {
+          y: 120,
+          opacity: 0,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.hero',
+            start: 'top top',
+            end: 'bottom 40%',
+            scrub: 1.5,
+          },
+        });
+
+        gsap.to('.cosmos-grad', {
+          y: 80,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.hero',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 2,
+          },
+        });
+
+        // ── Section headings reveal ──
+        gsap.utils
+          .toArray('.sec-badge, .sec-title, .sec-desc')
+          .forEach(function (el) {
+            gsap.from(el, {
+              y: 35,
+              opacity: 0,
+              filter: 'blur(4px)',
+              duration: 0.8,
+              ease: 'power2.out',
+              scrollTrigger: {
+                trigger: el,
+                start: 'top 88%',
+                toggleActions: 'play none none none',
+              },
+            });
+          });
+
+        // ── Cards + steps stagger reveal ──
+        var cardGroups = document.querySelectorAll(
+          '.tools-grid, .feat-grid, .plat-grid, .pricing-grid, .react-steps',
+        );
+
+        cardGroups.forEach(function (grid) {
+          var items = grid.children;
+          if (!items.length) return;
+
+          gsap.from(items, {
+            y: 45,
+            opacity: 0,
+            scale: 0.94,
+            rotateX: 6,
+            duration: 0.7,
+            stagger: 0.1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: grid,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+            },
+          });
+        });
+
+        // ── Showcase sections cinematic slide ──
+        gsap.utils.toArray('.showcase-inner').forEach(function (inner, idx) {
+          var content = inner.querySelector('.showcase-content');
+          var image = inner.querySelector(
+            '.showcase-image, .showcase-img-wrap',
+          );
+
+          if (content) {
+            gsap.from(content, {
+              x: idx % 2 === 0 ? -60 : 60,
+              opacity: 0,
+              duration: 1,
+              ease: 'power3.out',
+              scrollTrigger: {
+                trigger: inner,
+                start: 'top 80%',
+                toggleActions: 'play none none none',
+              },
+            });
+          }
+          if (image) {
+            gsap.from(image, {
+              x: idx % 2 === 0 ? 60 : -60,
+              opacity: 0,
+              rotateY: idx % 2 === 0 ? -8 : 8,
+              duration: 1,
+              ease: 'power3.out',
+              scrollTrigger: {
+                trigger: inner,
+                start: 'top 80%',
+                toggleActions: 'play none none none',
+              },
+            });
           }
         });
-      }, { threshold: 0.1 });
 
-      document.querySelectorAll('.animate-on-scroll').forEach(el => {
-        el.style.animationPlayState = 'paused';
-        observer.observe(el);
-      });
-
-      /* ===== COUNTER ANIMATION ===== */
-      var cObserver = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (e) {
-            if (e.isIntersecting) {
-              var el = e.target,
-                target = parseInt(el.dataset.target);
-              var cur = 0;
-              var step = Math.max(1, Math.ceil(target / 50));
-              var id = setInterval(function () {
-                cur += step;
-                if (cur >= target) {
-                  cur = target;
-                  clearInterval(id);
-                }
-                el.textContent = cur + '+';
-              }, 30);
-              cObserver.unobserve(el);
-            }
+        // ── Showcase images parallax (GSAP scrub) ──
+        gsap.utils.toArray('.showcase-img-wrap').forEach(function (img, idx) {
+          gsap.to(img, {
+            y: idx % 2 === 0 ? -25 : 25,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: img,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1.5,
+            },
           });
-        },
-        { threshold: 0.5 },
-      );
-      document.querySelectorAll('.counter-val').forEach(function (el) {
-        cObserver.observe(el);
-      });
-
-      /* ===== SCROLL REVEAL ===== */
-      var rObserver = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (e) {
-            if (e.isIntersecting) {
-              e.target.style.opacity = '1';
-              e.target.style.transform = 'translateY(0)';
-            }
-          });
-        },
-        { threshold: 0.08, rootMargin: '0px 0px -30px 0px' },
-      );
-      document
-        .querySelectorAll(
-          '.react-step,.tool-card,.feat-card,.plat-card,.price-card',
-        )
-        .forEach(function (el) {
-          el.style.opacity = '0';
-          el.style.transform = 'translateY(28px)';
-          el.style.transition = 'all .5s cubic-bezier(.22,1,.36,1)';
-          rObserver.observe(el);
         });
+
+        // ── Counter animation with GSAP + ScrollTrigger ──
+        gsap.utils.toArray('.counter-val').forEach(function (el) {
+          var target = parseInt(el.dataset.target, 10);
+          var obj = { val: 0 };
+
+          gsap.to(obj, {
+            val: target,
+            duration: 2,
+            ease: 'power1.out',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+            },
+            onUpdate: function () {
+              el.textContent = Math.round(obj.val) + '+';
+            },
+          });
+        });
+
+        // ── CTA section zoom-in ──
+        gsap.from('.cta-box', {
+          scale: 0.88,
+          opacity: 0,
+          y: 40,
+          duration: 0.9,
+          ease: 'back.out(1.4)',
+          scrollTrigger: {
+            trigger: '.cta-section',
+            start: 'top 82%',
+            toggleActions: 'play none none none',
+          },
+        });
+
+        // ── Demo terminal slide-up ──
+        gsap.from('.demo-window', {
+          y: 60,
+          opacity: 0,
+          scale: 0.95,
+          duration: 1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: '.demo-section',
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
+        });
+
+        // ── Footer links reveal ──
+        gsap.from('.footer-links a', {
+          y: 20,
+          opacity: 0,
+          stagger: 0.06,
+          duration: 0.5,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.footer',
+            start: 'top 92%',
+            toggleActions: 'play none none none',
+          },
+        });
+      })();
+
+      /* ===== FALLBACK: animate-on-scroll (if GSAP not loaded) ===== */
+      if (typeof gsap === 'undefined') {
+        var _ioObs = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.style.animationPlayState = 'running';
+                _ioObs.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.1 },
+        );
+        document.querySelectorAll('.animate-on-scroll').forEach(function (el) {
+          el.style.animationPlayState = 'paused';
+          _ioObs.observe(el);
+        });
+
+        // Fallback reveal
+        var _rObs = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('active');
+                _rObs.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.05 },
+        );
+        document
+          .querySelectorAll('.sec-badge, .sec-title, .sec-desc')
+          .forEach(function (el) {
+            el.classList.add('reveal');
+            _rObs.observe(el);
+          });
+
+        // Fallback card stagger
+        var _sObs = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                var parent = e.target.parentElement;
+                var idx = Array.from(parent.children).indexOf(e.target);
+                setTimeout(function () {
+                  e.target.style.opacity = '1';
+                  e.target.style.transform =
+                    'translateY(0) scale(1) perspective(1000px) rotateX(0deg)';
+                }, idx * 80);
+                _sObs.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.06 },
+        );
+        document
+          .querySelectorAll(
+            '.react-step,.tool-card,.feat-card,.plat-card,.price-card',
+          )
+          .forEach(function (el) {
+            el.style.opacity = '0';
+            el.style.transform =
+              'translateY(35px) scale(0.96) perspective(1000px) rotateX(5deg)';
+            el.style.transition = 'all .7s cubic-bezier(.22,1,.36,1)';
+            _sObs.observe(el);
+          });
+
+        // Fallback counter
+        var _cObs = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                var el = e.target,
+                  target = parseInt(el.dataset.target);
+                var cur = 0,
+                  step = Math.max(1, Math.ceil(target / 50));
+                var id = setInterval(function () {
+                  cur += step;
+                  if (cur >= target) {
+                    cur = target;
+                    clearInterval(id);
+                  }
+                  el.textContent = cur + '+';
+                }, 30);
+                _cObs.unobserve(el);
+              }
+            });
+          },
+          { threshold: 0.5 },
+        );
+        document.querySelectorAll('.counter-val').forEach(function (el) {
+          _cObs.observe(el);
+        });
+      }
+
+      /* ===== 3D TILT EFFECT on Cards ===== */
+      (function () {
+        var tiltElements = document.querySelectorAll(
+          '.tool-card, .feat-card, .price-card, .react-step',
+        );
+
+        tiltElements.forEach(function (el) {
+          el.addEventListener('mousemove', function (e) {
+            var rect = el.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var centerX = rect.width / 2;
+            var centerY = rect.height / 2;
+            var rotateX = ((y - centerY) / centerY) * -8;
+            var rotateY = ((x - centerX) / centerX) * 8;
+
+            el.style.transform =
+              'perspective(1000px) rotateX(' +
+              rotateX +
+              'deg) rotateY(' +
+              rotateY +
+              'deg) translateY(-6px) scale(1.02)';
+            el.style.transition = 'transform 0.1s ease';
+
+            el.style.boxShadow =
+              '0 20px 50px rgba(0, 212, 255, 0.1), 0 0 30px rgba(0, 212, 255, ' +
+              (0.02 + Math.abs(rotateY) * 0.01) +
+              ')';
+          });
+
+          el.addEventListener('mouseleave', function () {
+            el.style.transform = '';
+            el.style.transition =
+              'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+            el.style.boxShadow = '';
+          });
+        });
+      })();
+
+      /* ===== MAGNETIC BUTTON EFFECT ===== */
+      (function () {
+        document
+          .querySelectorAll('.btn-glow, .nav-cta')
+          .forEach(function (btn) {
+            btn.addEventListener('mousemove', function (e) {
+              var rect = btn.getBoundingClientRect();
+              var x = e.clientX - rect.left - rect.width / 2;
+              var y = e.clientY - rect.top - rect.height / 2;
+              btn.style.transform =
+                'translate(' +
+                x * 0.15 +
+                'px, ' +
+                y * 0.15 +
+                'px) translateY(-4px)';
+            });
+            btn.addEventListener('mouseleave', function () {
+              btn.style.transform = '';
+            });
+          });
+      })();
 
       /* ===== TERMINAL DEMO ===== */
       (function () {

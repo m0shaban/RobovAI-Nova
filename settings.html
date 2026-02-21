@@ -1639,6 +1639,15 @@
         }
         loadSettings();
         loadProfile();
+
+        // Add copyright
+        const cont =
+          document.querySelector('.settings-container') || document.body;
+        const f = document.createElement('div');
+        f.style.cssText =
+          'text-align:center;padding:2rem 0 1rem;font-size:0.75rem;color:#6b7280;opacity:0.5;';
+        f.innerHTML = '&copy; 2026 RobovAI Solutions';
+        cont.appendChild(f);
       });
     </script>
   </body>

@@ -810,5 +810,53 @@ class Database:
             )
             return c.fetchone()[0] > 0
 
+    async def get_admin_analytics(self) -> dict:
+        """Fetch advanced analytical data for the Super Admin dashboard."""
+        with self._get_conn() as conn:
+            c = conn.cursor()
+            
+            # 1. User Growth (Daily signups for last 7 days)
+            c.execute("""
+                SELECT strftime('%Y-%m-%d', created_at) as date, COUNT(*) as count 
+                FROM users 
+                WHERE created_at >= date('now', '-7 days')
+                GROUP BY date ORDER BY date ASC
+            """)
+            user_growth = [{"date": row["date"], "count": row["count"]} for row in c.fetchall()]
+            
+            # 2. Daily Token Consumption (Last 7 days)
+            c.execute("""
+                SELECT strftime('%Y-%m-%d', timestamp) as date, SUM(tokens) as total_tokens 
+                FROM tool_usage 
+                WHERE timestamp >= date('now', '-7 days')
+                GROUP BY date ORDER BY date ASC
+            """)
+            token_usage = [{"date": row["date"], "tokens": row["total_tokens"]} for row in c.fetchall()]
+            
+            # 3. Top Tools
+            c.execute("""
+                SELECT tool_name, COUNT(*) as usage_count 
+                FROM tool_usage 
+                GROUP BY tool_name 
+                ORDER BY usage_count DESC LIMIT 5
+            """)
+            top_tools = [{"name": row["tool_name"], "count": row["usage_count"]} for row in c.fetchall()]
+
+            # 4. Total Chatbots count
+            c.execute("SELECT COUNT(*) FROM custom_chatbots")
+            total_bots = c.fetchone()[0]
+
+            # 5. Total Interactions
+            c.execute("SELECT COUNT(*) FROM chat_history")
+            total_messages = c.fetchone()[0]
+
+            return {
+                "user_growth": user_growth,
+                "token_usage": token_usage,
+                "top_tools": top_tools,
+                "total_bots": total_bots,
+                "total_messages": total_messages
+            }
+
 
 db_client = Database()

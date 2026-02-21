@@ -4,7 +4,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from backend.core.database import db_client
-from backend.main import get_current_user
+from backend.core.deps import get_current_user
+from backend.agents.scheduler import reload_campaign, remove_campaign
 
 logger = logging.getLogger("robovai.agents")
 
@@ -37,6 +38,7 @@ async def create_campaign(camp: CampaignCreate, current_user: dict = Depends(get
         VALUES (?, ?, ?, ?, ?)
     """
     await db_client.execute(query, (camp_id, user_id, camp.name, camp.ai_persona, camp.schedule_cron))
+    await reload_campaign(camp_id)
     return {"id": camp_id, "message": "Campaign created successfully"}
 
 @router.get("/", response_model=List[dict])
@@ -81,6 +83,7 @@ async def update_campaign(campaign_id: str, camp_update: CampaignUpdate, current
         params.extend([campaign_id, user_id])
         update_query = f"UPDATE content_campaigns SET {', '.join(update_fields)} WHERE id = ? AND user_id = ?"
         await db_client.execute(update_query, tuple(params))
+        await reload_campaign(campaign_id)
         
     return {"message": "Campaign updated successfully"}
 
@@ -89,6 +92,7 @@ async def delete_campaign(campaign_id: str, current_user: dict = Depends(get_cur
     user_id = str(current_user["id"])
     query = "DELETE FROM content_campaigns WHERE id = ? AND user_id = ?"
     await db_client.execute(query, (campaign_id, user_id))
+    remove_campaign(campaign_id)
     return {"message": "Campaign deleted successfully"}
 
 @router.post("/{campaign_id}/sources", response_model=dict)
@@ -106,6 +110,7 @@ async def add_source(campaign_id: str, source: SourceCreate, current_user: dict 
         VALUES (?, ?, ?, ?)
     """
     await db_client.execute(insert_query, (src_id, campaign_id, source.source_type, source.source_url))
+    await reload_campaign(campaign_id)
     return {"id": src_id, "message": "Source added successfully"}
 
 @router.delete("/{campaign_id}/sources/{source_id}", response_model=dict)
@@ -119,4 +124,5 @@ async def delete_source(campaign_id: str, source_id: str, current_user: dict = D
         
     del_query = "DELETE FROM content_sources WHERE id = ? AND campaign_id = ?"
     await db_client.execute(del_query, (source_id, campaign_id))
+    await reload_campaign(campaign_id)
     return {"message": "Source deleted successfully"}

@@ -221,7 +221,7 @@ class LLMClient:
             "messages": [
                 {
                     "role": "system",
-                    "content": system_prompt or "أنت نوفا، المساعد الذكي من ابتكار RobovAI Tech و المهندس محمد شعبان (moshaban.me).",
+                    "content": system_prompt or "أنت نوفا، المساعد الذكي من ابتكار RobovAI Solutions و المهندس محمد شعبان (moshaban.me).",
                 },
                 {"role": "user", "content": prompt},
             ],

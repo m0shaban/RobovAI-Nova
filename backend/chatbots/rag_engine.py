@@ -5,13 +5,25 @@ from langchain_community.document_loaders import AsyncHtmlLoader
 from langchain_community.document_transformers import Html2TextTransformer
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain_qdrant import QdrantVectorStore
+from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams
+from langchain_community.document_loaders import PyPDFLoader
 
 logger = logging.getLogger("robovai.chatbots.rag")
 
-# Directory to store FAISS indices per bot
-FAISS_STORAGE_PATH = "data/vectorstores"
-os.makedirs(FAISS_STORAGE_PATH, exist_ok=True)
+# Directory to store Qdrant indices per bot
+QDRANT_STORAGE_PATH = "data/vectorstores/qdrant"
+os.makedirs(QDRANT_STORAGE_PATH, exist_ok=True)
+
+# Shared Qdrant client to save memory
+_qdrant_client = None
+
+def get_qdrant_client():
+    global _qdrant_client
+    if _qdrant_client is None:
+        _qdrant_client = QdrantClient(path=QDRANT_STORAGE_PATH)
+    return _qdrant_client
 
 # Shared embedding model to save memory
 _embeddings_model = None
@@ -21,7 +33,10 @@ def get_embeddings():
     if _embeddings_model is None:
         logger.info("Loading HuggingFace Embeddings model...")
         # Using a lightweight multilingual model good for Arabic
-        _embeddings_model = HuggingFaceEmbeddings(model_name="intfloat/multilingual-e5-small")
+        _embeddings_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            model_kwargs={'device': 'cpu'},        
+        )
     return _embeddings_model
 
 class RAGEngine:
@@ -51,20 +66,25 @@ class RAGEngine:
             )
             splits = text_splitter.split_documents(docs_transformed)
             
-            # 4. Create/Update FAISS Vectorstore
+            # 4. Create/Update Qdrant Vectorstore
             embeddings = get_embeddings()
-            bot_db_path = os.path.join(FAISS_STORAGE_PATH, f"bot_{bot_id}")
+            client = get_qdrant_client()
+            collection_name = f"bot_{bot_id}"
             
-            if os.path.exists(bot_db_path):
-                logger.info(f"Loading existing FAISS db for bot {bot_id}")
-                vectorstore = FAISS.load_local(bot_db_path, embeddings, allow_dangerous_deserialization=True)
-                vectorstore.add_documents(splits)
-            else:
-                logger.info(f"Creating new FAISS db for bot {bot_id}")
-                vectorstore = FAISS.from_documents(splits, embeddings)
+            # Ensure collection exists
+            if not client.collection_exists(collection_name):
+                client.create_collection(
+                    collection_name=collection_name,
+                    vectors_config=VectorParams(size=384, distance=Distance.COSINE),
+                )
+            
+            vectorstore = QdrantVectorStore(
+                client=client,
+                collection_name=collection_name,
+                embedding=embeddings,
+            )
+            vectorstore.add_documents(splits)
                 
-            # 5. Save
-            vectorstore.save_local(bot_db_path)
             logger.info(f"Successfully ingested {len(splits)} chunks for bot {bot_id}")
             return True
             
@@ -77,13 +97,19 @@ class RAGEngine:
         """
         Retrieves relevant context from the bot's FAISS database based on the user query.
         """
-        bot_db_path = os.path.join(FAISS_STORAGE_PATH, f"bot_{bot_id}")
-        if not os.path.exists(bot_db_path):
-            return ""
-            
         try:
+            client = get_qdrant_client()
+            collection_name = f"bot_{bot_id}"
+            
+            if not client.collection_exists(collection_name):
+                return ""
+            
             embeddings = get_embeddings()
-            vectorstore = FAISS.load_local(bot_db_path, embeddings, allow_dangerous_deserialization=True)
+            vectorstore = QdrantVectorStore(
+                client=client,
+                collection_name=collection_name,
+                embedding=embeddings,
+            )
             
             # Perform similarity search
             docs = vectorstore.similarity_search(query, k=k)
@@ -101,3 +127,44 @@ class RAGEngine:
         except Exception as e:
             logger.error(f"Error retrieving context for bot {bot_id}: {e}")
             return ""
+
+    @staticmethod
+    async def ingest_pdf(bot_id: str, pdf_path: str) -> bool:
+        """
+        Extracts text from a PDF file and stores it in the Chroma vector database for the bot.
+        """
+        try:
+            logger.info(f"Extracting PDF for bot {bot_id}: {pdf_path}")
+            loader = PyPDFLoader(pdf_path)
+            docs = loader.load()
+            
+            text_splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000, 
+                chunk_overlap=200,
+                separators=["\n\n", "\n", ".", " ", ""]
+            )
+            splits = text_splitter.split_documents(docs)
+            
+            embeddings = get_embeddings()
+            client = get_qdrant_client()
+            collection_name = f"bot_{bot_id}"
+            
+            # Ensure collection exists
+            if not client.collection_exists(collection_name):
+                client.create_collection(
+                    collection_name=collection_name,
+                    vectors_config=VectorParams(size=384, distance=Distance.COSINE),
+                )
+            
+            vectorstore = QdrantVectorStore(
+                client=client,
+                collection_name=collection_name,
+                embedding=embeddings,
+            )
+            vectorstore.add_documents(splits)
+                
+            logger.info(f"Successfully ingested {len(splits)} PDF chunks for bot {bot_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error ingesting PDF for bot {bot_id}: {e}")
+            return False

@@ -1,236 +1,377 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RobovAI Nova - منشئ الشات بوت المخصص</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: "#0F172A",
-                        darker: "#020617",
-                        primary: "#10B981", 
-                        primaryHover: "#059669",
-                        secondary: "#3B82F6",
-                        surface: "rgba(30, 41, 59, 0.7)",
-                    },
-                    fontFamily: {
-                        sans: ['"Tajawal"', 'sans-serif'],
-                    }
-                }
-            }
-        }
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              dark: '#0F172A',
+              darker: '#020617',
+              primary: '#10B981',
+              primaryHover: '#059669',
+              secondary: '#3B82F6',
+              surface: 'rgba(30, 41, 59, 0.7)',
+            },
+            fontFamily: {
+              sans: ['"Tajawal"', 'sans-serif'],
+            },
+          },
+        },
+      };
     </script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
     <style>
-        body { font-family: 'Tajawal', sans-serif; background-color: #020617; color: white; }
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.6);
-            -webkit-backdrop-filter: blur(12px);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 1rem;
-        }
+      body {
+        font-family: 'Tajawal', sans-serif;
+        background-color: #020617;
+        color: white;
+      }
+      .glass-panel {
+        background: rgba(30, 41, 59, 0.6);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 1rem;
+      }
     </style>
-</head>
-<body class="min-h-screen relative overflow-hidden flex flex-col">
+  </head>
+  <body class="min-h-screen relative overflow-hidden flex flex-col">
     <!-- Background Effects -->
     <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[120px]"></div>
+      <div
+        class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]"
+      ></div>
+      <div
+        class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[120px]"
+      ></div>
     </div>
 
     <!-- Navigation -->
-    <nav class="glass-panel mx-4 mt-4 px-6 py-4 flex justify-between items-center relative z-10">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">
-                <i class="fa-solid fa-robot"></i>
-            </div>
-            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-l from-white to-gray-400">
-                RobovAI Nova
-            </span>
+    <nav
+      class="glass-panel mx-4 mt-4 px-6 py-4 flex justify-between items-center relative z-10"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30"
+        >
+          <i class="fa-solid fa-robot"></i>
         </div>
-        <div class="flex gap-4">
-             <a href="account.html" class="text-gray-300 hover:text-white transition-colors duration-200">
-                <i class="fa-solid fa-arrow-right ml-2"></i> العودة للوحة التحكم
-            </a>
-        </div>
+        <span
+          class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-l from-white to-gray-400"
+        >
+          RobovAI Nova
+        </span>
+      </div>
+      <div class="flex gap-4">
+        <a
+          href="/account"
+          class="text-gray-300 hover:text-white transition-colors duration-200"
+        >
+          <i class="fa-solid fa-arrow-right ml-2"></i> العودة للوحة التحكم
+        </a>
+      </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8 relative z-10 z-[1] max-w-6xl">
-        <div class="mb-8 text-center">
-            <h1 class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">منشئ الشات بوت المخصص</h1>
-            <p class="text-gray-400 text-lg">صمم ودرب وادمج الشات بوت الخاص لشركتك بذكاء اصطناعي فائق</p>
-        </div>
+    <main class="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-6xl">
+      <div class="mb-8 text-center">
+        <h1
+          class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
+        >
+          منشئ الشات بوت المخصص
+        </h1>
+        <p class="text-gray-400 text-lg">
+          صمم ودرب وادمج الشات بوت الخاص لشركتك بذكاء اصطناعي فائق
+        </p>
+      </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Form Section -->
-            <div class="lg:col-span-2 glass-panel p-6">
-                <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-2"><i class="fa-solid fa-sliders text-primary ml-2"></i>إعدادات البوت</h2>
-                
-                <form id="botForm" class="space-y-6">
-                    <div>
-                        <label class="block text-gray-300 mb-2 font-medium">اسم البوت (للاستخدام الداخلي)</label>
-                        <input type="text" id="botName" required class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors" placeholder="مثال: بوت خدمة عملاء رواد">
-                    </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Form Section -->
+        <div class="lg:col-span-2 glass-panel p-6">
+          <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
+            <i class="fa-solid fa-sliders text-primary ml-2"></i>إعدادات البوت
+          </h2>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-gray-300 mb-2 font-medium">نوع البوت</label>
-                            <select id="botType" class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary appearance-none">
-                                <option value="hybrid">هجين (قواعد منظمة + ذكاء اصطناعي)</option>
-                                <option value="ai_only">ذكاء اصطناعي فقط</option>
-                                <option value="rules_only">قواعد نصية فقط</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 mb-2 font-medium">مستوى الإبداع (Temperature)</label>
-                            <input type="range" id="botTemp" min="0" max="1" step="0.1" value="0.7" class="w-full mt-2 accent-primary">
-                            <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>احترافي/دقيق (0.0)</span>
-                                <span>ابتكاري (1.0)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-gray-300 mb-2 font-medium">الوصف المختصر</label>
-                        <input type="text" id="botDesc" class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors" placeholder="يستخدم على تيليجرام لحجز المواعيد">
-                    </div>
-
-                    <div>
-                        <label class="block text-gray-300 mb-2 font-medium">موجه النظام (System Prompt) - شخصية البوت</label>
-                        <textarea id="botPrompt" rows="5" required class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors resize-none" placeholder="أنت مساعد ذكي لشركة عقارات. مهمتك الرد بلباقة واقتراح العقارات المتوفرة..."></textarea>
-                    </div>
-
-                    <button type="submit" class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-transform transform hover:scale-[1.02] shadow-lg shadow-primary/20">
-                        <i class="fa-solid fa-save ml-2"></i> حفظ وإنشاء البوت
-                    </button>
-                </form>
+          <form id="botForm" class="space-y-6">
+            <div>
+              <label class="block text-gray-300 mb-2 font-medium"
+                >اسم البوت (للاستخدام الداخلي)</label
+              >
+              <input
+                type="text"
+                id="botName"
+                required
+                class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors"
+                placeholder="مثال: بوت خدمة عملاء رواد"
+              />
             </div>
 
-            <!-- Side Panel (Lists & CRM) -->
-            <div class="space-y-6">
-                <!-- My Bots List -->
-                <div class="glass-panel p-6">
-                    <h2 class="text-xl font-bold mb-4 flex justify-between items-center border-b border-gray-700 pb-2">
-                        <span><i class="fa-solid fa-list-check text-secondary ml-2"></i>البوتات الخاصة بي</span>
-                        <button onclick="loadBots()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-rotate-right"></i></button>
-                    </h2>
-                    <div id="botsList" class="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                        <!-- Bot Items injected here by JS -->
-                        <div class="text-center text-gray-500 py-4">جاري التحميل...</div>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-gray-300 mb-2 font-medium"
+                  >نوع البوت</label
+                >
+                <select
+                  id="botType"
+                  class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary appearance-none"
+                >
+                  <option value="hybrid">
+                    هجين (قواعد منظمة + ذكاء اصطناعي)
+                  </option>
+                  <option value="ai_only">ذكاء اصطناعي فقط</option>
+                  <option value="rules_only">قواعد نصية فقط</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-gray-300 mb-2 font-medium"
+                  >مستوى الإبداع (Temperature)</label
+                >
+                <input
+                  type="range"
+                  id="botTemp"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value="0.7"
+                  class="w-full mt-2 accent-primary"
+                />
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>احترافي/دقيق (0.0)</span>
+                  <span>ابتكاري (1.0)</span>
                 </div>
+              </div>
+            </div>
 
-                <!-- Integration Info -->
-                <div class="glass-panel p-6" id="integrationPanel" style="display: none;">
-                    <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2"><i class="fa-solid fa-link text-primary ml-2"></i>ربط المنصات</h2>
-                    <div class="bg-darker p-4 rounded-lg border border-gray-800 text-sm">
-                        <p class="text-gray-300 mb-2">معرف البوت النشط:</p>
-                        <code id="activeBotId" class="text-primary break-all bg-black/50 px-2 py-1 rounded">--</code>
-                        
-                        <div class="mt-4">
-                            <p class="text-gray-300 mb-2">رابط الويب هوك (Web Widget):</p>
-                            <div class="flex">
-                                <input type="text" id="webhookUrl" readonly class="w-full bg-black/50 border border-gray-700 rounded-r-lg p-2 text-xs text-gray-400 outline-none">
-                                <button onclick="copyWebhook()" class="bg-gray-700 hover:bg-gray-600 text-white px-3 rounded-l-lg transition-colors"><i class="fa-solid fa-copy"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button class="w-full mt-4 border border-blue-500 text-blue-500 hover:bg-blue-500/10 font-bold py-2 px-4 rounded-lg transition-colors text-sm">
-                        <i class="fa-brands fa-telegram ml-2"></i>ربط بـ تيليجرام
-                    </button>
-                </div>
-                
-                <!-- Knowledge Base / Training Info -->
-                <div class="glass-panel p-6" id="trainingPanel" style="display: none;">
-                    <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2"><i class="fa-solid fa-brain text-purple-500 ml-2"></i>تغذية المعرفة (RAG)</h2>
-                    <div class="bg-darker p-4 rounded-lg border border-gray-800 text-sm">
-                        <p class="text-gray-300 mb-2">قم بإدخال رابط موقعك ليقوم البوت بقراءته واستخراج المعلومات للرد منها:</p>
-                        
-                        <div class="mt-4">
-                            <input type="url" id="trainUrl" class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-sm text-white outline-none focus:border-purple-500 transition-colors mb-3" placeholder="https://example.com">
-                            <button onclick="trainBot()" id="trainBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center">
-                                <i class="fa-solid fa-spider ml-2"></i>بدء الفحص والتعلّم (Scrape)
-                            </button>
-                            <p id="trainStatus" class="mt-2 text-xs text-gray-400 text-center"></p>
-                        </div>
-                    </div>
-                </div>
+            <div>
+              <label class="block text-gray-300 mb-2 font-medium"
+                >الوصف المختصر</label
+              >
+              <input
+                type="text"
+                id="botDesc"
+                class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors"
+                placeholder="يستخدم على تيليجرام لحجز المواعيد"
+              />
             </div>
-        </div>
-        
-        <!-- CRM Section (Mockup) -->
-        <div class="mt-8 glass-panel p-6 hidden" id="crmSection">
-            <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-2"><i class="fa-solid fa-users text-primary ml-2"></i>إدارة العملاء (CRM) النشطين</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-right border-collapse">
-                    <thead>
-                        <tr class="text-gray-400 border-b border-gray-700 text-sm">
-                            <th class="p-3">اسم العميل</th>
-                            <th class="p-3">منصة التواصل</th>
-                            <th class="p-3">عدد التفاعلات</th>
-                            <th class="p-3">تاريخ آخر تفاعل</th>
-                        </tr>
-                    </thead>
-                    <tbody id="crmTableBody">
-                        <!-- CRM Data -->
-                    </tbody>
-                </table>
+
+            <div>
+              <label class="block text-gray-300 mb-2 font-medium"
+                >موجه النظام (System Prompt) - شخصية البوت</label
+              >
+              <textarea
+                id="botPrompt"
+                rows="5"
+                required
+                class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors resize-none"
+                placeholder="أنت مساعد ذكي لشركة عقارات. مهمتك الرد بلباقة واقتراح العقارات المتوفرة..."
+              ></textarea>
             </div>
+
+            <button
+              type="submit"
+              class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-transform transform hover:scale-[1.02] shadow-lg shadow-primary/20"
+            >
+              <i class="fa-solid fa-save ml-2"></i> حفظ وإنشاء البوت
+            </button>
+          </form>
         </div>
+
+        <!-- Side Panel (Lists & CRM) -->
+        <div class="space-y-6">
+          <!-- My Bots List -->
+          <div class="glass-panel p-6">
+            <h2
+              class="text-xl font-bold mb-4 flex justify-between items-center border-b border-gray-700 pb-2"
+            >
+              <span
+                ><i class="fa-solid fa-list-check text-secondary ml-2"></i
+                >البوتات الخاصة بي</span
+              >
+              <button
+                onclick="loadBots()"
+                class="text-gray-400 hover:text-white"
+              >
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+            </h2>
+            <div
+              id="botsList"
+              class="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar"
+            >
+              <!-- Bot Items injected here by JS -->
+              <div class="text-center text-gray-500 py-4">جاري التحميل...</div>
+            </div>
+          </div>
+
+          <!-- Integration Info -->
+          <div
+            class="glass-panel p-6"
+            id="integrationPanel"
+            style="display: none"
+          >
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">
+              <i class="fa-solid fa-link text-primary ml-2"></i>ربط المنصات
+            </h2>
+            <div
+              class="bg-darker p-4 rounded-lg border border-gray-800 text-sm"
+            >
+              <p class="text-gray-300 mb-2">معرف البوت النشط:</p>
+              <code
+                id="activeBotId"
+                class="text-primary break-all bg-black/50 px-2 py-1 rounded"
+                >--</code
+              >
+
+              <div class="mt-4">
+                <p class="text-gray-300 mb-2">رابط الويب هوك (Web Widget):</p>
+                <div class="flex">
+                  <input
+                    type="text"
+                    id="webhookUrl"
+                    readonly
+                    class="w-full bg-black/50 border border-gray-700 rounded-r-lg p-2 text-xs text-gray-400 outline-none"
+                  />
+                  <button
+                    onclick="copyWebhook()"
+                    class="bg-gray-700 hover:bg-gray-600 text-white px-3 rounded-l-lg transition-colors"
+                  >
+                    <i class="fa-solid fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              class="w-full mt-4 border border-blue-500 text-blue-500 hover:bg-blue-500/10 font-bold py-2 px-4 rounded-lg transition-colors text-sm"
+            >
+              <i class="fa-brands fa-telegram ml-2"></i>ربط بـ تيليجرام
+            </button>
+          </div>
+
+          <!-- Knowledge Base / Training Info -->
+          <div class="glass-panel p-6" id="trainingPanel" style="display: none">
+            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">
+              <i class="fa-solid fa-brain text-purple-500 ml-2"></i>تغذية
+              المعرفة (RAG)
+            </h2>
+            <div
+              class="bg-darker p-4 rounded-lg border border-gray-800 text-sm"
+            >
+              <p class="text-gray-300 mb-2">
+                قم بإدخال رابط موقعك ليقوم البوت بقراءته واستخراج المعلومات للرد
+                منها:
+              </p>
+
+              <div class="mt-4">
+                <input
+                  type="url"
+                  id="trainUrl"
+                  class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-sm text-white outline-none focus:border-purple-500 transition-colors mb-3"
+                  placeholder="https://example.com"
+                />
+                <button
+                  onclick="trainBot()"
+                  id="trainBtn"
+                  class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center"
+                >
+                  <i class="fa-solid fa-spider ml-2"></i>بدء الفحص والتعلّم
+                  (Scrape)
+                </button>
+                <p
+                  id="trainStatus"
+                  class="mt-2 text-xs text-gray-400 text-center"
+                ></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRM Section (Mockup) -->
+      <div class="mt-8 glass-panel p-6 hidden" id="crmSection">
+        <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
+          <i class="fa-solid fa-users text-primary ml-2"></i>إدارة العملاء (CRM)
+          النشطين
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-right border-collapse">
+            <thead>
+              <tr class="text-gray-400 border-b border-gray-700 text-sm">
+                <th class="p-3">اسم العميل</th>
+                <th class="p-3">منصة التواصل</th>
+                <th class="p-3">عدد التفاعلات</th>
+                <th class="p-3">تاريخ آخر تفاعل</th>
+              </tr>
+            </thead>
+            <tbody id="crmTableBody">
+              <!-- CRM Data -->
+            </tbody>
+          </table>
+        </div>
+      </div>
     </main>
 
     <script>
-        const API_URL = '/api/chatbots';
-        let currentBotId = null;
+      const API_URL = '/api/chatbots';
+      let currentBotId = null;
 
-        // Custom styling for scrollbars
-        const style = document.createElement('style');
-        style.textContent = `
+      // Custom styling for scrollbars
+      const style = document.createElement('style');
+      style.textContent = `
             .custom-scrollbar::-webkit-scrollbar { width: 6px; }
             .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
             .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.5); border-radius: 10px; }
             .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.8); }
         `;
-        document.head.appendChild(style);
+      document.head.appendChild(style);
 
-        // Fetch user bots
-        async function loadBots() {
-            try {
-                const res = await fetch(API_URL, {
-                    headers: { 'Authorization': `Bearer ${getCookie('access_token')}` }
-                });
-                
-                if (res.status === 401) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                const bots = await res.json();
-                const list = document.getElementById('botsList');
-                list.innerHTML = '';
-                
-                if (bots.length === 0) {
-                    list.innerHTML = '<div class="text-center text-gray-500 py-4 text-sm">لا توجد بوتات بعد. قم بإنشاء أول بوت لك!</div>';
-                    return;
-                }
-                
-                bots.forEach(bot => {
-                    const iconColor = bot.bot_type === 'ai_only' ? 'text-purple-400' : (bot.bot_type === 'hybrid' ? 'text-primary' : 'text-gray-400');
-                    list.innerHTML += `
+      // Fetch user bots
+      async function loadBots() {
+        try {
+          const res = await fetch(API_URL, {
+            headers: { Authorization: `Bearer ${getAuthToken()}` },
+          });
+
+          if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+          }
+
+          const bots = await res.json();
+          const list = document.getElementById('botsList');
+          list.innerHTML = '';
+
+          if (bots.length === 0) {
+            list.innerHTML =
+              '<div class="text-center text-gray-500 py-4 text-sm">لا توجد بوتات بعد. قم بإنشاء أول بوت لك!</div>';
+            return;
+          }
+
+          bots.forEach((bot) => {
+            const iconColor =
+              bot.bot_type === 'ai_only'
+                ? 'text-purple-400'
+                : bot.bot_type === 'hybrid'
+                  ? 'text-primary'
+                  : 'text-gray-400';
+            list.innerHTML += `
                         <div onclick="selectBot('${bot.id}')" class="p-3 rounded-lg bg-darker/50 border border-gray-800 hover:border-primary/50 cursor-pointer transition-colors flex items-center justify-between group">
                             <div class="flex items-center gap-3">
                                 <div class="${iconColor} bg-white/5 p-2 rounded-lg">
@@ -244,100 +385,109 @@
                             <i class="fa-solid fa-chevron-left text-gray-600 group-hover:text-primary transition-colors text-xs"></i>
                         </div>
                     `;
-                });
-            } catch (err) {
-                console.error(err);
-            }
+          });
+        } catch (err) {
+          console.error(err);
         }
+      }
 
-        async function selectBot(id) {
-            currentBotId = id;
-            try {
-                const res = await fetch(`${API_URL}/${id}`, {
-                    headers: { 'Authorization': `Bearer ${getCookie('access_token')}` }
-                });
-                const botDetail = await res.json();
-                
-                // Populate Form
-                document.getElementById('botName').value = botDetail.name || '';
-                document.getElementById('botDesc').value = botDetail.description || '';
-                document.getElementById('botType').value = botDetail.bot_type || 'hybrid';
-                document.getElementById('botTemp').value = botDetail.temperature || 0.7;
-                document.getElementById('botPrompt').value = botDetail.system_prompt || '';
-                
-                // Show Integration info
-                document.getElementById('integrationPanel').style.display = 'block';
-                document.getElementById('activeBotId').textContent = botDetail.id;
-                document.getElementById('webhookUrl').value = `${window.location.origin}/webhook/${botDetail.id}/web`;
-                
-                // Load CRM 
-                loadCRM(botDetail.id);
-                document.getElementById('crmSection').style.display = 'block';
-                
-                // Show Training Panel
-                document.getElementById('trainingPanel').style.display = 'block';
-                document.getElementById('trainStatus').textContent = "";
-                
-            } catch (e) { console.error(e); }
+      async function selectBot(id) {
+        currentBotId = id;
+        try {
+          const res = await fetch(`${API_URL}/${id}`, {
+            headers: { Authorization: `Bearer ${getAuthToken()}` },
+          });
+          const botDetail = await res.json();
+
+          // Populate Form
+          document.getElementById('botName').value = botDetail.name || '';
+          document.getElementById('botDesc').value =
+            botDetail.description || '';
+          document.getElementById('botType').value =
+            botDetail.bot_type || 'hybrid';
+          document.getElementById('botTemp').value =
+            botDetail.temperature || 0.7;
+          document.getElementById('botPrompt').value =
+            botDetail.system_prompt || '';
+
+          // Show Integration info
+          document.getElementById('integrationPanel').style.display = 'block';
+          document.getElementById('activeBotId').textContent = botDetail.id;
+          document.getElementById('webhookUrl').value =
+            `${window.location.origin}/webhook/${botDetail.id}/web`;
+
+          // Load CRM
+          loadCRM(botDetail.id);
+          document.getElementById('crmSection').style.display = 'block';
+
+          // Show Training Panel
+          document.getElementById('trainingPanel').style.display = 'block';
+          document.getElementById('trainStatus').textContent = '';
+        } catch (e) {
+          console.error(e);
         }
+      }
 
-        // Form Submit
-        document.getElementById('botForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                name: document.getElementById('botName').value,
-                description: document.getElementById('botDesc').value,
-                bot_type: document.getElementById('botType').value,
-                system_prompt: document.getElementById('botPrompt').value,
-                temperature: parseFloat(document.getElementById('botTemp').value)
-            };
-            
-            const method = currentBotId ? 'PUT' : 'POST';
-            const url = currentBotId ? `${API_URL}/${currentBotId}` : API_URL;
-            
-            try {
-                const res = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getCookie('access_token')}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (res.ok) {
-                    alert('تم الحفظ بنجاح!');
-                    loadBots();
-                    if(!currentBotId) {
-                        const data = await res.json();
-                        selectBot(data.id);
-                    }
-                } else {
-                    alert('حدث خطأ أثناء الحفظ');
-                }
-            } catch(err) {
-                console.error(err);
-                alert('خطأ في الاتصال');
+      // Form Submit
+      document
+        .getElementById('botForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const payload = {
+            name: document.getElementById('botName').value,
+            description: document.getElementById('botDesc').value,
+            bot_type: document.getElementById('botType').value,
+            system_prompt: document.getElementById('botPrompt').value,
+            temperature: parseFloat(document.getElementById('botTemp').value),
+          };
+
+          const method = currentBotId ? 'PUT' : 'POST';
+          const url = currentBotId ? `${API_URL}/${currentBotId}` : API_URL;
+
+          try {
+            const res = await fetch(url, {
+              method: method,
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${getAuthToken()}`,
+              },
+              body: JSON.stringify(payload),
+            });
+
+            if (res.ok) {
+              alert('تم الحفظ بنجاح!');
+              loadBots();
+              if (!currentBotId) {
+                const data = await res.json();
+                selectBot(data.id);
+              }
+            } else {
+              alert('حدث خطأ أثناء الحفظ');
             }
+          } catch (err) {
+            console.error(err);
+            alert('خطأ في الاتصال');
+          }
         });
 
-        async function loadCRM(botId) {
-            try {
-                const res = await fetch(`${API_URL}/${botId}/crm`, {
-                    headers: { 'Authorization': `Bearer ${getCookie('access_token')}` }
-                });
-                const contacts = await res.json();
-                const tbody = document.getElementById('crmTableBody');
-                tbody.innerHTML = '';
-                
-                if(contacts.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">لا يوجد متفاعلين حتى الآن</td></tr>';
-                    return;
-                }
-                
-                contacts.forEach(c => {
-                    const date = new Date(c.last_interaction).toLocaleString('ar-EG');
-                    tbody.innerHTML += `
+      async function loadCRM(botId) {
+        try {
+          const res = await fetch(`${API_URL}/${botId}/crm`, {
+            headers: { Authorization: `Bearer ${getAuthToken()}` },
+          });
+          const contacts = await res.json();
+          const tbody = document.getElementById('crmTableBody');
+          tbody.innerHTML = '';
+
+          if (contacts.length === 0) {
+            tbody.innerHTML =
+              '<tr><td colspan="4" class="p-4 text-center text-gray-500">لا يوجد متفاعلين حتى الآن</td></tr>';
+            return;
+          }
+
+          contacts.forEach((c) => {
+            const date = new Date(c.last_interaction).toLocaleString('ar-EG');
+            tbody.innerHTML += `
                         <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
                             <td class="p-3 font-medium text-gray-200">${escapeHtml(c.name || 'مستخدم غير معروف')}</td>
                             <td class="p-3 text-gray-400 text-sm"><span class="bg-gray-800 px-2 py-1 rounded text-xs border border-gray-700">${c.platform || 'ويب'}</span></td>
@@ -345,75 +495,87 @@
                             <td class="p-3 text-gray-500 text-sm" dir="ltr">${date}</td>
                         </tr>
                     `;
-                });
-            } catch(e) { console.error(e) }
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function copyWebhook() {
+        const copyText = document.getElementById('webhookUrl');
+        copyText.select();
+        document.execCommand('copy');
+        alert('تم نسخ الرابط!');
+      }
+
+      function getAuthToken() {
+        // Use localStorage token (consistent with main app auth)
+        return localStorage.getItem('token') || '';
+      }
+
+      async function trainBot() {
+        if (!currentBotId) return;
+        const urlInput = document.getElementById('trainUrl').value;
+        if (!urlInput) {
+          alert('يرجى إدخال الرابط أولاً!');
+          return;
         }
 
-        function copyWebhook() {
-            const copyText = document.getElementById("webhookUrl");
-            copyText.select();
-            document.execCommand("copy");
-            alert("تم نسخ الرابط!");
-        }
+        const btn = document.getElementById('trainBtn');
+        const status = document.getElementById('trainStatus');
 
-        function getCookie(name) {
-            // Check auth token
-            let val = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-            return val ? val.pop() : '';
-        }
+        btn.disabled = true;
+        btn.innerHTML =
+          '<i class="fa-solid fa-circle-notch fa-spin ml-2"></i> جاري سحب ومعالجة البيانات...';
+        status.textContent = 'قد تستغرق هذه العملية بضع دقائق حسب حجم الموقع.';
+        status.className = 'mt-2 text-xs text-purple-400 text-center';
 
-        async function trainBot() {
-            if (!currentBotId) return;
-            const urlInput = document.getElementById('trainUrl').value;
-            if (!urlInput) {
-                alert('يرجى إدخال الرابط أولاً!');
-                return;
-            }
-            
-            const btn = document.getElementById('trainBtn');
-            const status = document.getElementById('trainStatus');
-            
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin ml-2"></i> جاري سحب ومعالجة البيانات...';
-            status.textContent = "قد تستغرق هذه العملية بضع دقائق حسب حجم الموقع.";
-            status.className = "mt-2 text-xs text-purple-400 text-center";
-            
-            try {
-                const res = await fetch(`${API_URL}/${currentBotId}/train`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${getCookie('access_token')}`
-                    },
-                    body: JSON.stringify({ urls: [urlInput] })
-                });
-                
-                if (res.ok) {
-                    const data = await res.json();
-                    status.textContent = data.message || "تم بنجاح!";
-                    status.className = "mt-2 text-xs text-green-400 text-center font-bold";
-                    document.getElementById('trainUrl').value = '';
-                } else {
-                    const error = await res.json();
-                    status.textContent = error.detail || "فشل السحب.";
-                    status.className = "mt-2 text-xs text-red-400 text-center";
-                }
-            } catch (err) {
-                console.error(err);
-                status.textContent = "حدث خطأ في الاتصال بالخادم.";
-                status.className = "mt-2 text-xs text-red-500 text-center";
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-spider ml-2"></i>بدء الفحص والتعلّم (Scrape)';
-            }
-        }
+        try {
+          const res = await fetch(`${API_URL}/${currentBotId}/train`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${getAuthToken()}`,
+            },
+            body: JSON.stringify({ urls: [urlInput] }),
+          });
 
-        function escapeHtml(unsafe) {
-            return (unsafe||"").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+          if (res.ok) {
+            const data = await res.json();
+            status.textContent = data.message || 'تم بنجاح!';
+            status.className =
+              'mt-2 text-xs text-green-400 text-center font-bold';
+            document.getElementById('trainUrl').value = '';
+          } else {
+            const error = await res.json();
+            status.textContent = error.detail || 'فشل السحب.';
+            status.className = 'mt-2 text-xs text-red-400 text-center';
+          }
+        } catch (err) {
+          console.error(err);
+          status.textContent = 'حدث خطأ في الاتصال بالخادم.';
+          status.className = 'mt-2 text-xs text-red-500 text-center';
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML =
+            '<i class="fa-solid fa-spider ml-2"></i>بدء الفحص والتعلّم (Scrape)';
         }
+      }
 
-        // Init
-        document.addEventListener('DOMContentLoaded', loadBots);
+      function escapeHtml(unsafe) {
+        return (unsafe || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // Init
+      document.addEventListener('DOMContentLoaded', loadBots);
     </script>
-</body>
+    <footer class="text-center py-4 text-gray-600 text-xs opacity-50">
+      &copy; 2026 RobovAI Solutions
+    </footer>
+  </body>
 </html>

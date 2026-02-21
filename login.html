@@ -29,8 +29,9 @@
         font-family: 'Cairo', sans-serif;
         background: var(--bg);
         color: var(--text);
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         background-image: radial-gradient(
@@ -38,6 +39,50 @@
           #1a1a2e 0%,
           #0a0a1a 100%
         );
+        overflow: hidden;
+      }
+
+      /* Animated Background */
+      .bg-effects {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      .bg-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.25;
+        animation: orbFloat 20s infinite ease-in-out;
+      }
+      .bg-orb:nth-child(1) {
+        width: 500px;
+        height: 500px;
+        background: linear-gradient(135deg, var(--primary), transparent);
+        top: -180px;
+        right: -180px;
+      }
+      .bg-orb:nth-child(2) {
+        width: 400px;
+        height: 400px;
+        background: linear-gradient(135deg, var(--secondary), transparent);
+        bottom: -180px;
+        left: -180px;
+        animation-delay: -10s;
+      }
+      @keyframes orbFloat {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        50% {
+          transform: translate(30px, 30px) scale(1.1);
+        }
       }
 
       .auth-card {
@@ -49,6 +94,28 @@
         border: 1px solid var(--border);
         box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
         text-align: center;
+        position: relative;
+        z-index: 1;
+        animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      @keyframes cardEntrance {
+        from {
+          opacity: 0;
+          transform: translateY(30px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .copyright {
+        margin-top: 1.5rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        opacity: 0.6;
+        position: relative;
+        z-index: 1;
       }
 
       .logo {
@@ -205,6 +272,10 @@
     </style>
   </head>
   <body>
+    <div class="bg-effects">
+      <div class="bg-orb"></div>
+      <div class="bg-orb"></div>
+    </div>
     <div class="auth-card">
       <div class="logo">
         <img
@@ -266,6 +337,7 @@
         لا تملك حساباً؟ <a href="/signup">أنشئ حساباً جديداً</a>
       </div>
     </div>
+    <small class="copyright">&copy; 2026 RobovAI Solutions</small>
 
     <script>
       function togglePw() {

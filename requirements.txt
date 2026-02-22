@@ -35,6 +35,8 @@ qdrant-client
 sentence-transformers
 pypdf
 html2text
+apscheduler
+feedparser
 openai==2.17.0
 langsmith==0.6.9
 langgraph-checkpoint-sqlite==3.0.3

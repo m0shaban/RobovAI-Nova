@@ -1,581 +1,1327 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RobovAI Nova - منشئ الشات بوت المخصص</title>
-
-    <!-- Tailwind CSS -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بناء البوتات - RobovAI Nova</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              dark: '#0F172A',
-              darker: '#020617',
-              primary: '#10B981',
-              primaryHover: '#059669',
-              secondary: '#3B82F6',
-              surface: 'rgba(30, 41, 59, 0.7)',
-            },
-            fontFamily: {
-              sans: ['"Tajawal"', 'sans-serif'],
-            },
-          },
-        },
-      };
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0F172A',
+                        darker: '#020617',
+                        primary: '#10B981',
+                        secondary: '#3B82F6',
+                        accent: '#8B5CF6',
+                        surface: '#1E293B',
+                        'surface-light': '#334155',
+                    }
+                }
+            }
+        }
     </script>
-    <!-- Google Fonts -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Font Awesome -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-
     <style>
-      body {
-        font-family: 'Tajawal', sans-serif;
-        background-color: #020617;
-        color: white;
-      }
-      .glass-panel {
-        background: rgba(30, 41, 59, 0.6);
-        -webkit-backdrop-filter: blur(12px);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 1rem;
-      }
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+        * { font-family: 'Tajawal', sans-serif; }
+        body { background: #020617; color: #e2e8f0; min-height: 100vh; overflow-y: auto; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        /* Stepper */
+        .step-item { position: relative; flex: 1; text-align: center; }
+        .step-item::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: -50%;
+            width: 100%;
+            height: 2px;
+            background: #334155;
+            z-index: 0;
+        }
+        .step-item:first-child::before { display: none; }
+        .step-item.active::before, .step-item.completed::before { background: #10B981; }
+        .step-circle {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .step-item .step-circle { background: #334155; color: #94a3b8; }
+        .step-item.active .step-circle { background: #10B981; color: white; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        .step-item.completed .step-circle { background: #10B981; color: white; }
+        
+        /* Animated gradient border */
+        .glow-card {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .glow-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            padding: 1px;
+            background: linear-gradient(135deg, #10B981, #3B82F6, #8B5CF6);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .glow-card:hover::before { opacity: 1; }
+        
+        /* Platform cards */
+        .platform-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .platform-card:hover { transform: translateY(-4px); }
+        .platform-card.connected { border-color: #10B981 !important; }
+        .platform-card.connected::after {
+            content: '✓ متصل';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #10B981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        
+        /* Chat preview */
+        .chat-bubble-bot {
+            background: linear-gradient(135deg, #1E293B, #334155);
+            border-radius: 16px 16px 4px 16px;
+            max-width: 80%;
+        }
+        .chat-bubble-user {
+            background: linear-gradient(135deg, #10B981, #059669);
+            border-radius: 16px 16px 16px 4px;
+            max-width: 80%;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            z-index: 9999;
+            transition: transform 0.4s ease;
+            min-width: 300px;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        
+        /* Tab active */
+        .tab-btn.active { background: #10B981; color: white; }
+        .tab-btn { transition: all 0.2s; }
+        
+        /* Fade sections */
+        .wizard-step { display: none; animation: fadeIn 0.3s ease; }
+        .wizard-step.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Toggle switch */
+        .toggle-switch { position: relative; width: 48px; height: 24px; }
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute; inset: 0; background: #334155; border-radius: 24px; cursor: pointer; transition: 0.3s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white;
+            bottom: 3px; right: 3px; transition: 0.3s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: #10B981; }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(-24px); }
     </style>
-  </head>
-  <body class="min-h-screen relative overflow-hidden flex flex-col">
-    <!-- Background Effects -->
-    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-      <div
-        class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]"
-      ></div>
-      <div
-        class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[120px]"
-      ></div>
+</head>
+<body>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <div class="bg-surface border border-surface-light rounded-xl px-6 py-4 shadow-2xl flex items-center gap-3">
+            <i id="toast-icon" class="fas fa-check-circle text-primary text-xl"></i>
+            <span id="toast-msg" class="text-sm font-medium"></span>
+        </div>
     </div>
 
-    <!-- Navigation -->
-    <nav
-      class="glass-panel mx-4 mt-4 px-6 py-4 flex justify-between items-center relative z-10"
-    >
-      <div class="flex items-center gap-3">
-        <div
-          class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30"
-        >
-          <i class="fa-solid fa-robot"></i>
+    <!-- Top Nav -->
+    <nav class="bg-dark/80 backdrop-blur-xl border-b border-surface-light/30 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/chat" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-arrow-right text-lg"></i>
+                </a>
+                <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+                    <i class="fas fa-robot text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white">بناء البوتات</h1>
+                    <p class="text-xs text-gray-400">أنشئ بوتات ذكية بدون كود</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openNewBotModal()" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2">
+                    <i class="fas fa-plus"></i>
+                    <span class="hidden sm:inline">بوت جديد</span>
+                </button>
+            </div>
         </div>
-        <span
-          class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-l from-white to-gray-400"
-        >
-          RobovAI Nova
-        </span>
-      </div>
-      <div class="flex gap-4">
-        <a
-          href="/account"
-          class="text-gray-300 hover:text-white transition-colors duration-200"
-        >
-          <i class="fa-solid fa-arrow-right ml-2"></i> العودة للوحة التحكم
-        </a>
-      </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-6xl">
-      <div class="mb-8 text-center">
-        <h1
-          class="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary"
-        >
-          منشئ الشات بوت المخصص
-        </h1>
-        <p class="text-gray-400 text-lg">
-          صمم ودرب وادمج الشات بوت الخاص لشركتك بذكاء اصطناعي فائق
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Form Section -->
-        <div class="lg:col-span-2 glass-panel p-6">
-          <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
-            <i class="fa-solid fa-sliders text-primary ml-2"></i>إعدادات البوت
-          </h2>
-
-          <form id="botForm" class="space-y-6">
-            <div>
-              <label class="block text-gray-300 mb-2 font-medium"
-                >اسم البوت (للاستخدام الداخلي)</label
-              >
-              <input
-                type="text"
-                id="botName"
-                required
-                class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors"
-                placeholder="مثال: بوت خدمة عملاء رواد"
-              />
+    <!-- Main Layout -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        <!-- Bot Selection Bar -->
+        <div id="bot-selector" class="mb-6">
+            <div class="flex items-center gap-3 mb-3">
+                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider">البوتات الخاصة بك</h2>
+                <span id="bots-count" class="bg-surface px-2 py-0.5 rounded-full text-xs text-gray-400">0</span>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-gray-300 mb-2 font-medium"
-                  >نوع البوت</label
-                >
-                <select
-                  id="botType"
-                  class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary appearance-none"
-                >
-                  <option value="hybrid">
-                    هجين (قواعد منظمة + ذكاء اصطناعي)
-                  </option>
-                  <option value="ai_only">ذكاء اصطناعي فقط</option>
-                  <option value="rules_only">قواعد نصية فقط</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-gray-300 mb-2 font-medium"
-                  >مستوى الإبداع (Temperature)</label
-                >
-                <input
-                  type="range"
-                  id="botTemp"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value="0.7"
-                  class="w-full mt-2 accent-primary"
-                />
-                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>احترافي/دقيق (0.0)</span>
-                  <span>ابتكاري (1.0)</span>
+            <div id="bots-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <!-- Bot cards rendered here -->
+            </div>
+            <div id="no-bots" class="hidden text-center py-16">
+                <div class="w-20 h-20 bg-surface rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-robot text-3xl text-gray-600"></i>
                 </div>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-gray-300 mb-2 font-medium"
-                >الوصف المختصر</label
-              >
-              <input
-                type="text"
-                id="botDesc"
-                class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors"
-                placeholder="يستخدم على تيليجرام لحجز المواعيد"
-              />
-            </div>
-
-            <div>
-              <label class="block text-gray-300 mb-2 font-medium"
-                >موجه النظام (System Prompt) - شخصية البوت</label
-              >
-              <textarea
-                id="botPrompt"
-                rows="5"
-                required
-                class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:border-primary transition-colors resize-none"
-                placeholder="أنت مساعد ذكي لشركة عقارات. مهمتك الرد بلباقة واقتراح العقارات المتوفرة..."
-              ></textarea>
-            </div>
-
-            <button
-              type="submit"
-              class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-transform transform hover:scale-[1.02] shadow-lg shadow-primary/20"
-            >
-              <i class="fa-solid fa-save ml-2"></i> حفظ وإنشاء البوت
-            </button>
-          </form>
-        </div>
-
-        <!-- Side Panel (Lists & CRM) -->
-        <div class="space-y-6">
-          <!-- My Bots List -->
-          <div class="glass-panel p-6">
-            <h2
-              class="text-xl font-bold mb-4 flex justify-between items-center border-b border-gray-700 pb-2"
-            >
-              <span
-                ><i class="fa-solid fa-list-check text-secondary ml-2"></i
-                >البوتات الخاصة بي</span
-              >
-              <button
-                onclick="loadBots()"
-                class="text-gray-400 hover:text-white"
-              >
-                <i class="fa-solid fa-rotate-right"></i>
-              </button>
-            </h2>
-            <div
-              id="botsList"
-              class="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar"
-            >
-              <!-- Bot Items injected here by JS -->
-              <div class="text-center text-gray-500 py-4">جاري التحميل...</div>
-            </div>
-          </div>
-
-          <!-- Integration Info -->
-          <div
-            class="glass-panel p-6"
-            id="integrationPanel"
-            style="display: none"
-          >
-            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">
-              <i class="fa-solid fa-link text-primary ml-2"></i>ربط المنصات
-            </h2>
-            <div
-              class="bg-darker p-4 rounded-lg border border-gray-800 text-sm"
-            >
-              <p class="text-gray-300 mb-2">معرف البوت النشط:</p>
-              <code
-                id="activeBotId"
-                class="text-primary break-all bg-black/50 px-2 py-1 rounded"
-                >--</code
-              >
-
-              <div class="mt-4">
-                <p class="text-gray-300 mb-2">رابط الويب هوك (Web Widget):</p>
-                <div class="flex">
-                  <input
-                    type="text"
-                    id="webhookUrl"
-                    readonly
-                    class="w-full bg-black/50 border border-gray-700 rounded-r-lg p-2 text-xs text-gray-400 outline-none"
-                  />
-                  <button
-                    onclick="copyWebhook()"
-                    class="bg-gray-700 hover:bg-gray-600 text-white px-3 rounded-l-lg transition-colors"
-                  >
-                    <i class="fa-solid fa-copy"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <button
-              class="w-full mt-4 border border-blue-500 text-blue-500 hover:bg-blue-500/10 font-bold py-2 px-4 rounded-lg transition-colors text-sm"
-            >
-              <i class="fa-brands fa-telegram ml-2"></i>ربط بـ تيليجرام
-            </button>
-          </div>
-
-          <!-- Knowledge Base / Training Info -->
-          <div class="glass-panel p-6" id="trainingPanel" style="display: none">
-            <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">
-              <i class="fa-solid fa-brain text-purple-500 ml-2"></i>تغذية
-              المعرفة (RAG)
-            </h2>
-            <div
-              class="bg-darker p-4 rounded-lg border border-gray-800 text-sm"
-            >
-              <p class="text-gray-300 mb-2">
-                قم بإدخال رابط موقعك ليقوم البوت بقراءته واستخراج المعلومات للرد
-                منها:
-              </p>
-
-              <div class="mt-4">
-                <input
-                  type="url"
-                  id="trainUrl"
-                  class="w-full bg-black/50 border border-gray-700 rounded-lg p-3 text-sm text-white outline-none focus:border-purple-500 transition-colors mb-3"
-                  placeholder="https://example.com"
-                />
-                <button
-                  onclick="trainBot()"
-                  id="trainBtn"
-                  class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center"
-                >
-                  <i class="fa-solid fa-spider ml-2"></i>بدء الفحص والتعلّم
-                  (Scrape)
+                <h3 class="text-xl font-bold text-white mb-2">لا توجد بوتات بعد</h3>
+                <p class="text-gray-400 mb-6">ابدأ بإنشاء أول بوت ذكي لك</p>
+                <button onclick="openNewBotModal()" class="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl font-bold transition">
+                    <i class="fas fa-plus ml-2"></i>إنشاء بوت جديد
                 </button>
-                <p
-                  id="trainStatus"
-                  class="mt-2 text-xs text-gray-400 text-center"
-                ></p>
-              </div>
             </div>
-          </div>
         </div>
-      </div>
 
-      <!-- CRM Section (Mockup) -->
-      <div class="mt-8 glass-panel p-6 hidden" id="crmSection">
-        <h2 class="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
-          <i class="fa-solid fa-users text-primary ml-2"></i>إدارة العملاء (CRM)
-          النشطين
-        </h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-right border-collapse">
-            <thead>
-              <tr class="text-gray-400 border-b border-gray-700 text-sm">
-                <th class="p-3">اسم العميل</th>
-                <th class="p-3">منصة التواصل</th>
-                <th class="p-3">عدد التفاعلات</th>
-                <th class="p-3">تاريخ آخر تفاعل</th>
-              </tr>
-            </thead>
-            <tbody id="crmTableBody">
-              <!-- CRM Data -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
+        <!-- Bot Editor (hidden until a bot is selected) -->
+        <div id="bot-editor" class="hidden">
+            <!-- Stepper -->
+            <div class="bg-dark/50 rounded-2xl p-4 mb-6 border border-surface-light/20">
+                <div class="flex items-center" id="stepper">
+                    <div class="step-item active" data-step="1" onclick="goToStep(1)">
+                        <div class="step-circle">1</div>
+                        <p class="text-xs mt-1 text-gray-400">الإعدادات</p>
+                    </div>
+                    <div class="step-item" data-step="2" onclick="goToStep(2)">
+                        <div class="step-circle">2</div>
+                        <p class="text-xs mt-1 text-gray-400">الشخصية</p>
+                    </div>
+                    <div class="step-item" data-step="3" onclick="goToStep(3)">
+                        <div class="step-circle">3</div>
+                        <p class="text-xs mt-1 text-gray-400">قاعدة المعرفة</p>
+                    </div>
+                    <div class="step-item" data-step="4" onclick="goToStep(4)">
+                        <div class="step-circle">4</div>
+                        <p class="text-xs mt-1 text-gray-400">المنصات</p>
+                    </div>
+                    <div class="step-item" data-step="5" onclick="goToStep(5)">
+                        <div class="step-circle">5</div>
+                        <p class="text-xs mt-1 text-gray-400">النشر</p>
+                    </div>
+                </div>
+            </div>
 
-    <script>
-      const API_URL = '/api/chatbots';
-      let currentBotId = null;
-
-      // Custom styling for scrollbars
-      const style = document.createElement('style');
-      style.textContent = `
-            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-            .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.5); border-radius: 10px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.8); }
-        `;
-      document.head.appendChild(style);
-
-      // Fetch user bots
-      async function loadBots() {
-        try {
-          const res = await fetch(API_URL, {
-            headers: { Authorization: `Bearer ${getAuthToken()}` },
-          });
-
-          if (res.status === 401) {
-            window.location.href = '/login';
-            return;
-          }
-
-          const bots = await res.json();
-          const list = document.getElementById('botsList');
-          list.innerHTML = '';
-
-          if (bots.length === 0) {
-            list.innerHTML =
-              '<div class="text-center text-gray-500 py-4 text-sm">لا توجد بوتات بعد. قم بإنشاء أول بوت لك!</div>';
-            return;
-          }
-
-          bots.forEach((bot) => {
-            const iconColor =
-              bot.bot_type === 'ai_only'
-                ? 'text-purple-400'
-                : bot.bot_type === 'hybrid'
-                  ? 'text-primary'
-                  : 'text-gray-400';
-            list.innerHTML += `
-                        <div onclick="selectBot('${bot.id}')" class="p-3 rounded-lg bg-darker/50 border border-gray-800 hover:border-primary/50 cursor-pointer transition-colors flex items-center justify-between group">
-                            <div class="flex items-center gap-3">
-                                <div class="${iconColor} bg-white/5 p-2 rounded-lg">
-                                    <i class="fa-solid fa-robot"></i>
+            <!-- ========== STEP 1: Basic Settings ========== -->
+            <div class="wizard-step active" id="step-1">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="glow-card bg-surface rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <i class="fas fa-cog text-primary"></i> الإعدادات الأساسية
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">اسم البوت <span class="text-red-400">*</span></label>
+                                    <input id="bot-name" type="text" placeholder="مثال: بوت خدمة العملاء" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition">
                                 </div>
                                 <div>
-                                    <div class="font-bold text-sm text-gray-200">${escapeHtml(bot.name)}</div>
-                                    <div class="text-xs text-gray-500">${bot.bot_type}</div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">الوصف</label>
+                                    <textarea id="bot-desc" rows="3" placeholder="وصف مختصر لوظيفة البوت..." class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none"></textarea>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-1">نوع البوت</label>
+                                        <select id="bot-type" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white focus:border-primary outline-none transition">
+                                            <option value="hybrid">هجين (ذكاء اصطناعي + قواعد)</option>
+                                            <option value="ai">ذكاء اصطناعي بالكامل</option>
+                                            <option value="rules">قائم على القواعد</option>
+                                            <option value="support">دعم فني</option>
+                                            <option value="sales">مبيعات</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-1">اللغة الافتراضية</label>
+                                        <select id="bot-lang" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white focus:border-primary outline-none transition">
+                                            <option value="ar">العربية</option>
+                                            <option value="en">English</option>
+                                            <option value="both">ثنائي اللغة</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                                        درجة الإبداع: <span id="temp-value" class="text-primary font-bold">0.7</span>
+                                    </label>
+                                    <input id="bot-temp" type="range" min="0" max="1" step="0.1" value="0.7" class="w-full accent-primary" oninput="document.getElementById('temp-value').textContent = this.value">
+                                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>دقيق ومحدد</span>
+                                        <span>إبداعي ومتنوع</span>
+                                    </div>
                                 </div>
                             </div>
-                            <i class="fa-solid fa-chevron-left text-gray-600 group-hover:text-primary transition-colors text-xs"></i>
                         </div>
-                    `;
-          });
-        } catch (err) {
-          console.error(err);
+                    </div>
+                    <!-- Side Info -->
+                    <div class="space-y-4">
+                        <div class="bg-surface rounded-2xl p-5 border border-surface-light/20">
+                            <h4 class="font-bold text-white mb-3 flex items-center gap-2">
+                                <i class="fas fa-lightbulb text-yellow-400"></i> نصائح
+                            </h4>
+                            <ul class="space-y-2 text-sm text-gray-400">
+                                <li class="flex items-start gap-2"><i class="fas fa-check text-primary mt-1 text-xs"></i> اختر اسمًا واضحًا يعكس وظيفة البوت</li>
+                                <li class="flex items-start gap-2"><i class="fas fa-check text-primary mt-1 text-xs"></i> البوت الهجين يجمع بين الذكاء الاصطناعي والقواعد الثابتة</li>
+                                <li class="flex items-start gap-2"><i class="fas fa-check text-primary mt-1 text-xs"></i> درجة إبداع أقل = ردود أدق وأكثر اتساقًا</li>
+                            </ul>
+                        </div>
+                        <div id="bot-stats-card" class="bg-surface rounded-2xl p-5 border border-surface-light/20 hidden">
+                            <h4 class="font-bold text-white mb-3 flex items-center gap-2">
+                                <i class="fas fa-chart-bar text-secondary"></i> إحصائيات
+                            </h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-dark rounded-xl p-3 text-center">
+                                    <div id="stat-contacts" class="text-2xl font-bold text-primary">0</div>
+                                    <div class="text-xs text-gray-400">جهات اتصال</div>
+                                </div>
+                                <div class="bg-dark rounded-xl p-3 text-center">
+                                    <div id="stat-platforms" class="text-2xl font-bold text-secondary">0</div>
+                                    <div class="text-xs text-gray-400">منصات</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== STEP 2: Personality & Responses ========== -->
+            <div class="wizard-step" id="step-2">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-6">
+                        <div class="glow-card bg-surface rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <i class="fas fa-brain text-accent"></i> شخصية البوت
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">تعليمات النظام (System Prompt) <span class="text-red-400">*</span></label>
+                                    <textarea id="system-prompt" rows="6" placeholder="أنت مساعد ذكي لخدمة العملاء. تتحدث بالعربية الفصحى. ترد بشكل مهذب ومهني..." class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"></textarea>
+                                    <p class="text-xs text-gray-500 mt-1">هذا النص يحدد شخصية وسلوك البوت في كل المحادثات</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">رسالة الترحيب</label>
+                                    <textarea id="welcome-msg" rows="2" placeholder="مرحبًا! 👋 أنا هنا لمساعدتك. كيف يمكنني خدمتك؟" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">رسالة عدم الفهم (Fallback)</label>
+                                    <textarea id="fallback-msg" rows="2" placeholder="عذرًا، لم أفهم سؤالك. هل يمكنك إعادة صياغته؟" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Replies -->
+                        <div class="glow-card bg-surface rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <i class="fas fa-reply text-secondary"></i> الردود السريعة
+                            </h3>
+                            <div id="quick-replies" class="space-y-2 mb-3">
+                                <!-- rendered dynamically -->
+                            </div>
+                            <div class="flex gap-2">
+                                <input id="new-quick-reply" type="text" placeholder="أضف رد سريع..." class="flex-1 bg-dark border border-surface-light rounded-xl px-4 py-2 text-white placeholder-gray-500 text-sm focus:border-primary outline-none transition">
+                                <button onclick="addQuickReply()" class="bg-secondary hover:bg-secondary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live Preview -->
+                    <div>
+                        <div class="bg-surface rounded-2xl border border-surface-light/20 overflow-hidden sticky top-24">
+                            <div class="bg-gradient-to-r from-primary/20 to-secondary/20 px-5 py-3 border-b border-surface-light/20">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                        <i class="fas fa-robot text-white text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <h4 id="preview-name" class="text-sm font-bold text-white">البوت</h4>
+                                        <p class="text-xs text-green-400">متصل الآن</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="chat-preview" class="p-4 space-y-3 min-h-[300px] max-h-[400px] overflow-y-auto">
+                                <div class="chat-bubble-bot p-3">
+                                    <p class="text-sm text-gray-200" id="preview-welcome">مرحبًا! 👋 أنا هنا لمساعدتك.</p>
+                                </div>
+                            </div>
+                            <div class="border-t border-surface-light/20 p-3">
+                                <div class="flex gap-2">
+                                    <input id="preview-input" type="text" placeholder="اكتب رسالة تجريبية..." class="flex-1 bg-dark border border-surface-light rounded-xl px-3 py-2 text-white text-sm placeholder-gray-500 outline-none focus:border-primary transition" onkeydown="if(event.key==='Enter')testChat()">
+                                    <button onclick="testChat()" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                                <div id="quick-reply-chips" class="flex flex-wrap gap-2 mt-2">
+                                    <!-- quick reply buttons -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== STEP 3: Knowledge Base ========== -->
+            <div class="wizard-step" id="step-3">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- URL Training (RAG) -->
+                    <div class="glow-card bg-surface rounded-2xl p-6">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-globe text-primary"></i> تدريب من المواقع
+                        </h3>
+                        <p class="text-sm text-gray-400 mb-4">أدخل روابط المواقع التي يتعلم منها البوت</p>
+                        <div id="training-urls" class="space-y-2 mb-3">
+                            <div class="flex gap-2 url-row">
+                                <input type="url" placeholder="https://example.com" class="train-url flex-1 bg-dark border border-surface-light rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition">
+                                <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 px-2"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mb-4">
+                            <button onclick="addUrlRow()" class="flex-1 bg-dark border border-dashed border-surface-light rounded-xl py-2 text-gray-400 hover:text-white hover:border-primary transition text-sm">
+                                <i class="fas fa-plus ml-1"></i> إضافة رابط
+                            </button>
+                        </div>
+                        <button onclick="trainBot()" id="train-btn" class="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                            <i class="fas fa-graduation-cap"></i> بدء التدريب
+                        </button>
+                        <div id="train-progress" class="hidden mt-3">
+                            <div class="bg-dark rounded-full h-2 overflow-hidden">
+                                <div class="bg-gradient-to-r from-primary to-secondary h-full rounded-full animate-pulse" style="width: 100%"></div>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1 text-center">جاري التدريب...</p>
+                        </div>
+                    </div>
+
+                    <!-- Q&A Builder -->
+                    <div class="glow-card bg-surface rounded-2xl p-6">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <i class="fas fa-comments text-accent"></i> أسئلة وأجوبة مخصصة
+                        </h3>
+                        <p class="text-sm text-gray-400 mb-4">أضف أسئلة وأجوبة يحفظها البوت</p>
+                        <div id="qa-list" class="space-y-3 mb-4 max-h-[300px] overflow-y-auto">
+                            <!-- QA items rendered here -->
+                        </div>
+                        <div class="space-y-2 bg-dark rounded-xl p-3">
+                            <input id="qa-question" type="text" placeholder="السؤال: ما هي ساعات العمل؟" class="w-full bg-surface border border-surface-light rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition">
+                            <textarea id="qa-answer" rows="2" placeholder="الإجابة: ساعات العمل من 9 صباحاً إلى 5 مساءً" class="w-full bg-surface border border-surface-light rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition resize-none"></textarea>
+                            <button onclick="addQA()" class="w-full bg-accent hover:bg-accent/80 text-white py-2 rounded-lg text-sm font-bold transition">
+                                <i class="fas fa-plus ml-1"></i> إضافة سؤال وجواب
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== STEP 4: Platform Integrations ========== -->
+            <div class="wizard-step" id="step-4">
+                <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                    <i class="fas fa-plug text-secondary"></i> ربط المنصات
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <!-- Telegram -->
+                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-blue-400/50" id="platform-telegram" onclick="showPlatformSetup('telegram')">
+                        <div class="w-12 h-12 bg-[#229ED9]/20 rounded-xl flex items-center justify-center mb-3">
+                            <i class="fab fa-telegram text-[#229ED9] text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-1">تيليجرام</h4>
+                        <p class="text-xs text-gray-400">اربط بوتك بتيليجرام عبر BotFather</p>
+                    </div>
+                    <!-- Website Widget -->
+                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-primary/50" id="platform-web" onclick="showPlatformSetup('web')">
+                        <div class="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center mb-3">
+                            <i class="fas fa-globe text-primary text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-1">ويدجت الموقع</h4>
+                        <p class="text-xs text-gray-400">أضف البوت مباشرة لموقعك الإلكتروني</p>
+                    </div>
+                    <!-- WhatsApp -->
+                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-green-400/50" id="platform-whatsapp" onclick="showPlatformSetup('whatsapp')">
+                        <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-3">
+                            <i class="fab fa-whatsapp text-green-500 text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-1">واتساب</h4>
+                        <p class="text-xs text-gray-400">WhatsApp Business API</p>
+                    </div>
+                    <!-- Facebook -->
+                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-blue-500/50" id="platform-facebook" onclick="showPlatformSetup('facebook')">
+                        <div class="w-12 h-12 bg-[#1877F2]/20 rounded-xl flex items-center justify-center mb-3">
+                            <i class="fab fa-facebook-messenger text-[#1877F2] text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-1">فيسبوك ماسنجر</h4>
+                        <p class="text-xs text-gray-400">Page Access Token</p>
+                    </div>
+                    <!-- Instagram -->
+                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-pink-400/50" id="platform-instagram" onclick="showPlatformSetup('instagram')">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center mb-3">
+                            <i class="fab fa-instagram text-pink-400 text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-1">إنستاجرام</h4>
+                        <p class="text-xs text-gray-400">Instagram Messaging API</p>
+                    </div>
+                    <!-- Custom API -->
+                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-accent/50" id="platform-api" onclick="showPlatformSetup('api')">
+                        <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center mb-3">
+                            <i class="fas fa-code text-accent text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-white mb-1">API مخصص</h4>
+                        <p class="text-xs text-gray-400">Webhook & REST API</p>
+                    </div>
+                </div>
+
+                <!-- Platform Setup Modal (inline) -->
+                <div id="platform-setup" class="hidden bg-surface rounded-2xl p-6 border border-surface-light/30">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 id="platform-setup-title" class="text-lg font-bold text-white flex items-center gap-2"></h4>
+                        <button onclick="closePlatformSetup()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div id="platform-setup-body"></div>
+                </div>
+            </div>
+
+            <!-- ========== STEP 5: Deploy & CRM ========== -->
+            <div class="wizard-step" id="step-5">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Bot Summary -->
+                        <div class="glow-card bg-surface rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <i class="fas fa-rocket text-primary"></i> ملخص البوت
+                            </h3>
+                            <div id="bot-summary" class="space-y-3">
+                                <!-- rendered dynamically -->
+                            </div>
+                            <div class="flex gap-3 mt-6">
+                                <button onclick="saveBotSettings()" class="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                                    <i class="fas fa-save"></i> حفظ التغييرات
+                                </button>
+                                <button onclick="deleteBotConfirm()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-5 py-3 rounded-xl font-bold transition">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CRM -->
+                        <div class="glow-card bg-surface rounded-2xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                    <i class="fas fa-users text-secondary"></i> جهات الاتصال (CRM)
+                                </h3>
+                                <button onclick="loadCRM()" class="text-sm text-primary hover:text-primary/80 transition">
+                                    <i class="fas fa-refresh ml-1"></i> تحديث
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="border-b border-surface-light text-gray-400">
+                                            <th class="text-right py-2 px-3">الاسم</th>
+                                            <th class="text-right py-2 px-3">الهاتف</th>
+                                            <th class="text-right py-2 px-3">المنصة</th>
+                                            <th class="text-right py-2 px-3">التفاعلات</th>
+                                            <th class="text-right py-2 px-3">آخر تواصل</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="crm-table">
+                                        <tr><td colspan="5" class="text-center py-8 text-gray-500">لا توجد جهات اتصال بعد</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Sidebar -->
+                    <div class="space-y-4">
+                        <div class="bg-surface rounded-2xl p-5 border border-surface-light/20">
+                            <h4 class="font-bold text-white mb-4 flex items-center gap-2">
+                                <i class="fas fa-chart-pie text-primary"></i> تحليلات
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-users text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <div id="analytics-contacts" class="text-xl font-bold text-white">0</div>
+                                        <div class="text-xs text-gray-400">إجمالي جهات الاتصال</div>
+                                    </div>
+                                </div>
+                                <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-comments text-secondary"></i>
+                                    </div>
+                                    <div>
+                                        <div id="analytics-interactions" class="text-xl font-bold text-white">0</div>
+                                        <div class="text-xs text-gray-400">إجمالي التفاعلات</div>
+                                    </div>
+                                </div>
+                                <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-plug text-accent"></i>
+                                    </div>
+                                    <div>
+                                        <div id="analytics-platforms" class="text-xl font-bold text-white">0</div>
+                                        <div class="text-xs text-gray-400">منصات متصلة</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Webhook Info -->
+                        <div class="bg-surface rounded-2xl p-5 border border-surface-light/20">
+                            <h4 class="font-bold text-white mb-3 flex items-center gap-2">
+                                <i class="fas fa-link text-primary"></i> Webhook URL
+                            </h4>
+                            <div class="bg-dark rounded-lg p-3 flex items-center gap-2">
+                                <code id="webhook-url" class="text-xs text-primary flex-1 break-all" dir="ltr">—</code>
+                                <button onclick="copyWebhook()" class="text-gray-400 hover:text-white transition"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex items-center justify-between mt-6 pb-8">
+                <button id="prev-btn" onclick="prevStep()" class="hidden bg-surface hover:bg-surface-light text-white px-6 py-3 rounded-xl font-bold transition flex items-center gap-2">
+                    <i class="fas fa-arrow-right"></i> السابق
+                </button>
+                <div></div>
+                <button id="next-btn" onclick="nextStep()" class="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl font-bold transition flex items-center gap-2">
+                    التالي <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Bot Modal -->
+    <div id="new-bot-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-surface rounded-2xl p-6 w-full max-w-md border border-surface-light/30">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <i class="fas fa-plus-circle text-primary"></i> إنشاء بوت جديد
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">اسم البوت <span class="text-red-400">*</span></label>
+                    <input id="modal-bot-name" type="text" placeholder="بوت خدمة العملاء" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">تعليمات النظام <span class="text-red-400">*</span></label>
+                    <textarea id="modal-system-prompt" rows="3" placeholder="أنت مساعد ذكي لخدمة العملاء..." class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary outline-none transition resize-none text-sm"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-5">
+                <button onclick="createNewBot()" class="flex-1 bg-primary hover:bg-primary/80 text-white py-3 rounded-xl font-bold transition">إنشاء</button>
+                <button onclick="closeNewBotModal()" class="bg-dark hover:bg-surface-light text-gray-300 px-5 py-3 rounded-xl font-bold transition">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ JAVASCRIPT ============ -->
+    <script>
+        const API_URL = '/api/chatbots';
+        let currentBotId = null;
+        let currentStep = 1;
+        let quickReplies = [];
+        let qaList = [];
+        let connectedPlatforms = {};
+        let allBots = [];
+
+        // ---- Auth ----
+        function getAuthToken() {
+            return localStorage.getItem('token') || localStorage.getItem('auth_token');
         }
-      }
-
-      async function selectBot(id) {
-        currentBotId = id;
-        try {
-          const res = await fetch(`${API_URL}/${id}`, {
-            headers: { Authorization: `Bearer ${getAuthToken()}` },
-          });
-          const botDetail = await res.json();
-
-          // Populate Form
-          document.getElementById('botName').value = botDetail.name || '';
-          document.getElementById('botDesc').value =
-            botDetail.description || '';
-          document.getElementById('botType').value =
-            botDetail.bot_type || 'hybrid';
-          document.getElementById('botTemp').value =
-            botDetail.temperature || 0.7;
-          document.getElementById('botPrompt').value =
-            botDetail.system_prompt || '';
-
-          // Show Integration info
-          document.getElementById('integrationPanel').style.display = 'block';
-          document.getElementById('activeBotId').textContent = botDetail.id;
-          document.getElementById('webhookUrl').value =
-            `${window.location.origin}/webhook/${botDetail.id}/web`;
-
-          // Load CRM
-          loadCRM(botDetail.id);
-          document.getElementById('crmSection').style.display = 'block';
-
-          // Show Training Panel
-          document.getElementById('trainingPanel').style.display = 'block';
-          document.getElementById('trainStatus').textContent = '';
-        } catch (e) {
-          console.error(e);
+        function authHeaders() {
+            const token = getAuthToken();
+            if (!token) { window.location.href = '/login'; return {}; }
+            return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
         }
-      }
 
-      // Form Submit
-      document
-        .getElementById('botForm')
-        .addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const payload = {
-            name: document.getElementById('botName').value,
-            description: document.getElementById('botDesc').value,
-            bot_type: document.getElementById('botType').value,
-            system_prompt: document.getElementById('botPrompt').value,
-            temperature: parseFloat(document.getElementById('botTemp').value),
-          };
+        // ---- Toast ----
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msgEl = document.getElementById('toast-msg');
+            msgEl.textContent = msg;
+            icon.className = type === 'success' ? 'fas fa-check-circle text-primary text-xl' :
+                             type === 'error' ? 'fas fa-times-circle text-red-400 text-xl' :
+                             'fas fa-info-circle text-secondary text-xl';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
 
-          const method = currentBotId ? 'PUT' : 'POST';
-          const url = currentBotId ? `${API_URL}/${currentBotId}` : API_URL;
+        // ---- Escape HTML ----
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
 
-          try {
-            const res = await fetch(url, {
-              method: method,
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${getAuthToken()}`,
-              },
-              body: JSON.stringify(payload),
-            });
-
-            if (res.ok) {
-              alert('تم الحفظ بنجاح!');
-              loadBots();
-              if (!currentBotId) {
-                const data = await res.json();
-                selectBot(data.id);
-              }
-            } else {
-              alert('حدث خطأ أثناء الحفظ');
+        // ---- Load Bots ----
+        async function loadBots() {
+            try {
+                const res = await fetch(API_URL, { headers: authHeaders() });
+                if (res.status === 401) { window.location.href = '/login'; return; }
+                allBots = await res.json();
+                renderBotsList();
+            } catch(e) {
+                showToast('فشل في تحميل البوتات', 'error');
             }
-          } catch (err) {
-            console.error(err);
-            alert('خطأ في الاتصال');
-          }
-        });
+        }
 
-      async function loadCRM(botId) {
-        try {
-          const res = await fetch(`${API_URL}/${botId}/crm`, {
-            headers: { Authorization: `Bearer ${getAuthToken()}` },
-          });
-          const contacts = await res.json();
-          const tbody = document.getElementById('crmTableBody');
-          tbody.innerHTML = '';
+        function renderBotsList() {
+            const grid = document.getElementById('bots-grid');
+            const noBots = document.getElementById('no-bots');
+            document.getElementById('bots-count').textContent = allBots.length;
+            
+            if (allBots.length === 0) {
+                grid.classList.add('hidden');
+                noBots.classList.remove('hidden');
+                return;
+            }
+            grid.classList.remove('hidden');
+            noBots.classList.add('hidden');
+            
+            grid.innerHTML = allBots.map(bot => `
+                <div onclick="selectBot('${bot.id}')" class="cursor-pointer bg-surface hover:bg-surface-light rounded-xl p-4 border transition ${currentBotId === bot.id ? 'border-primary shadow-lg shadow-primary/10' : 'border-surface-light/20 hover:border-surface-light'}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-primary/30 to-secondary/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-primary"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-sm font-bold text-white truncate">${escapeHtml(bot.name)}</h4>
+                            <p class="text-xs text-gray-400">${bot.bot_type || 'hybrid'}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-          if (contacts.length === 0) {
-            tbody.innerHTML =
-              '<tr><td colspan="4" class="p-4 text-center text-gray-500">لا يوجد متفاعلين حتى الآن</td></tr>';
-            return;
-          }
+        // ---- Select Bot ----
+        async function selectBot(botId) {
+            currentBotId = botId;
+            renderBotsList();
+            document.getElementById('bot-editor').classList.remove('hidden');
+            
+            try {
+                const res = await fetch(`${API_URL}/${botId}`, { headers: authHeaders() });
+                const bot = await res.json();
+                
+                // Populate Step 1
+                document.getElementById('bot-name').value = bot.name || '';
+                document.getElementById('bot-desc').value = bot.description || '';
+                document.getElementById('bot-type').value = bot.bot_type || 'hybrid';
+                document.getElementById('bot-temp').value = bot.temperature ?? 0.7;
+                document.getElementById('temp-value').textContent = bot.temperature ?? 0.7;
+                
+                // Populate Step 2
+                document.getElementById('system-prompt').value = bot.system_prompt || '';
+                document.getElementById('preview-name').textContent = bot.name || 'البوت';
+                
+                // Stats
+                const stats = bot.crm_stats || {};
+                const integrations = bot.integrations || [];
+                document.getElementById('stat-contacts').textContent = stats.total_contacts || 0;
+                document.getElementById('stat-platforms').textContent = integrations.length;
+                document.getElementById('bot-stats-card').classList.remove('hidden');
+                document.getElementById('analytics-contacts').textContent = stats.total_contacts || 0;
+                document.getElementById('analytics-platforms').textContent = integrations.length;
+                
+                // Mark connected platforms
+                connectedPlatforms = {};
+                document.querySelectorAll('.platform-card').forEach(c => c.classList.remove('connected'));
+                integrations.forEach(intg => {
+                    connectedPlatforms[intg.platform] = intg;
+                    const card = document.getElementById(`platform-${intg.platform}`);
+                    if (card) card.classList.add('connected');
+                });
+                
+                // Webhook URL
+                const base = window.location.origin;
+                document.getElementById('webhook-url').textContent = `${base}/webhook/${botId}/web`;
+                
+                // Bot Summary
+                renderSummary(bot);
+                
+                // Load CRM
+                loadCRM();
+                
+                goToStep(1);
+            } catch(e) {
+                showToast('فشل في تحميل بيانات البوت', 'error');
+            }
+        }
 
-          contacts.forEach((c) => {
-            const date = new Date(c.last_interaction).toLocaleString('ar-EG');
-            tbody.innerHTML += `
-                        <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
-                            <td class="p-3 font-medium text-gray-200">${escapeHtml(c.name || 'مستخدم غير معروف')}</td>
-                            <td class="p-3 text-gray-400 text-sm"><span class="bg-gray-800 px-2 py-1 rounded text-xs border border-gray-700">${c.platform || 'ويب'}</span></td>
-                            <td class="p-3 text-primary font-bold">${c.interactions_count}</td>
-                            <td class="p-3 text-gray-500 text-sm" dir="ltr">${date}</td>
+        // ---- Create Bot ----
+        function openNewBotModal() { document.getElementById('new-bot-modal').classList.remove('hidden'); }
+        function closeNewBotModal() { document.getElementById('new-bot-modal').classList.add('hidden'); }
+        
+        async function createNewBot() {
+            const name = document.getElementById('modal-bot-name').value.trim();
+            const prompt = document.getElementById('modal-system-prompt').value.trim();
+            if (!name || !prompt) { showToast('يرجى ملء جميع الحقول المطلوبة', 'error'); return; }
+            
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ name, system_prompt: prompt, bot_type: 'hybrid', description: '', temperature: 0.7 })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('تم إنشاء البوت بنجاح! 🎉');
+                    closeNewBotModal();
+                    document.getElementById('modal-bot-name').value = '';
+                    document.getElementById('modal-system-prompt').value = '';
+                    await loadBots();
+                    selectBot(data.id);
+                } else {
+                    showToast(data.detail || 'فشل في إنشاء البوت', 'error');
+                }
+            } catch(e) {
+                showToast('خطأ في الاتصال بالسيرفر', 'error');
+            }
+        }
+
+        // ---- Save Bot ----
+        async function saveBotSettings() {
+            if (!currentBotId) return;
+            const payload = {
+                name: document.getElementById('bot-name').value.trim(),
+                description: document.getElementById('bot-desc').value.trim(),
+                bot_type: document.getElementById('bot-type').value,
+                system_prompt: document.getElementById('system-prompt').value.trim(),
+                temperature: parseFloat(document.getElementById('bot-temp').value)
+            };
+            if (!payload.name) { showToast('اسم البوت مطلوب', 'error'); return; }
+            
+            try {
+                const res = await fetch(`${API_URL}/${currentBotId}`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast('تم حفظ التغييرات بنجاح! ✅');
+                    loadBots();
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || 'فشل في الحفظ', 'error');
+                }
+            } catch(e) {
+                showToast('خطأ في الاتصال', 'error');
+            }
+        }
+
+        // ---- Delete Bot ----
+        async function deleteBotConfirm() {
+            if (!currentBotId) return;
+            if (!confirm('هل أنت متأكد من حذف هذا البوت؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+            
+            try {
+                const res = await fetch(`${API_URL}/${currentBotId}`, {
+                    method: 'DELETE',
+                    headers: authHeaders()
+                });
+                if (res.ok) {
+                    showToast('تم حذف البوت');
+                    currentBotId = null;
+                    document.getElementById('bot-editor').classList.add('hidden');
+                    document.getElementById('bot-stats-card').classList.add('hidden');
+                    loadBots();
+                }
+            } catch(e) {
+                showToast('فشل في حذف البوت', 'error');
+            }
+        }
+
+        // ---- Train Bot (RAG) ----
+        async function trainBot() {
+            if (!currentBotId) { showToast('يرجى اختيار بوت أولاً', 'error'); return; }
+            const urls = [...document.querySelectorAll('.train-url')].map(i => i.value.trim()).filter(u => u);
+            if (urls.length === 0) { showToast('أضف رابط واحد على الأقل', 'error'); return; }
+            
+            document.getElementById('train-btn').disabled = true;
+            document.getElementById('train-progress').classList.remove('hidden');
+            
+            try {
+                const res = await fetch(`${API_URL}/${currentBotId}/train`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ urls })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || 'تم التدريب بنجاح! 🎓');
+                } else {
+                    showToast(data.detail || 'فشل في التدريب', 'error');
+                }
+            } catch(e) {
+                showToast('خطأ في التدريب', 'error');
+            } finally {
+                document.getElementById('train-btn').disabled = false;
+                document.getElementById('train-progress').classList.add('hidden');
+            }
+        }
+
+        function addUrlRow() {
+            const container = document.getElementById('training-urls');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 url-row';
+            div.innerHTML = `
+                <input type="url" placeholder="https://example.com" class="train-url flex-1 bg-dark border border-surface-light rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition">
+                <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 px-2"><i class="fas fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        // ---- Quick Replies ----
+        function addQuickReply() {
+            const input = document.getElementById('new-quick-reply');
+            const text = input.value.trim();
+            if (!text) return;
+            quickReplies.push(text);
+            input.value = '';
+            renderQuickReplies();
+        }
+
+        function removeQuickReply(index) {
+            quickReplies.splice(index, 1);
+            renderQuickReplies();
+        }
+
+        function renderQuickReplies() {
+            const container = document.getElementById('quick-replies');
+            container.innerHTML = quickReplies.map((reply, i) => `
+                <div class="flex items-center gap-2 bg-dark rounded-lg px-3 py-2">
+                    <span class="flex-1 text-sm text-gray-200">${escapeHtml(reply)}</span>
+                    <button onclick="removeQuickReply(${i})" class="text-red-400 hover:text-red-300 text-xs"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
+            
+            // Update preview chips
+            const chips = document.getElementById('quick-reply-chips');
+            chips.innerHTML = quickReplies.map(r => `
+                <button onclick="document.getElementById('preview-input').value='${escapeHtml(r)}';testChat()" class="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs hover:bg-primary/30 transition">${escapeHtml(r)}</button>
+            `).join('');
+        }
+
+        // ---- Q&A ----
+        function addQA() {
+            const q = document.getElementById('qa-question').value.trim();
+            const a = document.getElementById('qa-answer').value.trim();
+            if (!q || !a) { showToast('يرجى كتابة السؤال والجواب', 'error'); return; }
+            qaList.push({ question: q, answer: a });
+            document.getElementById('qa-question').value = '';
+            document.getElementById('qa-answer').value = '';
+            renderQAList();
+        }
+
+        function removeQA(index) {
+            qaList.splice(index, 1);
+            renderQAList();
+        }
+
+        function renderQAList() {
+            const container = document.getElementById('qa-list');
+            if (qaList.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">لم تتم إضافة أسئلة بعد</p>';
+                return;
+            }
+            container.innerHTML = qaList.map((item, i) => `
+                <div class="bg-dark rounded-xl p-3 border border-surface-light/20">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-primary mb-1"><i class="fas fa-question-circle ml-1"></i> ${escapeHtml(item.question)}</p>
+                            <p class="text-sm text-gray-300"><i class="fas fa-comment ml-1 text-secondary"></i> ${escapeHtml(item.answer)}</p>
+                        </div>
+                        <button onclick="removeQA(${i})" class="text-red-400 hover:text-red-300 text-xs mr-2"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ---- Chat Preview ----
+        function testChat() {
+            const input = document.getElementById('preview-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+            
+            const container = document.getElementById('chat-preview');
+            
+            // User bubble
+            container.innerHTML += `<div class="flex justify-start"><div class="chat-bubble-user p-3"><p class="text-sm text-white">${escapeHtml(msg)}</p></div></div>`;
+            
+            // Simulate Bot response
+            setTimeout(() => {
+                // Check Q&A first
+                const match = qaList.find(q => msg.includes(q.question) || q.question.includes(msg));
+                let reply;
+                if (match) {
+                    reply = match.answer;
+                } else {
+                    const prompts = [
+                        'شكرًا لتواصلك! كيف يمكنني مساعدتك؟',
+                        'هذا سؤال رائع! دعني أساعدك.',
+                        'أفهم ما تحتاجه. إليك ما يمكنني تقديمه...',
+                        'مرحبًا! أنا هنا لمساعدتك في أي وقت.',
+                    ];
+                    reply = prompts[Math.floor(Math.random() * prompts.length)];
+                }
+                container.innerHTML += `<div class="flex justify-end"><div class="chat-bubble-bot p-3"><p class="text-sm text-gray-200">${escapeHtml(reply)}</p></div></div>`;
+                container.scrollTop = container.scrollHeight;
+            }, 600);
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ---- Platform Setup ----
+        function showPlatformSetup(platform) {
+            const setup = document.getElementById('platform-setup');
+            const title = document.getElementById('platform-setup-title');
+            const body = document.getElementById('platform-setup-body');
+            setup.classList.remove('hidden');
+            
+            const configs = {
+                telegram: {
+                    icon: '<i class="fab fa-telegram text-[#229ED9]"></i>',
+                    title: 'ربط تيليجرام',
+                    body: `
+                        <div class="space-y-3">
+                            <p class="text-sm text-gray-400">1. افتح <a href="https://t.me/BotFather" target="_blank" class="text-primary hover:underline">@BotFather</a> على تيليجرام</p>
+                            <p class="text-sm text-gray-400">2. أنشئ بوت جديد بالأمر <code class="bg-dark px-1 rounded">/newbot</code></p>
+                            <p class="text-sm text-gray-400">3. انسخ التوكن وألصقه هنا:</p>
+                            <input id="telegram-token" type="text" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz" dir="ltr" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition font-mono">
+                            <button onclick="connectPlatform('telegram')" class="w-full bg-[#229ED9] hover:bg-[#229ED9]/80 text-white py-3 rounded-xl font-bold transition">
+                                <i class="fab fa-telegram ml-2"></i> ربط البوت
+                            </button>
+                        </div>
+                    `
+                },
+                web: {
+                    icon: '<i class="fas fa-globe text-primary"></i>',
+                    title: 'ويدجت الموقع',
+                    body: `
+                        <div class="space-y-3">
+                            <p class="text-sm text-gray-400">انسخ الكود التالي وألصقه في موقعك قبل وسم <code class="bg-dark px-1 rounded">&lt;/body&gt;</code>:</p>
+                            <div class="bg-dark rounded-xl p-4 border border-surface-light/20">
+                                <pre id="widget-code" class="text-xs text-primary font-mono whitespace-pre-wrap break-all" dir="ltr">&lt;script src="${window.location.origin}/public/widget.js" data-bot-id="${currentBotId}"&gt;&lt;/script&gt;</pre>
+                            </div>
+                            <button onclick="copyWidgetCode()" class="w-full bg-primary hover:bg-primary/80 text-white py-3 rounded-xl font-bold transition">
+                                <i class="fas fa-copy ml-2"></i> نسخ الكود
+                            </button>
+                            <button onclick="connectPlatform('web')" class="w-full bg-secondary hover:bg-secondary/80 text-white py-3 rounded-xl font-bold transition">
+                                <i class="fas fa-check ml-2"></i> تأكيد التفعيل
+                            </button>
+                        </div>
+                    `
+                },
+                whatsapp: {
+                    icon: '<i class="fab fa-whatsapp text-green-500"></i>',
+                    title: 'ربط واتساب',
+                    body: `
+                        <div class="space-y-3">
+                            <p class="text-sm text-gray-400">أدخل بيانات WhatsApp Business API:</p>
+                            <input id="whatsapp-token" type="text" placeholder="Access Token" dir="ltr" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition font-mono">
+                            <input id="whatsapp-phone" type="text" placeholder="Phone Number ID" dir="ltr" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition font-mono">
+                            <button onclick="connectPlatform('whatsapp')" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold transition">
+                                <i class="fab fa-whatsapp ml-2"></i> ربط واتساب
+                            </button>
+                        </div>
+                    `
+                },
+                facebook: {
+                    icon: '<i class="fab fa-facebook-messenger text-[#1877F2]"></i>',
+                    title: 'ربط فيسبوك ماسنجر',
+                    body: `
+                        <div class="space-y-3">
+                            <p class="text-sm text-gray-400">أدخل Page Access Token من Facebook Developer Console:</p>
+                            <input id="facebook-token" type="text" placeholder="Page Access Token" dir="ltr" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition font-mono">
+                            <button onclick="connectPlatform('facebook')" class="w-full bg-[#1877F2] hover:bg-[#1877F2]/80 text-white py-3 rounded-xl font-bold transition">
+                                <i class="fab fa-facebook-messenger ml-2"></i> ربط ماسنجر
+                            </button>
+                        </div>
+                    `
+                },
+                instagram: {
+                    icon: '<i class="fab fa-instagram text-pink-400"></i>',
+                    title: 'ربط إنستاجرام',
+                    body: `
+                        <div class="space-y-3">
+                            <p class="text-sm text-gray-400">أدخل Instagram Business Account Token:</p>
+                            <input id="instagram-token" type="text" placeholder="Instagram Access Token" dir="ltr" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition font-mono">
+                            <button onclick="connectPlatform('instagram')" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white py-3 rounded-xl font-bold transition">
+                                <i class="fab fa-instagram ml-2"></i> ربط إنستاجرام
+                            </button>
+                        </div>
+                    `
+                },
+                api: {
+                    icon: '<i class="fas fa-code text-accent"></i>',
+                    title: 'API مخصص',
+                    body: `
+                        <div class="space-y-3">
+                            <p class="text-sm text-gray-400">استخدم Webhook URL التالي لإرسال الرسائل برمجياً:</p>
+                            <div class="bg-dark rounded-xl p-3">
+                                <code class="text-xs text-primary font-mono break-all" dir="ltr">POST ${window.location.origin}/webhook/${currentBotId}/web</code>
+                            </div>
+                            <div class="bg-dark rounded-xl p-3">
+                                <p class="text-xs text-gray-400 mb-1">Body (JSON):</p>
+                                <pre class="text-xs text-accent font-mono" dir="ltr">{
+  "message": "Hello",
+  "user_id": "unique_user_id",
+  "user_name": "User Name"
+}</pre>
+                            </div>
+                            <button onclick="connectPlatform('api')" class="w-full bg-accent hover:bg-accent/80 text-white py-3 rounded-xl font-bold transition">
+                                <i class="fas fa-check ml-2"></i> تفعيل API
+                            </button>
+                        </div>
+                    `
+                }
+            };
+
+            const config = configs[platform];
+            title.innerHTML = `${config.icon} ${config.title}`;
+            body.innerHTML = config.body;
+            
+            // Scroll to setup
+            setup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function closePlatformSetup() {
+            document.getElementById('platform-setup').classList.add('hidden');
+        }
+
+        async function connectPlatform(platform) {
+            if (!currentBotId) { showToast('يرجى اختيار بوت أولاً', 'error'); return; }
+            
+            let accessToken = '';
+            let webhookUrl = '';
+            
+            if (platform === 'telegram') {
+                accessToken = document.getElementById('telegram-token')?.value?.trim();
+                if (!accessToken) { showToast('يرجى إدخال التوكن', 'error'); return; }
+                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/telegram`;
+            } else if (platform === 'web') {
+                accessToken = 'web-widget';
+                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/web`;
+            } else if (platform === 'whatsapp') {
+                accessToken = document.getElementById('whatsapp-token')?.value?.trim();
+                if (!accessToken) { showToast('يرجى إدخال التوكن', 'error'); return; }
+                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/whatsapp`;
+            } else if (platform === 'facebook') {
+                accessToken = document.getElementById('facebook-token')?.value?.trim();
+                if (!accessToken) { showToast('يرجى إدخال التوكن', 'error'); return; }
+                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/facebook`;
+            } else if (platform === 'instagram') {
+                accessToken = document.getElementById('instagram-token')?.value?.trim();
+                if (!accessToken) { showToast('يرجى إدخال التوكن', 'error'); return; }
+                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/instagram`;
+            } else if (platform === 'api') {
+                accessToken = 'api-integration';
+                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/web`;
+            }
+            
+            try {
+                const res = await fetch(`${API_URL}/${currentBotId}/integrations`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ platform, access_token: accessToken, webhook_url: webhookUrl })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`تم ربط ${getPlatformName(platform)} بنجاح! 🎉`);
+                    const card = document.getElementById(`platform-${platform}`);
+                    if (card) card.classList.add('connected');
+                    connectedPlatforms[platform] = { platform, access_token: accessToken };
+                    closePlatformSetup();
+                    
+                    // Update stats
+                    const count = Object.keys(connectedPlatforms).length;
+                    document.getElementById('stat-platforms').textContent = count;
+                    document.getElementById('analytics-platforms').textContent = count;
+                } else {
+                    showToast(data.detail || 'فشل في الربط', 'error');
+                }
+            } catch(e) {
+                showToast('خطأ في الاتصال', 'error');
+            }
+        }
+
+        function getPlatformName(p) {
+            const names = { telegram: 'تيليجرام', web: 'ويدجت الموقع', whatsapp: 'واتساب', facebook: 'فيسبوك', instagram: 'إنستاجرام', api: 'API' };
+            return names[p] || p;
+        }
+
+        // ---- Copy Functions ----
+        function copyWebhook() {
+            const text = document.getElementById('webhook-url').textContent;
+            navigator.clipboard.writeText(text);
+            showToast('تم نسخ الرابط');
+        }
+        
+        function copyWidgetCode() {
+            const code = document.getElementById('widget-code')?.textContent;
+            if (code) { navigator.clipboard.writeText(code); showToast('تم نسخ الكود'); }
+        }
+
+        // ---- CRM ----
+        async function loadCRM() {
+            if (!currentBotId) return;
+            try {
+                const res = await fetch(`${API_URL}/${currentBotId}/crm`, { headers: authHeaders() });
+                const contacts = await res.json();
+                const tbody = document.getElementById('crm-table');
+                
+                if (!contacts || contacts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">لا توجد جهات اتصال بعد</td></tr>';
+                    document.getElementById('analytics-interactions').textContent = '0';
+                    return;
+                }
+                
+                let totalInteractions = 0;
+                tbody.innerHTML = contacts.map(c => {
+                    totalInteractions += (c.interactions_count || 0);
+                    return `
+                        <tr class="border-b border-surface-light/10 hover:bg-dark/50">
+                            <td class="py-2 px-3 text-gray-200">${escapeHtml(c.name || '—')}</td>
+                            <td class="py-2 px-3 text-gray-400" dir="ltr">${escapeHtml(c.phone || '—')}</td>
+                            <td class="py-2 px-3"><span class="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs">${escapeHtml(c.platform_user_id?.split(':')[0] || 'web')}</span></td>
+                            <td class="py-2 px-3 text-gray-400">${c.interactions_count || 0}</td>
+                            <td class="py-2 px-3 text-gray-500 text-xs">${c.last_interaction ? new Date(c.last_interaction).toLocaleDateString('ar') : '—'}</td>
                         </tr>
                     `;
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      function copyWebhook() {
-        const copyText = document.getElementById('webhookUrl');
-        copyText.select();
-        document.execCommand('copy');
-        alert('تم نسخ الرابط!');
-      }
-
-      function getAuthToken() {
-        // Use localStorage token (consistent with main app auth)
-        return localStorage.getItem('token') || '';
-      }
-
-      async function trainBot() {
-        if (!currentBotId) return;
-        const urlInput = document.getElementById('trainUrl').value;
-        if (!urlInput) {
-          alert('يرجى إدخال الرابط أولاً!');
-          return;
+                }).join('');
+                
+                document.getElementById('analytics-interactions').textContent = totalInteractions;
+                document.getElementById('analytics-contacts').textContent = contacts.length;
+            } catch(e) {
+                console.error('CRM load error:', e);
+            }
         }
 
-        const btn = document.getElementById('trainBtn');
-        const status = document.getElementById('trainStatus');
-
-        btn.disabled = true;
-        btn.innerHTML =
-          '<i class="fa-solid fa-circle-notch fa-spin ml-2"></i> جاري سحب ومعالجة البيانات...';
-        status.textContent = 'قد تستغرق هذه العملية بضع دقائق حسب حجم الموقع.';
-        status.className = 'mt-2 text-xs text-purple-400 text-center';
-
-        try {
-          const res = await fetch(`${API_URL}/${currentBotId}/train`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${getAuthToken()}`,
-            },
-            body: JSON.stringify({ urls: [urlInput] }),
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            status.textContent = data.message || 'تم بنجاح!';
-            status.className =
-              'mt-2 text-xs text-green-400 text-center font-bold';
-            document.getElementById('trainUrl').value = '';
-          } else {
-            const error = await res.json();
-            status.textContent = error.detail || 'فشل السحب.';
-            status.className = 'mt-2 text-xs text-red-400 text-center';
-          }
-        } catch (err) {
-          console.error(err);
-          status.textContent = 'حدث خطأ في الاتصال بالخادم.';
-          status.className = 'mt-2 text-xs text-red-500 text-center';
-        } finally {
-          btn.disabled = false;
-          btn.innerHTML =
-            '<i class="fa-solid fa-spider ml-2"></i>بدء الفحص والتعلّم (Scrape)';
+        // ---- Bot Summary ----
+        function renderSummary(bot) {
+            const summary = document.getElementById('bot-summary');
+            const integrations = bot.integrations || [];
+            const platformBadges = integrations.map(i => `<span class="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs">${getPlatformName(i.platform)}</span>`).join(' ') || '<span class="text-gray-500 text-sm">لم يتم ربط أي منصة</span>';
+            
+            summary.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-dark rounded-xl p-3">
+                        <span class="text-xs text-gray-400">الاسم</span>
+                        <p class="text-sm font-bold text-white">${escapeHtml(bot.name || '—')}</p>
+                    </div>
+                    <div class="bg-dark rounded-xl p-3">
+                        <span class="text-xs text-gray-400">النوع</span>
+                        <p class="text-sm font-bold text-white">${bot.bot_type || 'hybrid'}</p>
+                    </div>
+                    <div class="bg-dark rounded-xl p-3">
+                        <span class="text-xs text-gray-400">درجة الإبداع</span>
+                        <p class="text-sm font-bold text-primary">${bot.temperature ?? 0.7}</p>
+                    </div>
+                    <div class="bg-dark rounded-xl p-3">
+                        <span class="text-xs text-gray-400">المنصات المتصلة</span>
+                        <div class="flex flex-wrap gap-1 mt-1">${platformBadges}</div>
+                    </div>
+                </div>
+                <div class="bg-dark rounded-xl p-3 mt-2">
+                    <span class="text-xs text-gray-400">تعليمات النظام</span>
+                    <p class="text-sm text-gray-200 mt-1">${escapeHtml((bot.system_prompt || '').substring(0, 200))}${(bot.system_prompt || '').length > 200 ? '...' : ''}</p>
+                </div>
+            `;
         }
-      }
 
-      function escapeHtml(unsafe) {
-        return (unsafe || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-      }
+        // ---- Stepper Navigation ----
+        function goToStep(step) {
+            currentStep = step;
+            
+            // Update stepper
+            document.querySelectorAll('.step-item').forEach((el, i) => {
+                el.classList.remove('active', 'completed');
+                if (i + 1 < step) el.classList.add('completed');
+                if (i + 1 === step) el.classList.add('active');
+            });
+            
+            // Show/hide steps
+            document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step-${step}`).classList.add('active');
+            
+            // Update nav buttons
+            document.getElementById('prev-btn').classList.toggle('hidden', step === 1);
+            document.getElementById('next-btn').textContent = step === 5 ? '' : '';
+            document.getElementById('next-btn').innerHTML = step === 5 
+                ? '<i class="fas fa-save ml-2"></i> حفظ' 
+                : 'التالي <i class="fas fa-arrow-left"></i>';
+            
+            // Update preview name
+            const nameVal = document.getElementById('bot-name').value;
+            if (nameVal) document.getElementById('preview-name').textContent = nameVal;
+            
+            // Update welcome preview
+            const welcomeVal = document.getElementById('welcome-msg').value;
+            if (welcomeVal) document.getElementById('preview-welcome').textContent = welcomeVal;
 
-      // Init
-      document.addEventListener('DOMContentLoaded', loadBots);
+            // Update widget code when on platforms step
+            if (step === 4 && currentBotId) {
+                const widgetCode = document.getElementById('widget-code');
+                if (widgetCode) {
+                    widgetCode.textContent = `<script src="${window.location.origin}/public/widget.js" data-bot-id="${currentBotId}"><\/script>`;
+                }
+            }
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function nextStep() {
+            if (currentStep === 5) { saveBotSettings(); return; }
+            if (currentStep < 5) goToStep(currentStep + 1);
+        }
+        function prevStep() {
+            if (currentStep > 1) goToStep(currentStep - 1);
+        }
+
+        // ---- Init ----
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!getAuthToken()) { window.location.href = '/login'; return; }
+            loadBots();
+            renderQAList();
+        });
     </script>
-    <footer class="text-center py-4 text-gray-600 text-xs opacity-50">
-      &copy; 2026 RobovAI Solutions
-    </footer>
-  </body>
+</body>
 </html>

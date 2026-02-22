@@ -1,0 +1,13 @@
+services:
+  webly:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: webly:latest
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./websites_storage:/app/websites_storage
+    restart: unless-stopped

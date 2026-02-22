@@ -124,7 +124,14 @@ async def on_startup():
     
     # ── Start Smart Agents Background Scheduler ──
     from backend.agents.scheduler import start_scheduler
-    asyncio.create_task(start_scheduler())
+
+    async def _safe_start_scheduler():
+        try:
+            await start_scheduler()
+        except Exception as e:
+            logger.error(f"Scheduler startup failed (non-fatal): {e}")
+
+    asyncio.create_task(_safe_start_scheduler())
 
 
 @app.on_event("shutdown")

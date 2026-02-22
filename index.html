@@ -50,16 +50,16 @@
     ></script>
     <style>
       :root {
-        --bg: #081F3D; /* Navy Dark */
+        --bg: #081f3d; /* Navy Dark */
         --surface: rgba(13, 44, 90, 0.7); /* Royal Deep Blue */
         --surface-2: rgba(27, 78, 140, 0.5); /* AI Blue */
         --glass: rgba(255, 255, 255, 0.05);
-        --primary: #D4AF37; /* Royal Gold */
+        --primary: #d4af37; /* Royal Gold */
         --primary-dim: rgba(212, 175, 55, 0.15);
-        --secondary: #3FA9F5; /* Light Neon Blue */
+        --secondary: #3fa9f5; /* Light Neon Blue */
         --secondary-dim: rgba(63, 169, 245, 0.15);
-        --accent: #C9A227; /* Metallic Gold */
-        --gold: #F1C40F; /* Highlight Gold */
+        --accent: #c9a227; /* Metallic Gold */
+        --gold: #f1c40f; /* Highlight Gold */
         --gold-dim: rgba(241, 196, 15, 0.12);
         --green: #22c55e;
         --text: #f0f0f5;
@@ -87,7 +87,13 @@
         overflow-x: hidden;
         line-height: 1.75;
       }
-      h1, h2, h3, h4, h5, h6, .brand-name {
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      .brand-name {
         font-family: var(--font-heading);
       }
       ::selection {
@@ -1532,8 +1538,26 @@
     <!-- NAVBAR -->
     <nav class="nav" id="nav">
       <div class="nav-inner">
-        <a href="#" class="brand" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
-          <img src="/public/assets/logo.png" alt="RobovAI Nova Logo" style="width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));" />
+        <a
+          href="#"
+          class="brand"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+          "
+        >
+          <img
+            src="/public/assets/logo.png"
+            alt="RobovAI Nova Logo"
+            style="
+              width: 40px;
+              height: 40px;
+              object-fit: contain;
+              filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+            "
+          />
           <span class="brand-name">RobovAI Nova</span>
         </a>
         <ul class="nav-menu">
@@ -2150,8 +2174,17 @@
 
     <!-- FOOTER -->
     <footer class="footer">
-      <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-        <img src="/public/assets/logo.png" alt="RobovAI Nova Logo" style="width: 80px; height: 80px; object-fit: contain; filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.5));" />
+      <div style="display: flex; justify-content: center; margin-bottom: 20px">
+        <img
+          src="/public/assets/logo.png"
+          alt="RobovAI Nova Logo"
+          style="
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.5));
+          "
+        />
       </div>
       <div class="footer-links">
         <a href="/chat">المحادثة</a>

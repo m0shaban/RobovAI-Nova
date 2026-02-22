@@ -10,16 +10,19 @@
         theme: {
           extend: {
             colors: {
-              dark: '#081F3D', /* Navy Dark */
-              darker: '#051224', /* Darker Navy */
-              primary: '#D4AF37', /* Royal Gold */
-              primaryHover: '#C9A227', /* Metallic Gold */
-              secondary: '#3FA9F5', /* Light Neon Blue */
-              secondaryHover: '#2E86C1', /* Electric Glow Blue */
-              surface: 'rgba(13, 44, 90, 0.7)', /* Royal Deep Blue */
-              accent: '#F1C40F', /* Highlight Gold */
+              dark: '#081F3D' /* Navy Dark */,
+              darker: '#051224' /* Darker Navy */,
+              primary: '#D4AF37' /* Royal Gold */,
+              primaryHover: '#C9A227' /* Metallic Gold */,
+              secondary: '#3FA9F5' /* Light Neon Blue */,
+              secondaryHover: '#2E86C1' /* Electric Glow Blue */,
+              surface: 'rgba(13, 44, 90, 0.7)' /* Royal Deep Blue */,
+              accent: '#F1C40F' /* Highlight Gold */,
             },
-            fontFamily: { sans: ['"Cairo"', 'sans-serif'], heading: ['"Cinzel"', '"Playfair Display"', 'serif'] },
+            fontFamily: {
+              sans: ['"Cairo"', 'sans-serif'],
+              heading: ['"Cinzel"', '"Playfair Display"', 'serif'],
+            },
           },
         },
       };
@@ -39,10 +42,16 @@
     <style>
       body {
         font-family: 'Cairo', sans-serif;
-        background: #081F3D;
+        background: #081f3d;
         color: #fff;
       }
-      h1, h2, h3, h4, h5, h6, .brand-name {
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      .brand-name {
         font-family: 'Cinzel', 'Playfair Display', serif;
       }
       .glass {
@@ -76,8 +85,8 @@
         transition: all 0.25s;
       }
       .tab-btn.active {
-        color: #D4AF37;
-        border-color: #D4AF37;
+        color: #d4af37;
+        border-color: #d4af37;
         background: rgba(212, 175, 55, 0.08);
       }
       .campaign-card {
@@ -112,7 +121,7 @@
         transition: all 0.15s;
       }
       .cron-btn.active {
-        background: #D4AF37;
+        background: #d4af37;
         color: #000;
       }
       .pulse {
@@ -137,7 +146,7 @@
       textarea:focus,
       select:focus {
         outline: none;
-        border-color: #D4AF37 !important;
+        border-color: #d4af37 !important;
         box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
       }
       .toast {
@@ -182,7 +191,7 @@
       .geo-shape.shape-1 {
         width: 130px;
         height: 130px;
-        border-color: #D4AF37;
+        border-color: #d4af37;
         top: 8%;
         left: 8%;
         border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
@@ -191,7 +200,7 @@
       .geo-shape.shape-2 {
         width: 90px;
         height: 90px;
-        border-color: #3FA9F5;
+        border-color: #3fa9f5;
         top: 55%;
         right: 6%;
         clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
@@ -451,7 +460,11 @@
       class="glass mx-4 mt-4 px-6 py-4 flex justify-between items-center relative z-10"
     >
       <div class="flex items-center gap-3">
-        <img src="/public/assets/logo.png" alt="RobovAI Nova Logo" class="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
+        <img
+          src="/public/assets/logo.png"
+          alt="RobovAI Nova Logo"
+          class="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]"
+        />
         <span
           class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-l from-white to-gray-400 brand-name"
           >RobovAI Nova</span

@@ -1158,7 +1158,7 @@ async def get_tools(request: Request):
 @_rl("120/minute")
 async def get_tools_list(request: Request):
     """Alias for /tools — backwards compatibility for API docs."""
-    return await get_tools()
+    return await get_tools(request)
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -18,13 +18,13 @@
         theme: {
           extend: {
             colors: {
-              dark: '#081F3D', /* Navy Dark */
-              darker: '#051224', /* Darker Navy */
-              primary: '#D4AF37', /* Royal Gold */
-              secondary: '#3FA9F5', /* Light Neon Blue */
-              accent: '#C9A227', /* Metallic Gold */
-              surface: '#0D2C5A', /* Royal Deep Blue */
-              'surface-light': '#1B4E8C', /* AI Blue */
+              dark: '#081F3D' /* Navy Dark */,
+              darker: '#051224' /* Darker Navy */,
+              primary: '#D4AF37' /* Royal Gold */,
+              secondary: '#3FA9F5' /* Light Neon Blue */,
+              accent: '#C9A227' /* Metallic Gold */,
+              surface: '#0D2C5A' /* Royal Deep Blue */,
+              'surface-light': '#1B4E8C' /* AI Blue */,
             },
           },
         },
@@ -35,11 +35,17 @@
       * {
         font-family: 'Cairo', sans-serif;
       }
-      h1, h2, h3, h4, h5, h6, .brand-name {
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      .brand-name {
         font-family: 'Cinzel', 'Playfair Display', serif;
       }
       body {
-        background: #081F3D;
+        background: #081f3d;
         color: #e2e8f0;
         min-height: 100vh;
         overflow-y: auto;
@@ -50,14 +56,14 @@
         width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #081F3D;
+        background: #081f3d;
       }
       ::-webkit-scrollbar-thumb {
-        background: #1B4E8C;
+        background: #1b4e8c;
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #3FA9F5;
+        background: #3fa9f5;
       }
 
       /* Stepper */
@@ -73,7 +79,7 @@
         left: -50%;
         width: 100%;
         height: 2px;
-        background: #1B4E8C;
+        background: #1b4e8c;
         z-index: 0;
       }
       .step-item:first-child::before {
@@ -81,7 +87,7 @@
       }
       .step-item.active::before,
       .step-item.completed::before {
-        background: #D4AF37;
+        background: #d4af37;
       }
       .step-circle {
         width: 36px;
@@ -97,16 +103,16 @@
         transition: all 0.3s;
       }
       .step-item .step-circle {
-        background: #1B4E8C;
+        background: #1b4e8c;
         color: #94a3b8;
       }
       .step-item.active .step-circle {
-        background: #D4AF37;
+        background: #d4af37;
         color: white;
         box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
       }
       .step-item.completed .step-circle {
-        background: #D4AF37;
+        background: #d4af37;
         color: white;
       }
 
@@ -122,7 +128,7 @@
         inset: 0;
         border-radius: 12px;
         padding: 1px;
-        background: linear-gradient(135deg, #D4AF37, #3FA9F5, #C9A227);
+        background: linear-gradient(135deg, #d4af37, #3fa9f5, #c9a227);
         -webkit-mask:
           linear-gradient(#fff 0 0) content-box,
           linear-gradient(#fff 0 0);
@@ -149,14 +155,14 @@
         transform: translateY(-4px);
       }
       .platform-card.connected {
-        border-color: #D4AF37 !important;
+        border-color: #d4af37 !important;
       }
       .platform-card.connected::after {
         content: '✓ متصل';
         position: absolute;
         top: 8px;
         left: 8px;
-        background: #D4AF37;
+        background: #d4af37;
         color: white;
         padding: 2px 8px;
         border-radius: 12px;
@@ -166,12 +172,12 @@
 
       /* Chat preview */
       .chat-bubble-bot {
-        background: linear-gradient(135deg, #0D2C5A, #1B4E8C);
+        background: linear-gradient(135deg, #0d2c5a, #1b4e8c);
         border-radius: 16px 16px 4px 16px;
         max-width: 80%;
       }
       .chat-bubble-user {
-        background: linear-gradient(135deg, #D4AF37, #A67C00);
+        background: linear-gradient(135deg, #d4af37, #a67c00);
         border-radius: 16px 16px 16px 4px;
         max-width: 80%;
       }
@@ -192,7 +198,7 @@
 
       /* Tab active */
       .tab-btn.active {
-        background: #D4AF37;
+        background: #d4af37;
         color: white;
       }
       .tab-btn {
@@ -590,9 +596,15 @@
           <a href="/chat" class="text-gray-400 hover:text-white transition">
             <i class="fas fa-arrow-right text-lg"></i>
           </a>
-          <img src="/public/assets/logo.png" alt="RobovAI Nova Logo" class="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
+          <img
+            src="/public/assets/logo.png"
+            alt="RobovAI Nova Logo"
+            class="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]"
+          />
           <div>
-            <h1 class="text-lg font-bold text-white brand-name">بناء البوتات</h1>
+            <h1 class="text-lg font-bold text-white brand-name">
+              بناء البوتات
+            </h1>
             <p class="text-xs text-gray-400">أنشئ بوتات ذكية بدون كود</p>
           </div>
         </div>

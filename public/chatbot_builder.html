@@ -9,7 +9,10 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+      defer
+    ></script>
     <script>
       tailwind.config = {
         theme: {
@@ -122,8 +125,13 @@
           linear-gradient(#fff 0 0);
         -webkit-mask-composite: xor;
         mask-composite: exclude;
+        pointer-events: none;
         opacity: 0.5;
         transition: opacity 0.3s;
+      }
+      .glow-card > * {
+        position: relative;
+        z-index: 1;
       }
       .glow-card:hover::before {
         opacity: 1;
@@ -268,50 +276,76 @@
         animation: floatRotate var(--dur, 20s) ease-in-out infinite;
       }
       .geo-shape.shape-1 {
-        width: 120px; height: 120px;
-        border-color: #10B981;
-        top: 10%; right: 8%;
+        width: 120px;
+        height: 120px;
+        border-color: #10b981;
+        top: 10%;
+        right: 8%;
         border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
         --dur: 18s;
       }
       .geo-shape.shape-2 {
-        width: 80px; height: 80px;
-        border-color: #3B82F6;
-        top: 60%; left: 5%;
+        width: 80px;
+        height: 80px;
+        border-color: #3b82f6;
+        top: 60%;
+        left: 5%;
         clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
         --dur: 22s;
         animation-delay: -5s;
       }
       .geo-shape.shape-3 {
-        width: 60px; height: 60px;
-        border-color: #8B5CF6;
-        bottom: 20%; right: 15%;
+        width: 60px;
+        height: 60px;
+        border-color: #8b5cf6;
+        bottom: 20%;
+        right: 15%;
         border-radius: 50%;
         --dur: 15s;
         animation-delay: -8s;
       }
       .geo-shape.shape-4 {
-        width: 100px; height: 100px;
-        border-color: #10B981;
-        top: 35%; left: 20%;
-        clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        width: 100px;
+        height: 100px;
+        border-color: #10b981;
+        top: 35%;
+        left: 20%;
+        clip-path: polygon(
+          25% 0%,
+          75% 0%,
+          100% 50%,
+          75% 100%,
+          25% 100%,
+          0% 50%
+        );
         --dur: 25s;
         animation-delay: -12s;
       }
       .geo-shape.shape-5 {
-        width: 50px; height: 50px;
-        border-color: #3B82F6;
-        top: 80%; right: 40%;
+        width: 50px;
+        height: 50px;
+        border-color: #3b82f6;
+        top: 80%;
+        right: 40%;
         border-radius: 10%;
         --dur: 20s;
         animation-delay: -3s;
       }
 
       @keyframes floatRotate {
-        0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
-        25% { transform: translateY(-30px) rotate(90deg) scale(1.08); }
-        50% { transform: translateY(-15px) rotate(180deg) scale(0.95); }
-        75% { transform: translateY(-40px) rotate(270deg) scale(1.05); }
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg) scale(1);
+        }
+        25% {
+          transform: translateY(-30px) rotate(90deg) scale(1.08);
+        }
+        50% {
+          transform: translateY(-15px) rotate(180deg) scale(0.95);
+        }
+        75% {
+          transform: translateY(-40px) rotate(270deg) scale(1.05);
+        }
       }
 
       /* Glow orbs background */
@@ -329,38 +363,52 @@
         animation: orbFloat 12s ease-in-out infinite alternate;
       }
       .bg-orbs .orb-1 {
-        width: 400px; height: 400px;
+        width: 400px;
+        height: 400px;
         background: rgba(16, 185, 129, 0.12);
-        top: -10%; right: -5%;
+        top: -10%;
+        right: -5%;
         animation-duration: 14s;
       }
       .bg-orbs .orb-2 {
-        width: 350px; height: 350px;
+        width: 350px;
+        height: 350px;
         background: rgba(59, 130, 246, 0.08);
-        bottom: -10%; left: -8%;
+        bottom: -10%;
+        left: -8%;
         animation-duration: 18s;
         animation-delay: -4s;
       }
       .bg-orbs .orb-3 {
-        width: 250px; height: 250px;
+        width: 250px;
+        height: 250px;
         background: rgba(139, 92, 246, 0.06);
-        top: 40%; left: 30%;
+        top: 40%;
+        left: 30%;
         animation-duration: 16s;
         animation-delay: -8s;
       }
       @keyframes orbFloat {
-        0% { transform: translate(0, 0) scale(1); }
-        100% { transform: translate(30px, -30px) scale(1.15); }
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          transform: translate(30px, -30px) scale(1.15);
+        }
       }
 
       /* 3D Card Tilt */
       .tilt-3d {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
         transform-style: preserve-3d;
         perspective: 1000px;
       }
       .tilt-3d:hover {
-        box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.15), 0 0 30px rgba(16, 185, 129, 0.08);
+        box-shadow:
+          0 25px 50px -12px rgba(16, 185, 129, 0.15),
+          0 0 30px rgba(16, 185, 129, 0.08);
       }
 
       /* Scroll entrance animations */
@@ -411,22 +459,46 @@
         opacity: 1;
         transform: translateY(0);
       }
-      .stagger-children.revealed > *:nth-child(1) { transition-delay: 0.05s; }
-      .stagger-children.revealed > *:nth-child(2) { transition-delay: 0.1s; }
-      .stagger-children.revealed > *:nth-child(3) { transition-delay: 0.15s; }
-      .stagger-children.revealed > *:nth-child(4) { transition-delay: 0.2s; }
-      .stagger-children.revealed > *:nth-child(5) { transition-delay: 0.25s; }
-      .stagger-children.revealed > *:nth-child(6) { transition-delay: 0.3s; }
+      .stagger-children.revealed > *:nth-child(1) {
+        transition-delay: 0.05s;
+      }
+      .stagger-children.revealed > *:nth-child(2) {
+        transition-delay: 0.1s;
+      }
+      .stagger-children.revealed > *:nth-child(3) {
+        transition-delay: 0.15s;
+      }
+      .stagger-children.revealed > *:nth-child(4) {
+        transition-delay: 0.2s;
+      }
+      .stagger-children.revealed > *:nth-child(5) {
+        transition-delay: 0.25s;
+      }
+      .stagger-children.revealed > *:nth-child(6) {
+        transition-delay: 0.3s;
+      }
 
       /* Glowing line accent */
       .glow-line {
         height: 2px;
-        background: linear-gradient(90deg, transparent, #10B981, #3B82F6, #8B5CF6, transparent);
+        background: linear-gradient(
+          90deg,
+          transparent,
+          #10b981,
+          #3b82f6,
+          #8b5cf6,
+          transparent
+        );
         animation: glowPulse 3s ease-in-out infinite;
       }
       @keyframes glowPulse {
-        0%, 100% { opacity: 0.4; }
-        50% { opacity: 1; }
+        0%,
+        100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 1;
+        }
       }
 
       /* Particle glow effect on nav */
@@ -441,7 +513,13 @@
         left: 0;
         right: 0;
         height: 1px;
-        background: linear-gradient(90deg, transparent, #10B981, #3B82F6, transparent);
+        background: linear-gradient(
+          90deg,
+          transparent,
+          #10b981,
+          #3b82f6,
+          transparent
+        );
         opacity: 0.5;
       }
 
@@ -451,8 +529,14 @@
         animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       }
       @keyframes fadeInScale {
-        from { opacity: 0; transform: translateY(15px) scale(0.97) rotateX(3deg); }
-        to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
+        from {
+          opacity: 0;
+          transform: translateY(15px) scale(0.97) rotateX(3deg);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1) rotateX(0);
+        }
       }
 
       /* Main content above background */
@@ -2152,287 +2236,350 @@
 
     <!-- ===== 3D Particle Network & Animations ===== -->
     <script>
-    (function() {
-      'use strict';
+      (function () {
+        'use strict';
 
-      // ---------- Three.js 3D Particle Network ----------
-      function initParticleNetwork() {
-        const canvas = document.getElementById('particleCanvas');
-        if (!canvas || typeof THREE === 'undefined') return;
+        // ---------- Three.js 3D Particle Network ----------
+        function initParticleNetwork() {
+          const canvas = document.getElementById('particleCanvas');
+          if (!canvas || typeof THREE === 'undefined') return;
 
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setSize(window.innerWidth, window.innerHeight);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 50;
-
-        // Colors matching chatbot builder theme
-        const EMERALD = new THREE.Color(0x10B981);
-        const BLUE = new THREE.Color(0x3B82F6);
-        const PURPLE = new THREE.Color(0x8B5CF6);
-        const themeColors = [EMERALD, BLUE, PURPLE];
-
-        // Create particles
-        const PARTICLE_COUNT = 70;
-        const particleGeometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(PARTICLE_COUNT * 3);
-        const colors = new Float32Array(PARTICLE_COUNT * 3);
-        const velocities = [];
-        const SPREAD = 80;
-
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-          positions[i * 3]     = (Math.random() - 0.5) * SPREAD;
-          positions[i * 3 + 1] = (Math.random() - 0.5) * SPREAD;
-          positions[i * 3 + 2] = (Math.random() - 0.5) * SPREAD * 0.5;
-
-          const col = themeColors[Math.floor(Math.random() * themeColors.length)];
-          colors[i * 3]     = col.r;
-          colors[i * 3 + 1] = col.g;
-          colors[i * 3 + 2] = col.b;
-
-          velocities.push({
-            x: (Math.random() - 0.5) * 0.02,
-            y: (Math.random() - 0.5) * 0.02,
-            z: (Math.random() - 0.5) * 0.01
+          const renderer = new THREE.WebGLRenderer({
+            canvas,
+            alpha: true,
+            antialias: true,
           });
-        }
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+          renderer.setSize(window.innerWidth, window.innerHeight);
 
-        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+          const scene = new THREE.Scene();
+          const camera = new THREE.PerspectiveCamera(
+            60,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000,
+          );
+          camera.position.z = 50;
 
-        // Glow sprite texture
-        const spriteCanvas = document.createElement('canvas');
-        spriteCanvas.width = 64;
-        spriteCanvas.height = 64;
-        const ctx = spriteCanvas.getContext('2d');
-        const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-        gradient.addColorStop(0, 'rgba(255,255,255,1)');
-        gradient.addColorStop(0.3, 'rgba(255,255,255,0.5)');
-        gradient.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 64, 64);
-        const spriteTexture = new THREE.CanvasTexture(spriteCanvas);
+          // Colors matching chatbot builder theme
+          const EMERALD = new THREE.Color(0x10b981);
+          const BLUE = new THREE.Color(0x3b82f6);
+          const PURPLE = new THREE.Color(0x8b5cf6);
+          const themeColors = [EMERALD, BLUE, PURPLE];
 
-        const particleMaterial = new THREE.PointsMaterial({
-          size: 1.2,
-          map: spriteTexture,
-          vertexColors: true,
-          transparent: true,
-          opacity: 0.8,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false
-        });
+          // Create particles
+          const PARTICLE_COUNT = 70;
+          const particleGeometry = new THREE.BufferGeometry();
+          const positions = new Float32Array(PARTICLE_COUNT * 3);
+          const colors = new Float32Array(PARTICLE_COUNT * 3);
+          const velocities = [];
+          const SPREAD = 80;
 
-        const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-        scene.add(particleSystem);
-
-        // Connection lines
-        const MAX_CONNECTIONS = 100;
-        const CONNECTION_DIST = 12;
-        const linePositions = new Float32Array(MAX_CONNECTIONS * 6);
-        const lineColors = new Float32Array(MAX_CONNECTIONS * 6);
-        const lineGeometry = new THREE.BufferGeometry();
-        lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
-        lineGeometry.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
-        lineGeometry.setDrawRange(0, 0);
-
-        const lineMaterial = new THREE.LineBasicMaterial({
-          vertexColors: true,
-          transparent: true,
-          opacity: 0.25,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false
-        });
-        const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
-        scene.add(lines);
-
-        // Central glowing ring
-        const ringGeometry = new THREE.TorusGeometry(8, 0.08, 16, 100);
-        const ringMaterial = new THREE.MeshBasicMaterial({ color: EMERALD, transparent: true, opacity: 0.2 });
-        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-        scene.add(ring);
-
-        // Second ring (tilted)
-        const ring2Geometry = new THREE.TorusGeometry(12, 0.05, 16, 100);
-        const ring2Material = new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0.12 });
-        const ring2 = new THREE.Mesh(ring2Geometry, ring2Material);
-        ring2.rotation.x = Math.PI / 3;
-        ring2.rotation.y = Math.PI / 6;
-        scene.add(ring2);
-
-        // Central icosahedron wireframe
-        const coreGeometry = new THREE.IcosahedronGeometry(3, 1);
-        const coreMaterial = new THREE.MeshBasicMaterial({ color: PURPLE, wireframe: true, transparent: true, opacity: 0.15 });
-        const core = new THREE.Mesh(coreGeometry, coreMaterial);
-        scene.add(core);
-
-        // Mouse tracking for parallax
-        let mouseX = 0, mouseY = 0;
-        document.addEventListener('mousemove', (e) => {
-          mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-          mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-        });
-
-        // Animation loop
-        function animate() {
-          requestAnimationFrame(animate);
-
-          const time = Date.now() * 0.001;
-
-          // Update particle positions
-          const pos = particleGeometry.attributes.position.array;
           for (let i = 0; i < PARTICLE_COUNT; i++) {
-            pos[i * 3]     += velocities[i].x;
-            pos[i * 3 + 1] += velocities[i].y;
-            pos[i * 3 + 2] += velocities[i].z;
+            positions[i * 3] = (Math.random() - 0.5) * SPREAD;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * SPREAD;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * SPREAD * 0.5;
 
-            // Bounce within bounds
-            const halfSpread = SPREAD / 2;
-            if (Math.abs(pos[i * 3]) > halfSpread) velocities[i].x *= -1;
-            if (Math.abs(pos[i * 3 + 1]) > halfSpread) velocities[i].y *= -1;
-            if (Math.abs(pos[i * 3 + 2]) > halfSpread * 0.5) velocities[i].z *= -1;
+            const col =
+              themeColors[Math.floor(Math.random() * themeColors.length)];
+            colors[i * 3] = col.r;
+            colors[i * 3 + 1] = col.g;
+            colors[i * 3 + 2] = col.b;
+
+            velocities.push({
+              x: (Math.random() - 0.5) * 0.02,
+              y: (Math.random() - 0.5) * 0.02,
+              z: (Math.random() - 0.5) * 0.01,
+            });
           }
-          particleGeometry.attributes.position.needsUpdate = true;
 
-          // Update connections
-          let lineIdx = 0;
-          for (let i = 0; i < PARTICLE_COUNT && lineIdx < MAX_CONNECTIONS; i++) {
-            for (let j = i + 1; j < PARTICLE_COUNT && lineIdx < MAX_CONNECTIONS; j++) {
-              const dx = pos[i * 3] - pos[j * 3];
-              const dy = pos[i * 3 + 1] - pos[j * 3 + 1];
-              const dz = pos[i * 3 + 2] - pos[j * 3 + 2];
-              const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-              if (dist < CONNECTION_DIST) {
-                const alpha = 1 - dist / CONNECTION_DIST;
-                const ci = lineIdx * 6;
-                linePositions[ci]     = pos[i * 3];
-                linePositions[ci + 1] = pos[i * 3 + 1];
-                linePositions[ci + 2] = pos[i * 3 + 2];
-                linePositions[ci + 3] = pos[j * 3];
-                linePositions[ci + 4] = pos[j * 3 + 1];
-                linePositions[ci + 5] = pos[j * 3 + 2];
+          particleGeometry.setAttribute(
+            'position',
+            new THREE.BufferAttribute(positions, 3),
+          );
+          particleGeometry.setAttribute(
+            'color',
+            new THREE.BufferAttribute(colors, 3),
+          );
 
-                lineColors[ci]     = EMERALD.r * alpha;
-                lineColors[ci + 1] = EMERALD.g * alpha;
-                lineColors[ci + 2] = EMERALD.b * alpha;
-                lineColors[ci + 3] = BLUE.r * alpha;
-                lineColors[ci + 4] = BLUE.g * alpha;
-                lineColors[ci + 5] = BLUE.b * alpha;
-                lineIdx++;
+          // Glow sprite texture
+          const spriteCanvas = document.createElement('canvas');
+          spriteCanvas.width = 64;
+          spriteCanvas.height = 64;
+          const ctx = spriteCanvas.getContext('2d');
+          const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+          gradient.addColorStop(0, 'rgba(255,255,255,1)');
+          gradient.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+          gradient.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 64, 64);
+          const spriteTexture = new THREE.CanvasTexture(spriteCanvas);
+
+          const particleMaterial = new THREE.PointsMaterial({
+            size: 1.2,
+            map: spriteTexture,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          });
+
+          const particleSystem = new THREE.Points(
+            particleGeometry,
+            particleMaterial,
+          );
+          scene.add(particleSystem);
+
+          // Connection lines
+          const MAX_CONNECTIONS = 100;
+          const CONNECTION_DIST = 12;
+          const linePositions = new Float32Array(MAX_CONNECTIONS * 6);
+          const lineColors = new Float32Array(MAX_CONNECTIONS * 6);
+          const lineGeometry = new THREE.BufferGeometry();
+          lineGeometry.setAttribute(
+            'position',
+            new THREE.BufferAttribute(linePositions, 3),
+          );
+          lineGeometry.setAttribute(
+            'color',
+            new THREE.BufferAttribute(lineColors, 3),
+          );
+          lineGeometry.setDrawRange(0, 0);
+
+          const lineMaterial = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.25,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          });
+          const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+          scene.add(lines);
+
+          // Central glowing ring
+          const ringGeometry = new THREE.TorusGeometry(8, 0.08, 16, 100);
+          const ringMaterial = new THREE.MeshBasicMaterial({
+            color: EMERALD,
+            transparent: true,
+            opacity: 0.2,
+          });
+          const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+          scene.add(ring);
+
+          // Second ring (tilted)
+          const ring2Geometry = new THREE.TorusGeometry(12, 0.05, 16, 100);
+          const ring2Material = new THREE.MeshBasicMaterial({
+            color: BLUE,
+            transparent: true,
+            opacity: 0.12,
+          });
+          const ring2 = new THREE.Mesh(ring2Geometry, ring2Material);
+          ring2.rotation.x = Math.PI / 3;
+          ring2.rotation.y = Math.PI / 6;
+          scene.add(ring2);
+
+          // Central icosahedron wireframe
+          const coreGeometry = new THREE.IcosahedronGeometry(3, 1);
+          const coreMaterial = new THREE.MeshBasicMaterial({
+            color: PURPLE,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15,
+          });
+          const core = new THREE.Mesh(coreGeometry, coreMaterial);
+          scene.add(core);
+
+          // Mouse tracking for parallax
+          let mouseX = 0,
+            mouseY = 0;
+          document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+          });
+
+          // Animation loop
+          function animate() {
+            requestAnimationFrame(animate);
+
+            const time = Date.now() * 0.001;
+
+            // Update particle positions
+            const pos = particleGeometry.attributes.position.array;
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+              pos[i * 3] += velocities[i].x;
+              pos[i * 3 + 1] += velocities[i].y;
+              pos[i * 3 + 2] += velocities[i].z;
+
+              // Bounce within bounds
+              const halfSpread = SPREAD / 2;
+              if (Math.abs(pos[i * 3]) > halfSpread) velocities[i].x *= -1;
+              if (Math.abs(pos[i * 3 + 1]) > halfSpread) velocities[i].y *= -1;
+              if (Math.abs(pos[i * 3 + 2]) > halfSpread * 0.5)
+                velocities[i].z *= -1;
+            }
+            particleGeometry.attributes.position.needsUpdate = true;
+
+            // Update connections
+            let lineIdx = 0;
+            for (
+              let i = 0;
+              i < PARTICLE_COUNT && lineIdx < MAX_CONNECTIONS;
+              i++
+            ) {
+              for (
+                let j = i + 1;
+                j < PARTICLE_COUNT && lineIdx < MAX_CONNECTIONS;
+                j++
+              ) {
+                const dx = pos[i * 3] - pos[j * 3];
+                const dy = pos[i * 3 + 1] - pos[j * 3 + 1];
+                const dz = pos[i * 3 + 2] - pos[j * 3 + 2];
+                const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                if (dist < CONNECTION_DIST) {
+                  const alpha = 1 - dist / CONNECTION_DIST;
+                  const ci = lineIdx * 6;
+                  linePositions[ci] = pos[i * 3];
+                  linePositions[ci + 1] = pos[i * 3 + 1];
+                  linePositions[ci + 2] = pos[i * 3 + 2];
+                  linePositions[ci + 3] = pos[j * 3];
+                  linePositions[ci + 4] = pos[j * 3 + 1];
+                  linePositions[ci + 5] = pos[j * 3 + 2];
+
+                  lineColors[ci] = EMERALD.r * alpha;
+                  lineColors[ci + 1] = EMERALD.g * alpha;
+                  lineColors[ci + 2] = EMERALD.b * alpha;
+                  lineColors[ci + 3] = BLUE.r * alpha;
+                  lineColors[ci + 4] = BLUE.g * alpha;
+                  lineColors[ci + 5] = BLUE.b * alpha;
+                  lineIdx++;
+                }
               }
             }
+            lineGeometry.attributes.position.needsUpdate = true;
+            lineGeometry.attributes.color.needsUpdate = true;
+            lineGeometry.setDrawRange(0, lineIdx * 2);
+
+            // Animate rings
+            ring.rotation.z = time * 0.15;
+            ring.rotation.x = Math.sin(time * 0.1) * 0.3;
+            ring2.rotation.z = -time * 0.1;
+            ring2.rotation.y = Math.PI / 6 + Math.sin(time * 0.15) * 0.2;
+
+            // Animate core
+            core.rotation.x = time * 0.2;
+            core.rotation.y = time * 0.15;
+            core.scale.setScalar(1 + Math.sin(time * 0.8) * 0.08);
+
+            // Camera parallax
+            camera.position.x += (mouseX * 3 - camera.position.x) * 0.02;
+            camera.position.y += (-mouseY * 3 - camera.position.y) * 0.02;
+            camera.lookAt(scene.position);
+
+            renderer.render(scene, camera);
           }
-          lineGeometry.attributes.position.needsUpdate = true;
-          lineGeometry.attributes.color.needsUpdate = true;
-          lineGeometry.setDrawRange(0, lineIdx * 2);
+          animate();
 
-          // Animate rings
-          ring.rotation.z = time * 0.15;
-          ring.rotation.x = Math.sin(time * 0.1) * 0.3;
-          ring2.rotation.z = -time * 0.1;
-          ring2.rotation.y = Math.PI / 6 + Math.sin(time * 0.15) * 0.2;
-
-          // Animate core
-          core.rotation.x = time * 0.2;
-          core.rotation.y = time * 0.15;
-          core.scale.setScalar(1 + Math.sin(time * 0.8) * 0.08);
-
-          // Camera parallax
-          camera.position.x += (mouseX * 3 - camera.position.x) * 0.02;
-          camera.position.y += (-mouseY * 3 - camera.position.y) * 0.02;
-          camera.lookAt(scene.position);
-
-          renderer.render(scene, camera);
+          // Resize handler
+          window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+          });
         }
-        animate();
 
-        // Resize handler
-        window.addEventListener('resize', () => {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-      }
+        // ---------- 3D Card Tilt Effect ----------
+        function initTiltEffect() {
+          document
+            .querySelectorAll('.glow-card, .platform-card, .tilt-3d')
+            .forEach((card) => {
+              if (card.querySelector('input, textarea, select, [contenteditable="true"]')) {
+                return;
+              }
+              card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -6;
+                const rotateY = ((x - centerX) / centerX) * 6;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+              });
+              card.addEventListener('mouseleave', () => {
+                card.style.transform =
+                  'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+              });
+            });
+        }
 
-      // ---------- 3D Card Tilt Effect ----------
-      function initTiltEffect() {
-        document.querySelectorAll('.glow-card, .platform-card, .tilt-3d').forEach(card => {
-          card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            const rotateX = ((y - centerY) / centerY) * -6;
-            const rotateY = ((x - centerX) / centerX) * 6;
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+        // ---------- Scroll Reveal Animations ----------
+        function initScrollReveal() {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add('revealed');
+                  // Don't unobserve to allow re-reveal if desired
+                }
+              });
+            },
+            { threshold: 0.1, rootMargin: '0px 0px -40px 0px' },
+          );
+
+          document
+            .querySelectorAll(
+              '.reveal-up, .reveal-left, .reveal-right, .reveal-scale, .stagger-children',
+            )
+            .forEach((el) => {
+              observer.observe(el);
+            });
+
+          // Auto-add reveal classes to key sections
+          document.querySelectorAll('.glow-card').forEach((el, i) => {
+            el.classList.add('reveal-up');
+            el.style.transitionDelay = `${i * 0.08}s`;
+            observer.observe(el);
           });
-          card.addEventListener('mouseleave', () => {
-            card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+          document.querySelectorAll('.platform-card').forEach((el, i) => {
+            el.classList.add('reveal-scale');
+            el.style.transitionDelay = `${i * 0.06}s`;
+            observer.observe(el);
           });
-        });
-      }
+        }
 
-      // ---------- Scroll Reveal Animations ----------
-      function initScrollReveal() {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('revealed');
-              // Don't unobserve to allow re-reveal if desired
+        // ---------- Magnetic Button Effect ----------
+        function initMagneticButtons() {
+          document
+            .querySelectorAll('button.bg-primary, button.bg-secondary')
+            .forEach((btn) => {
+              btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+              });
+              btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'translate(0, 0)';
+              });
+            });
+        }
+
+        // ---------- Init All Effects ----------
+        window.addEventListener('DOMContentLoaded', () => {
+          // Wait for Three.js to load
+          const checkThree = setInterval(() => {
+            if (typeof THREE !== 'undefined') {
+              clearInterval(checkThree);
+              initParticleNetwork();
             }
-          });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+          }, 100);
 
-        document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right, .reveal-scale, .stagger-children').forEach(el => {
-          observer.observe(el);
+          initTiltEffect();
+          initScrollReveal();
+          initMagneticButtons();
         });
-
-        // Auto-add reveal classes to key sections
-        document.querySelectorAll('.glow-card').forEach((el, i) => {
-          el.classList.add('reveal-up');
-          el.style.transitionDelay = `${i * 0.08}s`;
-          observer.observe(el);
-        });
-        document.querySelectorAll('.platform-card').forEach((el, i) => {
-          el.classList.add('reveal-scale');
-          el.style.transitionDelay = `${i * 0.06}s`;
-          observer.observe(el);
-        });
-      }
-
-      // ---------- Magnetic Button Effect ----------
-      function initMagneticButtons() {
-        document.querySelectorAll('button.bg-primary, button.bg-secondary').forEach(btn => {
-          btn.addEventListener('mousemove', (e) => {
-            const rect = btn.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
-          });
-          btn.addEventListener('mouseleave', () => {
-            btn.style.transform = 'translate(0, 0)';
-          });
-        });
-      }
-
-      // ---------- Init All Effects ----------
-      window.addEventListener('DOMContentLoaded', () => {
-        // Wait for Three.js to load
-        const checkThree = setInterval(() => {
-          if (typeof THREE !== 'undefined') {
-            clearInterval(checkThree);
-            initParticleNetwork();
-          }
-        }, 100);
-
-        initTiltEffect();
-        initScrollReveal();
-        initMagneticButtons();
-      });
-    })();
+      })();
     </script>
   </body>
 </html>

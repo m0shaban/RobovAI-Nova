@@ -7,6 +7,7 @@ Extracted to avoid circular imports between main.py and sub-routers.
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
+
 from backend.core.database import db_client
 from backend.core.security import decode_access_token
 
@@ -83,5 +84,5 @@ async def get_current_user(
 async def require_admin(current_user: dict = Depends(get_current_user)):
     """Dependency that requires admin role."""
     if current_user.get("role") != "admin":
-        raise HTTPException(status_code=403, detail="⛔ صلاحيات المسؤول مطلوبة")
+        raise HTTPException(status_code=403, detail="Admin privileges are required")
     return current_user

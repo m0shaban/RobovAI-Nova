@@ -7,11 +7,14 @@
 • Password strength validation
 """
 
+import os
+import re
+import secrets
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 import jwt  # Needs: pip install pyjwt
 from passlib.context import CryptContext
-import os, secrets, re
 
 # ─── Independent JWT Secret ───────────────────────────────────
 # Priority: env var → auto-generated (persisted in .jwt_secret)
@@ -96,13 +99,13 @@ def get_password_hash(password: str) -> str:
 def validate_password_strength(password: str) -> tuple[bool, str]:
     """Check password meets minimum requirements."""
     if len(password) < 8:
-        return False, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+        return False, "Password must be at least 8 characters long"
     if not re.search(r"[A-Za-z]", password):
-        return False, "كلمة المرور يجب أن تحتوي على حرف واحد على الأقل"
+        return False, "Password must include at least one letter"
     if not re.search(r"[0-9]", password):
-        return False, "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل"
+        return False, "Password must include at least one number"
     if not re.search(r'[!@#$%^&*()_+\-=\[\]{};\':",./<>?]', password):
-        return False, "كلمة المرور يجب أن تحتوي على رمز خاص واحد على الأقل (!@#$%...)"
+        return False, "Password must include at least one special character (!@#$%...)"
     return True, ""
 
 

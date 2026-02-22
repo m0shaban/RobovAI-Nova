@@ -4,29 +4,34 @@
 Professional AI Chief of Staff - SaaS Ready Edition
 """
 
+import base64
+import binascii
 import logging
 import os
-import re
 import random
+import re
 import tempfile
+from typing import Optional
+
 from telegram import (
-    Update,
-    ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
-    KeyboardButton,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    Update,
 )
 from telegram.ext import (
     Application,
-    CommandHandler,
-    MessageHandler,
     CallbackQueryHandler,
-    filters,
+    CommandHandler,
     ContextTypes,
+    MessageHandler,
+    filters,
 )
 
 logger = logging.getLogger("robovai.telegram")
+EMAIL_PATTERN = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORECASE)
+
 
 # Safe imports
 try:
@@ -46,6 +51,43 @@ except ImportError:
 # ═══════════════════════════════════════════════════════════════════════════
 
 USER_STATE = {}  # Track user menu state
+
+
+def _is_valid_email(email: str) -> bool:
+    """Validate email format for verification flow."""
+    return bool(EMAIL_PATTERN.match(email.strip()))
+
+
+def _resolve_welcome_image_path() -> Optional[str]:
+    """Resolve the preferred welcome image path for Telegram welcome message."""
+    candidates = [
+        os.path.join("public", "assets", "robovai nova bot.jpg"),
+        os.path.join("public", "assets", "logo.png"),
+    ]
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+    return None
+
+
+def _decode_verify_start_arg(start_arg: str) -> Optional[str]:
+    """Decode deep-link start argument in the format verify_<base64url(email)>."""
+    if not start_arg.startswith("verify_"):
+        return None
+
+    payload = start_arg[len("verify_") :].strip()
+    if not payload:
+        return None
+
+    try:
+        padded_payload = payload + "=" * ((4 - len(payload) % 4) % 4)
+        decoded = base64.urlsafe_b64decode(padded_payload.encode("utf-8")).decode(
+            "utf-8"
+        )
+        email = decoded.strip().lower()
+        return email if _is_valid_email(email) else None
+    except (ValueError, binascii.Error, UnicodeDecodeError):
+        return None
 
 # ═══════════════════════════════════════════════════════════════════════════
 # ⌨️ PROFESSIONAL KEYBOARD MENUS
@@ -152,6 +194,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"User {update.effective_user.id} started the bot")
 
     user_name = update.effective_user.first_name or "مستخدم"
+    chat_id = str(update.effective_chat.id)
+
+    start_arg = context.args[0] if getattr(context, "args", None) else ""
+    prefilled_email = _decode_verify_start_arg(start_arg) if start_arg else None
 
     welcome_msg = f"""✨ <b>مرحباً {user_name} في RobovAI Nova</b>
 
@@ -190,11 +236,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Try to send logo if exists
     try:
-        logo_path = os.path.join("public", "assets", "logo.png")
-        if os.path.exists(logo_path):
-            await update.message.reply_photo(photo=open(logo_path, "rb"))
-    except:
-        pass
+        welcome_image = _resolve_welcome_image_path()
+        if welcome_image:
+            with open(welcome_image, "rb") as image_file:
+                await update.message.reply_photo(
+                    photo=image_file,
+                    caption="🤖 RobovAI Nova",
+                )
+    except Exception as image_error:
+        logger.warning(f"Failed to send welcome image: {image_error}")
 
     await safe_reply(update, welcome_msg, reply_markup=get_main_keyboard())
     # Send inline buttons as a separate message so they don't interfere with ReplyKeyboard
@@ -203,6 +253,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="HTML",
         reply_markup=inline_kb,
     )
+
+    if prefilled_email:
+        VERIFY_STATE[chat_id] = {"step": "awaiting_email", "method": "email"}
+        await update.message.reply_text(
+            f"✅ تم التقاط بريدك تلقائياً: <code>{prefilled_email}</code>\n"
+            "جارٍ التحقق من الحساب الآن...",
+            parse_mode="HTML",
+        )
+        await _start_email_verification_with_email(update.message, chat_id, prefilled_email)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1059,7 +1118,7 @@ async def handle_verify_flow(
     # Step 1: User sent their email
     if state["step"] == "awaiting_email":
         email = message.lower()
-        if "@" not in email or "." not in email:
+        if not _is_valid_email(email):
             await safe_reply(
                 update,
                 "⚠️ هذا لا يبدو بريداً إلكترونياً صحيحاً. حاول مرة أخرى:",
@@ -1067,81 +1126,8 @@ async def handle_verify_flow(
             )
             return True
 
-        try:
-            from backend.core.database import db_client
-
-            user = await db_client.get_user_by_email_unverified(email)
-
-            if not user:
-                # ── Check external apps (centralized bot mode) ──
-                ext_otp = await db_client.get_external_otp(email)
-                if ext_otp:
-                    # External app pushed an OTP for this email
-                    state["external"] = True
-                    state["email"] = email
-                    state["ext_otp"] = ext_otp
-                    state["step"] = "awaiting_otp"
-                    state["otp"] = ext_otp["code"]
-                    VERIFY_STATE[chat_id] = state
-
-                    msg = f"""✅ <b>تم العثور على طلب تفعيل!</b>
-
-📧 <b>البريد:</b> {email}
-📱 <b>التطبيق:</b> {ext_otp.get('app_id', 'external')}
-
-━━━━━━━━━━━━━━━━━━━━
-
-🔑 <b>كود التحقق:</b>
-
-<code>{ext_otp['code']}</code>
-
-━━━━━━━━━━━━━━━━━━━━
-
-⏱️ صلاحية الكود: <b>10 دقائق</b>
-
-📋 انسخ الكود وأدخله في التطبيق لتفعيل حسابك ✅"""
-
-                    await safe_reply(
-                        update,
-                        msg,
-                        reply_markup=_verify_confirm_keyboard(ext_otp["code"]),
-                    )
-
-                    # Mark as verified in Nova's external_verifications
-                    await db_client.mark_external_verified(email, telegram_chat_id=chat_id)
-
-                    return True
-
-                await safe_reply(
-                    update,
-                    "❌ لم يتم العثور على حساب بهذا البريد.\n\nسجّل أولاً من الموقع ثم عد هنا للتفعيل.",
-                    reply_markup=_verify_method_keyboard(),
-                )
-                VERIFY_STATE.pop(chat_id, None)
-                return True
-
-            if user.get("is_verified"):
-                await safe_reply(
-                    update,
-                    "✅ هذا الحساب مُفعّل بالفعل! يمكنك تسجيل الدخول من الموقع.",
-                    reply_markup=get_main_keyboard(),
-                )
-                VERIFY_STATE.pop(chat_id, None)
-                return True
-
-            # Found unverified account → generate OTP with inline buttons
-            state["user_id"] = user["id"]
-            state["email"] = email
-            VERIFY_STATE[chat_id] = state
-
-            await _generate_and_send_otp(update.message, chat_id, state)
-            return True
-
-        except Exception as e:
-            logger.error(f"Verify email error: {e}", exc_info=True)
-            await safe_reply(update, "❌ حدث خطأ تقني. حاول مرة أخرى.")
-            VERIFY_STATE.pop(chat_id, None)
-            return True
+        await _start_email_verification_with_email(update.message, chat_id, email)
+        return True
 
     # Step: User typed email while in phone flow (fallback)
     if state["step"] == "awaiting_phone":
@@ -1178,6 +1164,81 @@ async def handle_verify_flow(
     return False
 
 
+async def _start_email_verification_with_email(message, chat_id: str, email: str) -> None:
+    """Resolve account by email and continue verification flow."""
+    state = VERIFY_STATE.get(chat_id, {"step": "awaiting_email", "method": "email"})
+
+    try:
+        from backend.core.database import db_client
+
+        user = await db_client.get_user_by_email_unverified(email)
+
+        if not user:
+            # ── Check external apps (centralized bot mode) ──
+            ext_otp = await db_client.get_external_otp(email)
+            if ext_otp:
+                state["external"] = True
+                state["email"] = email
+                state["ext_otp"] = ext_otp
+                state["step"] = "awaiting_otp"
+                state["otp"] = ext_otp["code"]
+                VERIFY_STATE[chat_id] = state
+
+                msg = f"""✅ <b>تم العثور على طلب تفعيل!</b>
+
+📧 <b>البريد:</b> {email}
+📱 <b>التطبيق:</b> {ext_otp.get('app_id', 'external')}
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔑 <b>كود التحقق:</b>
+
+<code>{ext_otp['code']}</code>
+
+━━━━━━━━━━━━━━━━━━━━
+
+⏱️ صلاحية الكود: <b>10 دقائق</b>
+
+📋 انسخ الكود وأدخله في التطبيق لتفعيل حسابك ✅"""
+
+                await message.reply_text(
+                    msg,
+                    parse_mode="HTML",
+                    reply_markup=_verify_confirm_keyboard(ext_otp["code"]),
+                )
+
+                await db_client.mark_external_verified(
+                    email,
+                    telegram_chat_id=chat_id,
+                )
+                return
+
+            await message.reply_text(
+                "❌ لم يتم العثور على حساب بهذا البريد.\n\n"
+                "سجّل أولاً من الموقع ثم عد هنا للتفعيل.",
+                reply_markup=_verify_method_keyboard(),
+            )
+            VERIFY_STATE.pop(chat_id, None)
+            return
+
+        if user.get("is_verified"):
+            await message.reply_text(
+                "✅ هذا الحساب مُفعّل بالفعل! يمكنك تسجيل الدخول من الموقع.",
+                reply_markup=get_main_keyboard(),
+            )
+            VERIFY_STATE.pop(chat_id, None)
+            return
+
+        state["user_id"] = user["id"]
+        state["email"] = email
+        VERIFY_STATE[chat_id] = state
+        await _generate_and_send_otp(message, chat_id, state)
+    except Exception as e:
+        logger.error(f"Verify email error: {e}", exc_info=True)
+        await message.reply_text("❌ حدث خطأ تقني. حاول مرة أخرى.")
+        VERIFY_STATE.pop(chat_id, None)
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # �🚀 APP SETUP
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1186,9 +1247,9 @@ async def handle_verify_flow(
 def create_telegram_app():
     """Create and configure Telegram application"""
     try:
-        token = os.getenv("TELEGRAM_BOT_TOKEN")
+        token = (os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("TELEGRAM_TOKEN") or "").strip()
         if not token:
-            logger.error("TELEGRAM_BOT_TOKEN not set")
+            logger.warning("Telegram token is not set (TELEGRAM_BOT_TOKEN / TELEGRAM_TOKEN)")
             return None
 
         logger.info("Creating Telegram app...")

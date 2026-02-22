@@ -1,23 +1,24 @@
-from fastapi import FastAPI, Request, HTTPException, File, UploadFile, Form
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 
 load_dotenv()
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime, timedelta
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
+import json
 import logging
 import tempfile
-import json
 import uuid
-import os
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
 from backend.tools.registry import ToolRegistry
-from backend.core.config import settings
 
 # Setup Logger FIRST
 logging.basicConfig(level=logging.INFO)
@@ -65,17 +66,23 @@ from backend.tools.loader import register_all_tools
 register_all_tools()
 
 # Initialize Telegram Bot (safe import)
-
-# Initialize Telegram Bot (safe import)
 try:
     from backend.telegram_bot import create_telegram_app
 
-    # Temporarily disabled to avoid hanging locally
-    telegram_app = None # create_telegram_app()
-    if telegram_app:
+    telegram_enabled = os.getenv("TELEGRAM_ENABLED", "true").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+    telegram_app = create_telegram_app() if telegram_enabled else None
+    if telegram_app is not None:
         logger.info("✅ Telegram bot enabled")
+    elif telegram_enabled:
+        logger.info("⚠️ Telegram bot disabled (missing/invalid token)")
     else:
-        logger.info("⚠️ Telegram bot disabled (no token)")
+        logger.info("⚠️ Telegram bot disabled by TELEGRAM_ENABLED=false")
 except Exception as e:
     logger.error(f"Telegram bot init failed: {e}")
     telegram_app = None
@@ -189,7 +196,7 @@ async def security_headers_middleware(request: Request, call_next):
 
 # ── HTTPS Redirect in Production ──
 if _is_prod_env:
-    from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
+    pass
 
     # Render terminates TLS at the load balancer, so skip redirect there
     # Only add if not behind a reverse proxy that already handles HTTPS
@@ -199,8 +206,8 @@ if _is_prod_env:
 # ── Rate Limiting ──
 try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
-    from slowapi.util import get_remote_address
     from slowapi.errors import RateLimitExceeded
+    from slowapi.util import get_remote_address
 
     def _client_ip_for_rate_limit(request: Request) -> str:
         x_client_ip = (request.headers.get("x-client-ip") or "").strip()
@@ -255,7 +262,6 @@ _ALLOWED_PAGES = {
     "chat",
     "signup",
     "login",
-    "admin",
     "account",
     "settings",
     "developers",
@@ -284,28 +290,27 @@ async def serve_html_page(page: str):
 # 🔐 AUTHENTICATION & SECURITY
 # ═══════════════════════════════════════════════════════════════════════════
 
+from backend.agents.campaigns import router as agents_campaigns_router
 from backend.chatbots.builder import router as chatbot_builder_router
 from backend.chatbots.integrations import router as integrations_router
-from backend.agents.campaigns import router as agents_campaigns_router
 
 app.include_router(chatbot_builder_router)
 app.include_router(integrations_router)
 app.include_router(agents_campaigns_router)
 
-from fastapi import Depends, status, Response, Request
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Depends, Request, Response, status
 from fastapi.responses import RedirectResponse
+from fastapi.security import OAuth2PasswordRequestForm
+
 from backend.core.database import db_client
-from backend.core.security import (
-    create_access_token,
-    decode_access_token,
-    validate_password_strength,
-)
 from backend.core.deps import (
-    oauth2_scheme,
     get_current_user,
     get_current_user_from_cookie,
     require_admin,
+)
+from backend.core.security import (
+    create_access_token,
+    validate_password_strength,
 )
 
 
@@ -730,7 +735,7 @@ async def text_to_speech(body: TtsRequest):
         raise HTTPException(status_code=400, detail="text is required")
 
     try:
-        from backend.tools.audio import synthesize_speech, TTS_VOICES
+        from backend.tools.audio import TTS_VOICES, synthesize_speech
 
         voice = TTS_VOICES.get(body.voice) if body.voice else None
         filepath = await synthesize_speech(body.text.strip(), voice=voice)
@@ -925,8 +930,31 @@ async def serve_signup():
 
 
 @app.get("/admin", tags=["Pages"])
-async def serve_admin():
-    return FileResponse("admin.html")
+async def serve_admin(request: Request):
+    user = await get_current_user_from_cookie(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=404, detail="Not Found")
+    return FileResponse(
+        "admin.html",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, private",
+            "Pragma": "no-cache",
+        },
+    )
+
+
+@app.get("/admin.html", tags=["Pages"])
+async def serve_admin_html(request: Request):
+    user = await get_current_user_from_cookie(request)
+    if not user or user.get("role") != "admin":
+        raise HTTPException(status_code=404, detail="Not Found")
+    return FileResponse(
+        "admin.html",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, private",
+            "Pragma": "no-cache",
+        },
+    )
 
 
 @app.get("/settings", tags=["Pages"])
@@ -985,8 +1013,8 @@ async def whatsapp_webhook(request: Request):
     - Conversation tracking via db_client
     """
     try:
-        import hmac as _hmac
         import hashlib as _hashlib
+        import hmac as _hmac
 
         raw_body = await request.body()
 
@@ -1001,7 +1029,7 @@ async def whatsapp_webhook(request: Request):
                 logger.warning("WhatsApp webhook signature mismatch — rejecting")
                 raise HTTPException(status_code=403, detail="Invalid signature")
 
-        from backend.adapters.platforms import WhatsAppAdapter, OutgoingMessage
+        from backend.adapters.platforms import OutgoingMessage, WhatsAppAdapter
 
         payload = json.loads(raw_body)
         access_token = os.getenv("WHATSAPP_ACCESS_TOKEN", "")
@@ -1088,8 +1116,8 @@ async def messenger_webhook(request: Request):
     - Conversation tracking via db_client
     """
     try:
-        import hmac as _hmac
         import hashlib as _hashlib
+        import hmac as _hmac
 
         raw_body = await request.body()
 
@@ -1202,8 +1230,8 @@ def _verify_discord_signature(
 ) -> bool:
     """Verify Discord interaction signature using Ed25519."""
     try:
-        from nacl.signing import VerifyKey
         from nacl.exceptions import BadSignatureError
+        from nacl.signing import VerifyKey
 
         verify_key = VerifyKey(bytes.fromhex(public_key))
         verify_key.verify(timestamp.encode() + raw_body, bytes.fromhex(signature))
@@ -1228,7 +1256,6 @@ async def discord_webhook(request: Request):
     3. Create slash commands via Discord API
     """
     try:
-        import hmac
 
         raw_body = await request.body()
         payload = json.loads(raw_body)
@@ -1247,7 +1274,7 @@ async def discord_webhook(request: Request):
             return {"type": 1}
 
         # ── Type 2+3: Application commands / components ──
-        from backend.adapters.platforms import DiscordAdapter, OutgoingMessage
+        from backend.adapters.platforms import DiscordAdapter
 
         bot_token = os.getenv("DISCORD_BOT_TOKEN", "")
         app_id = os.getenv("DISCORD_APPLICATION_ID", "")
@@ -1309,7 +1336,9 @@ async def webhooks_status():
     """
     platforms = {
         "telegram": {
-            "configured": bool(os.getenv("TELEGRAM_BOT_TOKEN")),
+            "configured": bool(
+                (os.getenv("TELEGRAM_BOT_TOKEN") or os.getenv("TELEGRAM_TOKEN") or "").strip()
+            ),
             "endpoint": "/telegram-webhook",
             "verify_endpoint": None,
             "docs": "https://core.telegram.org/bots/webhooks",
@@ -1384,7 +1413,7 @@ async def telegram_webhook(request: Request):
 # 💳 UNIFIED PAYMENT GATEWAY (Stripe + Paymob + LemonSqueezy)
 # ═══════════════════════════════════════════════════════════════════════════
 
-from backend.payment_gateway import PaymentGateway, PLANS, TOKEN_PACKAGES
+from backend.payment_gateway import PLANS, TOKEN_PACKAGES, PaymentGateway
 
 
 @app.post("/payments/checkout", tags=["Payments"])
@@ -1706,8 +1735,9 @@ async def stream_agent_get(
     Uses response cache to save tokens on repeated/greeting messages.
     ai_level: "fast" (chatbot only), "balanced" (smart routing), "powerful" (full agent)
     """
-    from backend.cache import get_cached, set_cached, get_instant_response
     from fastapi.responses import StreamingResponse as _SR
+
+    from backend.cache import get_cached, get_instant_response
 
     # — Check instant / cached response FIRST (zero tokens) —
     instant = get_instant_response(message)
@@ -1766,8 +1796,9 @@ async def stream_agent_get(
 
 async def _stream_chatbot(message: str, user_id: str, platform: str):
     """Fast chatbot mode — LLM only, no tools/agent. Much faster responses."""
-    from fastapi.responses import StreamingResponse
     import json
+
+    from fastapi.responses import StreamingResponse
 
     async def event_generator():
         try:
@@ -1828,13 +1859,15 @@ async def _stream_chatbot(message: str, user_id: str, platform: str):
 
 async def _stream_agent(message: str, user_id: str, platform: str):
     """Internal streaming function used by both GET and POST endpoints"""
-    from fastapi.responses import StreamingResponse
     import json
+
+    from fastapi.responses import StreamingResponse
 
     async def event_generator():
         try:
-            from backend.agent.graph import NovaAgent
             import asyncio
+
+            from backend.agent.graph import NovaAgent
         except ImportError as imp_err:
             logger.error(
                 f"❌ Agent import failed: {imp_err}  — Python: {sys.executable}"
@@ -1931,7 +1964,7 @@ async def _stream_agent(message: str, user_id: str, platform: str):
                             break
                     else:
                         # Timeout - send heartbeat without cancelling
-                        yield f": keep-alive\n\n"
+                        yield ": keep-alive\n\n"
                         continue
 
                 except Exception as e:
@@ -2012,8 +2045,9 @@ async def get_conversation(
 ):
     """الحصول على محادثة"""
     try:
-        from backend.history.manager import get_conversation_manager
         from dataclasses import asdict
+
+        from backend.history.manager import get_conversation_manager
 
         manager = get_conversation_manager()
         conv = manager.get_conversation(user_id, conv_id)
@@ -2032,7 +2066,6 @@ async def create_conversation(
     """إنشاء محادثة جديدة"""
     try:
         from backend.history.manager import get_conversation_manager
-        from dataclasses import asdict
 
         manager = get_conversation_manager()
         conv = manager.create_conversation(body.user_id, body.title)
@@ -2402,7 +2435,7 @@ async def _process_wallet_payment(payment_token: str, phone_number: str) -> dict
         )
         return {
             "status": "error",
-            "detail": f"رقم الهاتف غير صحيح. يجب أن يكون بصيغة 01xxxxxxxxx (11 رقم)",
+            "detail": "رقم الهاتف غير صحيح. يجب أن يكون بصيغة 01xxxxxxxxx (11 رقم)",
         }
 
     logger.info(
@@ -2813,7 +2846,7 @@ async def list_custom_bots(current_user: dict = Depends(get_current_user)):
             (str(current_user["id"]),),
         )
         return {"status": "success", "bots": bots or []}
-    except Exception as e:
+    except Exception:
         return {"status": "success", "bots": []}
 
 

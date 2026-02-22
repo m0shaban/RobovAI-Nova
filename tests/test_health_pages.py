@@ -33,7 +33,7 @@ class TestPages:
 
     @pytest.mark.parametrize(
         "path",
-        ["/", "/chat", "/developers", "/login", "/signup", "/admin",
+        ["/", "/chat", "/developers", "/login", "/signup",
          "/settings", "/chatbot-builder", "/smart-agents"],
     )
     def test_page_returns_200(self, client, path):
@@ -43,12 +43,27 @@ class TestPages:
 
     @pytest.mark.parametrize(
         "page",
-        ["chat", "signup", "login", "admin", "account", "settings",
+        ["chat", "signup", "login", "account", "settings",
          "developers", "index"],
     )
     def test_html_extension_pages(self, client, page):
         resp = client.get(f"/{page}.html")
         assert resp.status_code == 200
+
+    def test_admin_page_hidden_without_admin_cookie(self, client):
+        resp = client.get("/admin")
+        assert resp.status_code == 404
+
+        resp_html = client.get("/admin.html")
+        assert resp_html.status_code == 404
+
+    def test_admin_page_visible_with_admin_cookie(self, client, admin_auth_headers):
+        token = admin_auth_headers["Authorization"].replace("Bearer ", "")
+        client.cookies.set("access_token", f"Bearer {token}")
+
+        resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert "text/html" in resp.headers.get("content-type", "")
 
     def test_disallowed_page_returns_404(self, client):
         resp = client.get("/../../etc/passwd.html")

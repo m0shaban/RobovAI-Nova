@@ -350,6 +350,28 @@
         font-size: 0.82rem;
       }
 
+      .telegram-email-hint {
+        background: rgba(139, 92, 246, 0.12);
+        border: 1px solid rgba(139, 92, 246, 0.28);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        color: var(--text);
+        margin: 0.75rem 0;
+      }
+      .telegram-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 0.75rem;
+      }
+      .btn-ghost {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--border);
+      }
+      .btn-ghost:hover {
+        box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
+      }
+
       .timer {
         color: var(--text-muted);
         font-size: 0.82rem;
@@ -385,6 +407,23 @@
       .success-box h2 {
         color: var(--success);
         margin-bottom: 0.5rem;
+      }
+      .verify-otp-panel {
+        margin-top: 1.5rem;
+        text-align: center;
+      }
+      .otp-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+      .is-hidden {
+        display: none;
+      }
+      .success-subtitle {
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
       }
     </style>
   </head>
@@ -465,22 +504,38 @@
       <!-- ═══ STEP 2: Telegram Verification ═══ -->
       <div class="step-panel" id="step2">
         <h1>🔐 تفعيل الحساب</h1>
-        <p class="subtitle">فعّل حسابك عبر بوت تليجرام</p>
+        <p class="subtitle">فعّل حسابك عبر تيليجرام بخطوة واحدة</p>
 
         <div class="telegram-guide">
           <h3>📱 خطوات التفعيل</h3>
           <ol>
             <li>افتح بوت <b>RobovAI</b> في تليجرام</li>
-            <li>أرسل الأمر <code>/verify</code></li>
+            <li>سيبدأ <code>/verify</code> تلقائياً من زر التفعيل</li>
             <li>أدخل بريدك الإلكتروني عند الطلب</li>
             <li>سيظهر لك <b>كود تحقق</b> من 6 أرقام</li>
             <li>أدخل الكود هنا بالأسفل ⬇️</li>
           </ol>
         </div>
 
+        <div class="telegram-email-hint" id="telegramEmailHint">
+          سنستخدم بريدك المسجل لبدء التفعيل مباشرة داخل تيليجرام.
+        </div>
+
+        <div class="telegram-actions">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            id="copyEmailBtn"
+            onclick="copyRegisteredEmail()"
+          >
+            📋 نسخ البريد
+          </button>
+        </div>
+
         <a
           href="https://t.me/robovainova_bot"
           target="_blank"
+          rel="noopener noreferrer"
           class="btn btn-telegram"
           id="openTelegramBtn"
         >
@@ -489,19 +544,11 @@
               d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"
             />
           </svg>
-          افتح بوت RobovAI في تليجرام
+          افتح تيليجرام وابدأ التفعيل الآن
         </a>
 
-        <div style="margin-top: 1.5rem; text-align: center">
-          <label
-            style="
-              display: block;
-              margin-bottom: 0.5rem;
-              color: var(--text-muted);
-              font-size: 0.85rem;
-            "
-            >أدخل كود التحقق</label
-          >
+        <div class="verify-otp-panel">
+          <label class="otp-label">أدخل كود التحقق</label>
           <div class="otp-wrap" id="otpWrap">
             <input
               type="text"
@@ -556,9 +603,8 @@
             صلاحية الكود: <span id="countdown">10:00</span>
           </div>
           <div
-            class="resend-link"
+            class="resend-link is-hidden"
             id="resendLink"
-            style="display: none"
             onclick="resendOTP()"
           >
             إعادة إرسال الكود
@@ -581,7 +627,7 @@
         <div class="success-box">
           <div class="icon">🎉</div>
           <h2>تم تفعيل حسابك!</h2>
-          <p style="color: var(--text-muted); margin-bottom: 1.5rem">
+          <p class="success-subtitle">
             حسابك جاهز. مرحباً بك في RobovAI Nova 🚀
           </p>
           <button class="btn btn-primary" onclick="goToChat()">
@@ -600,6 +646,59 @@
 
       let registeredEmail = '';
       let countdownInterval = null;
+
+      function base64UrlEncode(value) {
+        const utf8Bytes = new TextEncoder().encode(value);
+        let binary = '';
+        utf8Bytes.forEach((byte) => {
+          binary += String.fromCharCode(byte);
+        });
+        return btoa(binary)
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+      }
+
+      function buildTelegramVerifyLink(email) {
+        const base = 'https://t.me/robovainova_bot';
+        const normalized = (email || '').trim().toLowerCase();
+        if (!normalized) {
+          return `${base}?start=verify`;
+        }
+        const encodedEmail = base64UrlEncode(normalized);
+        return `${base}?start=verify_${encodedEmail}`;
+      }
+
+      function updateTelegramActivationUI() {
+        const hint = document.getElementById('telegramEmailHint');
+        const telegramBtn = document.getElementById('openTelegramBtn');
+        const email = (registeredEmail || '').trim().toLowerCase();
+
+        telegramBtn.href = buildTelegramVerifyLink(email);
+
+        hint.innerHTML = email
+          ? `سيتم تمرير البريد تلقائياً إلى البوت: <b>${email}</b>`
+          : 'سنستخدم بريدك المسجل لبدء التفعيل مباشرة داخل تيليجرام.';
+      }
+
+      async function copyRegisteredEmail() {
+        const email = (registeredEmail || '').trim();
+        if (!email) {
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(email);
+          const btn = document.getElementById('copyEmailBtn');
+          const prev = btn.textContent;
+          btn.textContent = '✅ تم نسخ البريد';
+          setTimeout(() => {
+            btn.textContent = prev;
+          }, 1200);
+        } catch (error) {
+          console.error('Copy failed', error);
+        }
+      }
 
       function togglePw() {
         const i = document.getElementById('password');
@@ -652,6 +751,7 @@
                 data.status === 'success')
             ) {
               registeredEmail = email;
+              updateTelegramActivationUI();
               goToStep(2);
               startCountdown(600);
             } else {
@@ -709,8 +809,8 @@
         const el = document.getElementById('countdown');
         const resend = document.getElementById('resendLink');
         const timerDiv = document.getElementById('otpTimer');
-        resend.style.display = 'none';
-        timerDiv.style.display = 'block';
+        resend.classList.add('is-hidden');
+        timerDiv.classList.remove('is-hidden');
         let remaining = seconds;
         const tick = () => {
           const m = Math.floor(remaining / 60);
@@ -718,8 +818,8 @@
           el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
           if (remaining <= 0) {
             clearInterval(countdownInterval);
-            timerDiv.style.display = 'none';
-            resend.style.display = 'inline-block';
+            timerDiv.classList.add('is-hidden');
+            resend.classList.remove('is-hidden');
           }
           remaining--;
         };

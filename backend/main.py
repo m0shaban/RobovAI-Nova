@@ -1,6 +1,8 @@
 import os
 import sys
 from pathlib import Path
+from collections import defaultdict, deque
+from time import perf_counter, time
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -23,6 +25,25 @@ from backend.tools.registry import ToolRegistry
 # Setup Logger FIRST
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("robovai")
+
+# Optional production monitoring (Sentry)
+_sentry_dsn = os.getenv("SENTRY_DSN", "").strip()
+if _sentry_dsn:
+    try:
+        import sentry_sdk
+
+        sentry_sdk.init(
+            dsn=_sentry_dsn,
+            environment=os.getenv("ENVIRONMENT", "development"),
+            release=os.getenv("RELEASE_VERSION", "robovai-backend@local"),
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.15")),
+            profiles_sample_rate=float(
+                os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.0")
+            ),
+        )
+        logger.info("✅ Sentry monitoring enabled")
+    except Exception as sentry_err:
+        logger.warning(f"Sentry init failed: {sentry_err}")
 
 # ── Startup sanity check: verify critical packages are importable ──
 _missing_pkgs = []
@@ -59,6 +80,14 @@ app = FastAPI(
     version="1.0.0",
     openapi_tags=_tags_metadata,
 )
+
+if _sentry_dsn:
+    try:
+        from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
+
+        app.add_middleware(SentryAsgiMiddleware)
+    except Exception as sentry_mw_err:
+        logger.warning(f"Sentry middleware not attached: {sentry_mw_err}")
 
 # Register Tools on Startup
 from backend.tools.loader import register_all_tools
@@ -171,6 +200,119 @@ app.add_middleware(
 )
 
 
+# ── Request metrics / abuse state (in-memory) ──
+_request_metrics = {
+    "total": 0,
+    "errors": 0,
+    "slow": 0,
+    "total_ms": 0.0,
+    "by_path": defaultdict(lambda: {"count": 0, "errors": 0, "total_ms": 0.0}),
+}
+_abuse_buckets: dict[str, deque] = defaultdict(deque)
+_abuse_blocked_until: dict[str, float] = {}
+
+_ABUSE_RULES = {
+    "/webhook": (int(os.getenv("RL_CHAT_PER_MIN", "60")), 60),
+    "/agent/stream": (int(os.getenv("RL_CHAT_STREAM_PER_MIN", "45")), 60),
+    "/tools": (int(os.getenv("RL_TOOLS_PER_MIN", "120")), 60),
+    "/tools/list": (int(os.getenv("RL_TOOLS_PER_MIN", "120")), 60),
+    "/upload": (int(os.getenv("RL_UPLOAD_PER_MIN", "20")), 60),
+    "/upload_image": (int(os.getenv("RL_UPLOAD_PER_MIN", "20")), 60),
+    "/webhook_audio": (int(os.getenv("RL_AUDIO_PER_MIN", "15")), 60),
+}
+_ABUSE_BAN_SECONDS = int(os.getenv("RL_ABUSE_BAN_SECONDS", "120"))
+_SLOW_REQUEST_MS = int(os.getenv("SLOW_REQUEST_MS", "1800"))
+
+
+def _is_rate_limited_path(path: str) -> bool:
+    return path in _ABUSE_RULES
+
+
+def _client_ip_for_abuse(request: Request) -> str:
+    x_client_ip = (request.headers.get("x-client-ip") or "").strip()
+    if x_client_ip:
+        return x_client_ip
+    x_forwarded_for = (request.headers.get("x-forwarded-for") or "").strip()
+    if x_forwarded_for:
+        return x_forwarded_for.split(",", 1)[0].strip()
+    x_real_ip = (request.headers.get("x-real-ip") or "").strip()
+    if x_real_ip:
+        return x_real_ip
+    return request.client.host if request.client else "unknown"
+
+
+@app.middleware("http")
+async def abuse_and_observability_middleware(request: Request, call_next):
+    req_path = request.url.path
+    req_method = request.method.upper()
+    request_id = (request.headers.get("x-request-id") or str(uuid.uuid4())).strip()
+    start_ts = perf_counter()
+
+    if req_method != "OPTIONS" and _is_rate_limited_path(req_path):
+        ip = _client_ip_for_abuse(request)
+        key = f"{ip}:{req_path}"
+        now = time()
+        blocked_until = _abuse_blocked_until.get(key, 0.0)
+        if blocked_until > now:
+            retry_after = max(1, int(blocked_until - now))
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "detail": "Too many requests. Please try again shortly.",
+                    "retry_after_seconds": retry_after,
+                },
+                headers={"Retry-After": str(retry_after), "X-Request-Id": request_id},
+            )
+
+        limit, window_seconds = _ABUSE_RULES[req_path]
+        dq = _abuse_buckets[key]
+        cutoff = now - window_seconds
+        while dq and dq[0] < cutoff:
+            dq.popleft()
+
+        if len(dq) >= limit:
+            _abuse_blocked_until[key] = now + _ABUSE_BAN_SECONDS
+            logger.warning(
+                f"🚫 Abuse guard triggered ip={ip} path={req_path} limit={limit}/{window_seconds}s"
+            )
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "detail": "Rate limit exceeded due to repeated requests.",
+                    "retry_after_seconds": _ABUSE_BAN_SECONDS,
+                },
+                headers={
+                    "Retry-After": str(_ABUSE_BAN_SECONDS),
+                    "X-Request-Id": request_id,
+                },
+            )
+
+        dq.append(now)
+
+    response = await call_next(request)
+
+    elapsed_ms = (perf_counter() - start_ts) * 1000
+    _request_metrics["total"] += 1
+    _request_metrics["total_ms"] += elapsed_ms
+    if response.status_code >= 400:
+        _request_metrics["errors"] += 1
+    if elapsed_ms >= _SLOW_REQUEST_MS:
+        _request_metrics["slow"] += 1
+        logger.warning(
+            f"🐢 Slow request {req_method} {req_path} took {elapsed_ms:.2f}ms"
+        )
+
+    path_metric = _request_metrics["by_path"][req_path]
+    path_metric["count"] += 1
+    path_metric["total_ms"] += elapsed_ms
+    if response.status_code >= 400:
+        path_metric["errors"] += 1
+
+    response.headers["X-Request-Id"] = request_id
+    response.headers["X-Response-Time-Ms"] = f"{elapsed_ms:.2f}"
+    return response
+
+
 # ── Security Headers Middleware (HSTS, X-Content-Type-Options, CSP, etc.) ──
 _is_prod_env = bool(
     os.getenv("RENDER") or os.getenv("ENVIRONMENT", "").lower() == "production"
@@ -268,6 +410,9 @@ _ALLOWED_PAGES = {
     "index",
     "chatbot_builder",
     "smart_agents",
+    "privacy",
+    "terms",
+    "refund",
 }
 
 
@@ -517,7 +662,9 @@ class WebhookPayload(BaseModel):
 
 
 @app.post("/webhook", tags=["Webhooks"])
+@_rl("60/minute")
 async def handle_webhook(
+    request: Request,
     payload: WebhookPayload,
     current_user: Optional[dict] = Depends(
         get_current_user
@@ -628,7 +775,9 @@ async def handle_webhook(
 
 
 @app.post("/webhook_audio", tags=["Webhooks"])
+@_rl("15/minute")
 async def handle_audio_webhook(
+    request: Request,
     audio: UploadFile = File(...), user_id: str = Form(...), platform: str = Form(...)
 ):
     """
@@ -747,7 +896,9 @@ async def text_to_speech(body: TtsRequest):
 
 
 @app.post("/upload", tags=["Files"])
+@_rl("20/minute")
 async def upload_file(
+    request: Request,
     file: UploadFile = File(...), current_user: dict = Depends(get_current_user)
 ):
     """
@@ -825,7 +976,9 @@ async def upload_file(
 
 
 @app.post("/upload_image", tags=["Files"])
+@_rl("20/minute")
 async def upload_image_to_imgbb(
+    request: Request,
     file: UploadFile = File(...),
     user_id: str = Form("anonymous"),
     current_user: dict = Depends(get_current_user),
@@ -972,8 +1125,24 @@ async def serve_smart_agents():
     return FileResponse("public/smart_agents.html")
 
 
+@app.get("/privacy", tags=["Pages"])
+async def serve_privacy_page():
+    return FileResponse("privacy.html")
+
+
+@app.get("/terms", tags=["Pages"])
+async def serve_terms_page():
+    return FileResponse("terms.html")
+
+
+@app.get("/refund", tags=["Pages"])
+async def serve_refund_page():
+    return FileResponse("refund.html")
+
+
 @app.get("/tools", tags=["System"])
-async def get_tools():
+@_rl("120/minute")
+async def get_tools(request: Request):
     """
     Get all registered tools for dynamic frontend rendering
     """
@@ -986,7 +1155,8 @@ async def get_tools():
 
 
 @app.get("/tools/list", tags=["System"])
-async def get_tools_list():
+@_rl("120/minute")
+async def get_tools_list(request: Request):
     """Alias for /tools — backwards compatibility for API docs."""
     return await get_tools()
 
@@ -1624,6 +1794,45 @@ async def health_check():
     }
 
 
+@app.get("/metrics/summary", tags=["System"])
+async def metrics_summary(request: Request):
+    """Simple JSON metrics endpoint for logs/dashboard ingestion."""
+    metrics_api_key = os.getenv("METRICS_API_KEY", "").strip()
+    if metrics_api_key:
+        supplied = (request.headers.get("x-api-key") or "").strip()
+        if supplied != metrics_api_key:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+    total = _request_metrics["total"]
+    avg_ms = (_request_metrics["total_ms"] / total) if total else 0.0
+
+    paths = []
+    for path, stats in _request_metrics["by_path"].items():
+        count = stats["count"]
+        paths.append(
+            {
+                "path": path,
+                "count": count,
+                "errors": stats["errors"],
+                "avg_ms": round((stats["total_ms"] / count) if count else 0.0, 2),
+            }
+        )
+
+    paths.sort(key=lambda x: x["count"], reverse=True)
+
+    return {
+        "status": "ok",
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "totals": {
+            "requests": total,
+            "errors": _request_metrics["errors"],
+            "slow_requests": _request_metrics["slow"],
+            "avg_latency_ms": round(avg_ms, 2),
+        },
+        "top_paths": paths[:20],
+    }
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # 🤖 AI AGENT ENDPOINTS (LangGraph)
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1712,16 +1921,18 @@ async def run_agent_endpoint(
 
 
 @app.post("/agent/stream", tags=["Agent"])
-async def stream_agent_endpoint(request: AgentRequest):
+@_rl("45/minute")
+async def stream_agent_endpoint(request: Request, payload: AgentRequest):
     """
     🔄 Stream agent execution step by step (POST version)
 
     Returns Server-Sent Events for real-time updates.
     """
-    return await _stream_agent(request.message, request.user_id, request.platform)
+    return await _stream_agent(payload.message, payload.user_id, payload.platform)
 
 
 @app.get("/agent/stream", tags=["Agent"])
+@_rl("45/minute")
 async def stream_agent_get(
     message: str,
     user_id: str = "web_user",

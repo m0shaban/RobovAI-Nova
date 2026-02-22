@@ -29,6 +29,12 @@ langchain-groq==1.1.2
 langchain-core==1.2.9
 langchain-community==0.4.1
 langchain-openai==1.1.8
+langchain-text-splitters==0.3.11
+langchain-qdrant
+qdrant-client
+sentence-transformers
+pypdf
+html2text
 openai==2.17.0
 langsmith==0.6.9
 langgraph-checkpoint-sqlite==3.0.3

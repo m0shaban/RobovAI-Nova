@@ -18,25 +18,28 @@
         theme: {
           extend: {
             colors: {
-              dark: '#0F172A',
-              darker: '#020617',
-              primary: '#10B981',
-              secondary: '#3B82F6',
-              accent: '#8B5CF6',
-              surface: '#1E293B',
-              'surface-light': '#334155',
+              dark: '#081F3D', /* Navy Dark */
+              darker: '#051224', /* Darker Navy */
+              primary: '#D4AF37', /* Royal Gold */
+              secondary: '#3FA9F5', /* Light Neon Blue */
+              accent: '#C9A227', /* Metallic Gold */
+              surface: '#0D2C5A', /* Royal Deep Blue */
+              'surface-light': '#1B4E8C', /* AI Blue */
             },
           },
         },
       };
     </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Cinzel:wght@400;600;700;800&family=Playfair+Display:wght@400;600;700&display=swap');
       * {
-        font-family: 'Tajawal', sans-serif;
+        font-family: 'Cairo', sans-serif;
+      }
+      h1, h2, h3, h4, h5, h6, .brand-name {
+        font-family: 'Cinzel', 'Playfair Display', serif;
       }
       body {
-        background: #020617;
+        background: #081F3D;
         color: #e2e8f0;
         min-height: 100vh;
         overflow-y: auto;
@@ -47,14 +50,14 @@
         width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #0f172a;
+        background: #081F3D;
       }
       ::-webkit-scrollbar-thumb {
-        background: #334155;
+        background: #1B4E8C;
         border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #475569;
+        background: #3FA9F5;
       }
 
       /* Stepper */
@@ -70,7 +73,7 @@
         left: -50%;
         width: 100%;
         height: 2px;
-        background: #334155;
+        background: #1B4E8C;
         z-index: 0;
       }
       .step-item:first-child::before {
@@ -78,7 +81,7 @@
       }
       .step-item.active::before,
       .step-item.completed::before {
-        background: #10b981;
+        background: #D4AF37;
       }
       .step-circle {
         width: 36px;
@@ -94,16 +97,16 @@
         transition: all 0.3s;
       }
       .step-item .step-circle {
-        background: #334155;
+        background: #1B4E8C;
         color: #94a3b8;
       }
       .step-item.active .step-circle {
-        background: #10b981;
+        background: #D4AF37;
         color: white;
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
       }
       .step-item.completed .step-circle {
-        background: #10b981;
+        background: #D4AF37;
         color: white;
       }
 
@@ -119,7 +122,7 @@
         inset: 0;
         border-radius: 12px;
         padding: 1px;
-        background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6);
+        background: linear-gradient(135deg, #D4AF37, #3FA9F5, #C9A227);
         -webkit-mask:
           linear-gradient(#fff 0 0) content-box,
           linear-gradient(#fff 0 0);
@@ -146,14 +149,14 @@
         transform: translateY(-4px);
       }
       .platform-card.connected {
-        border-color: #10b981 !important;
+        border-color: #D4AF37 !important;
       }
       .platform-card.connected::after {
         content: '✓ متصل';
         position: absolute;
         top: 8px;
         left: 8px;
-        background: #10b981;
+        background: #D4AF37;
         color: white;
         padding: 2px 8px;
         border-radius: 12px;
@@ -163,12 +166,12 @@
 
       /* Chat preview */
       .chat-bubble-bot {
-        background: linear-gradient(135deg, #1e293b, #334155);
+        background: linear-gradient(135deg, #0D2C5A, #1B4E8C);
         border-radius: 16px 16px 4px 16px;
         max-width: 80%;
       }
       .chat-bubble-user {
-        background: linear-gradient(135deg, #10b981, #059669);
+        background: linear-gradient(135deg, #D4AF37, #A67C00);
         border-radius: 16px 16px 16px 4px;
         max-width: 80%;
       }
@@ -189,7 +192,7 @@
 
       /* Tab active */
       .tab-btn.active {
-        background: #10b981;
+        background: #D4AF37;
         color: white;
       }
       .tab-btn {
@@ -2493,7 +2496,11 @@
           document
             .querySelectorAll('.glow-card, .platform-card, .tilt-3d')
             .forEach((card) => {
-              if (card.querySelector('input, textarea, select, [contenteditable="true"]')) {
+              if (
+                card.querySelector(
+                  'input, textarea, select, [contenteditable="true"]',
+                )
+              ) {
                 return;
               }
               card.addEventListener('mousemove', (e) => {

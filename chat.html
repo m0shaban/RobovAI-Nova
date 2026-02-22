@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RobovAI Nova Agent - مساعدك الذكي</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Cinzel:wght@400;600;700;800&family=Playfair+Display:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     <style>
@@ -15,19 +15,21 @@
         ═══════════════════════════════════════════════════════════════ */
 
       :root {
-        --bg-void: #000000;
-        --bg-space: #050510;
-        --glass: rgba(10, 10, 20, 0.7);
-        --glass-light: rgba(255, 255, 255, 0.03);
-        --primary: #00f0ff; /* Neon Cyan */
-        --secondary: #8b5cf6; /* Purple */
-        --accent: #ff00aa; /* Magenta */
-        --gold: #ffd700;
+        --bg-void: #081F3D; /* Navy Dark */
+        --bg-space: #0D2C5A; /* Royal Deep Blue */
+        --glass: rgba(13, 44, 90, 0.7);
+        --glass-light: rgba(255, 255, 255, 0.05);
+        --primary: #D4AF37; /* Royal Gold */
+        --secondary: #3FA9F5; /* Light Neon Blue */
+        --accent: #C9A227; /* Metallic Gold */
+        --gold: #F1C40F; /* Highlight Gold */
         --text: #ffffff;
-        --text-muted: #6b7280;
-        --border: rgba(255, 255, 255, 0.08);
-        --glow-cyan: rgba(0, 240, 255, 0.4);
-        --glow-purple: rgba(139, 92, 246, 0.4);
+        --text-muted: #a0aabf;
+        --border: rgba(212, 175, 55, 0.15);
+        --glow-cyan: rgba(63, 169, 245, 0.4);
+        --glow-purple: rgba(212, 175, 55, 0.4);
+        --font-heading: 'Cinzel', 'Playfair Display', serif;
+        --font-body: 'Cairo', 'Tajawal', sans-serif;
       }
 
       * {
@@ -38,11 +40,15 @@
 
       html,
       body {
-        font-family: 'Cairo', 'Tajawal', sans-serif;
+        font-family: var(--font-body);
         background: var(--bg-void);
         color: var(--text);
         height: 100%;
         overflow: hidden;
+      }
+      
+      h1, h2, h3, h4, h5, h6, .brand-name, .startup-title {
+        font-family: var(--font-heading);
       }
 
       /* ═══════════════════════════════════════════════════════════════
@@ -444,6 +450,7 @@
         background-clip: text;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        font-family: var(--font-heading);
       }
 
       .brand-tag {
@@ -484,7 +491,7 @@
       }
 
       .tab-btn.active {
-        background: rgba(0, 240, 255, 0.1);
+        background: rgba(212, 175, 55, 0.1);
         border-color: var(--primary);
         color: var(--primary);
       }
@@ -658,6 +665,7 @@
         font-size: 28px;
         font-weight: 700;
         margin-bottom: 15px;
+        font-family: var(--font-heading);
       }
 
       .hero-subtitle {
@@ -690,7 +698,7 @@
       }
 
       .suggestion-pill:hover {
-        background: rgba(0, 240, 255, 0.1);
+        background: rgba(212, 175, 55, 0.1);
         border-color: var(--primary);
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
@@ -861,6 +869,7 @@
         color: var(--primary);
         margin: 15px 0 8px;
         font-weight: 700;
+        font-family: var(--font-heading);
       }
       h1.chat-heading {
         font-size: 1.5em;

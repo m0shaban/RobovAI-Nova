@@ -1,645 +1,1483 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RobovAI Nova - الوكلاء الأذكياء</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: '#0F172A',
-                        darker: '#020617',
-                        primary: '#8B5CF6',
-                        primaryHover: '#7C3AED',
-                        secondary: '#EC4899',
-                        secondaryHover: '#DB2777',
-                        surface: 'rgba(30, 41, 59, 0.7)',
-                        accent: '#06B6D4',
-                    },
-                    fontFamily: { sans: ['"Tajawal"', 'sans-serif'] },
-                },
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              dark: '#0F172A',
+              darker: '#020617',
+              primary: '#8B5CF6',
+              primaryHover: '#7C3AED',
+              secondary: '#EC4899',
+              secondaryHover: '#DB2777',
+              surface: 'rgba(30, 41, 59, 0.7)',
+              accent: '#06B6D4',
             },
-        };
+            fontFamily: { sans: ['"Tajawal"', 'sans-serif'] },
+          },
+        },
+      };
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
     <style>
-        body { font-family: 'Tajawal', sans-serif; background: #020617; color: #fff; }
-        .glass { background: rgba(30,41,59,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,.06); border-radius: 1rem; }
-        .glass-sm { background: rgba(30,41,59,.4); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.04); border-radius: .75rem; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,.15); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: rgba(139,92,246,.45); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,.7); }
-        .tab-btn { transition: all .25s; }
-        .tab-btn.active { color: #8B5CF6; border-color: #8B5CF6; background: rgba(139,92,246,.08); }
-        .campaign-card { transition: all .2s; }
-        .campaign-card:hover, .campaign-card.selected { border-color: rgba(139,92,246,.6); box-shadow: 0 0 20px rgba(139,92,246,.12); }
-        .campaign-card.selected { background: rgba(139,92,246,.08); }
-        .channel-card { transition: all .25s; }
-        .channel-card:hover { transform: translateY(-2px); border-color: rgba(139,92,246,.4); }
-        .channel-card.connected { border-color: rgba(16,185,129,.5); background: rgba(16,185,129,.06); }
-        .source-badge { transition: all .2s; }
-        .source-badge:hover { transform: scale(1.02); }
-        .cron-btn { transition: all .15s; }
-        .cron-btn.active { background: #8B5CF6; color: #fff; }
-        .pulse { animation: pulsate 2s infinite; }
-        @keyframes pulsate { 0%,100%{opacity:.6} 50%{opacity:1} }
-        .stat-card { transition: transform .2s; }
-        .stat-card:hover { transform: translateY(-3px); }
-        input:focus, textarea:focus, select:focus { outline: none; border-color: #8B5CF6 !important; box-shadow: 0 0 0 2px rgba(139,92,246,.15); }
-        .toast { animation: slideIn .4s ease-out; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+      body {
+        font-family: 'Tajawal', sans-serif;
+        background: #020617;
+        color: #fff;
+      }
+      .glass {
+        background: rgba(30, 41, 59, 0.55);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1rem;
+      }
+      .glass-sm {
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 0.75rem;
+      }
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.45);
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.7);
+      }
+      .tab-btn {
+        transition: all 0.25s;
+      }
+      .tab-btn.active {
+        color: #8b5cf6;
+        border-color: #8b5cf6;
+        background: rgba(139, 92, 246, 0.08);
+      }
+      .campaign-card {
+        transition: all 0.2s;
+      }
+      .campaign-card:hover,
+      .campaign-card.selected {
+        border-color: rgba(139, 92, 246, 0.6);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.12);
+      }
+      .campaign-card.selected {
+        background: rgba(139, 92, 246, 0.08);
+      }
+      .channel-card {
+        transition: all 0.25s;
+      }
+      .channel-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(139, 92, 246, 0.4);
+      }
+      .channel-card.connected {
+        border-color: rgba(16, 185, 129, 0.5);
+        background: rgba(16, 185, 129, 0.06);
+      }
+      .source-badge {
+        transition: all 0.2s;
+      }
+      .source-badge:hover {
+        transform: scale(1.02);
+      }
+      .cron-btn {
+        transition: all 0.15s;
+      }
+      .cron-btn.active {
+        background: #8b5cf6;
+        color: #fff;
+      }
+      .pulse {
+        animation: pulsate 2s infinite;
+      }
+      @keyframes pulsate {
+        0%,
+        100% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      .stat-card {
+        transition: transform 0.2s;
+      }
+      .stat-card:hover {
+        transform: translateY(-3px);
+      }
+      input:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: #8b5cf6 !important;
+        box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+      }
+      .toast {
+        animation: slideIn 0.4s ease-out;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* ===== 3D & Animation Effects ===== */
+      #particleCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -2;
+        pointer-events: none;
+      }
+
+      /* Floating 3D geometric shapes */
+      .floating-shapes {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .geo-shape {
+        position: absolute;
+        border: 1.5px solid;
+        opacity: 0.07;
+        animation: floatRotate var(--dur, 20s) ease-in-out infinite;
+      }
+      .geo-shape.shape-1 {
+        width: 130px; height: 130px;
+        border-color: #8B5CF6;
+        top: 8%; left: 8%;
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        --dur: 18s;
+      }
+      .geo-shape.shape-2 {
+        width: 90px; height: 90px;
+        border-color: #EC4899;
+        top: 55%; right: 6%;
+        clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+        --dur: 22s;
+        animation-delay: -5s;
+      }
+      .geo-shape.shape-3 {
+        width: 70px; height: 70px;
+        border-color: #06B6D4;
+        bottom: 15%; left: 12%;
+        border-radius: 50%;
+        --dur: 15s;
+        animation-delay: -8s;
+      }
+      .geo-shape.shape-4 {
+        width: 110px; height: 110px;
+        border-color: #8B5CF6;
+        top: 30%; right: 20%;
+        clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        --dur: 25s;
+        animation-delay: -12s;
+      }
+      .geo-shape.shape-5 {
+        width: 55px; height: 55px;
+        border-color: #EC4899;
+        bottom: 40%; left: 40%;
+        border-radius: 10%;
+        --dur: 20s;
+        animation-delay: -3s;
+      }
+      .geo-shape.shape-6 {
+        width: 45px; height: 45px;
+        border-color: #06B6D4;
+        top: 75%; right: 35%;
+        clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        --dur: 28s;
+        animation-delay: -7s;
+      }
+
+      @keyframes floatRotate {
+        0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+        25% { transform: translateY(-35px) rotate(90deg) scale(1.1); }
+        50% { transform: translateY(-18px) rotate(180deg) scale(0.92); }
+        75% { transform: translateY(-42px) rotate(270deg) scale(1.06); }
+      }
+
+      /* 3D Card Tilt */
+      .tilt-3d {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transform-style: preserve-3d;
+      }
+      .tilt-3d:hover {
+        box-shadow: 0 25px 50px -12px rgba(139, 92, 246, 0.15), 0 0 30px rgba(139, 92, 246, 0.08);
+      }
+
+      /* Scroll entrance animations */
+      .reveal-up {
+        opacity: 0;
+        transform: translateY(40px) scale(0.96);
+        transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-up.revealed {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      .reveal-left {
+        opacity: 0;
+        transform: translateX(-40px) rotateY(8deg);
+        transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-left.revealed {
+        opacity: 1;
+        transform: translateX(0) rotateY(0);
+      }
+      .reveal-right {
+        opacity: 0;
+        transform: translateX(40px) rotateY(-8deg);
+        transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-right.revealed {
+        opacity: 1;
+        transform: translateX(0) rotateY(0);
+      }
+      .reveal-scale {
+        opacity: 0;
+        transform: scale(0.85) rotateX(6deg);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-scale.revealed {
+        opacity: 1;
+        transform: scale(1) rotateX(0);
+      }
+
+      /* Staggered children */
+      .stagger-children > * {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .stagger-children.revealed > * {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .stagger-children.revealed > *:nth-child(1) { transition-delay: 0.05s; }
+      .stagger-children.revealed > *:nth-child(2) { transition-delay: 0.1s; }
+      .stagger-children.revealed > *:nth-child(3) { transition-delay: 0.15s; }
+      .stagger-children.revealed > *:nth-child(4) { transition-delay: 0.2s; }
+      .stagger-children.revealed > *:nth-child(5) { transition-delay: 0.25s; }
+      .stagger-children.revealed > *:nth-child(6) { transition-delay: 0.3s; }
+
+      /* Nav glow line */
+      nav.glass::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #8B5CF6, #EC4899, transparent);
+        opacity: 0.5;
+      }
+
+      /* Glowing separator */
+      .glow-line {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #8B5CF6, #EC4899, #06B6D4, transparent);
+        animation: glowPulse 3s ease-in-out infinite;
+      }
+      @keyframes glowPulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
+
+      /* Subtle animated gradient on header text */
+      .animated-gradient-text {
+        background-size: 200% 200%;
+        animation: gradientShift 6s ease infinite;
+      }
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
     </style>
-</head>
-<body class="min-h-screen overflow-y-auto flex flex-col">
+  </head>
+  <body class="min-h-screen overflow-y-auto flex flex-col">
+    <!-- 3D Particle Canvas -->
+    <canvas id="particleCanvas"></canvas>
 
-<!-- Background -->
-<div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
-    <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]"></div>
-    <div class="absolute bottom-[-10%] left-[-10%] w-[35%] h-[35%] bg-secondary/20 rounded-full blur-[120px]"></div>
-    <div class="absolute top-[50%] left-[30%] w-[20%] h-[20%] bg-accent/10 rounded-full blur-[100px]"></div>
-</div>
+    <!-- Floating Geometric Shapes -->
+    <div class="floating-shapes">
+      <div class="geo-shape shape-1"></div>
+      <div class="geo-shape shape-2"></div>
+      <div class="geo-shape shape-3"></div>
+      <div class="geo-shape shape-4"></div>
+      <div class="geo-shape shape-5"></div>
+      <div class="geo-shape shape-6"></div>
+    </div>
 
-<!-- Toast Container -->
-<div id="toastContainer" class="fixed top-4 left-4 z-50 flex flex-col gap-2"></div>
+    <!-- Background -->
+    <div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+      <div
+        class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px]"
+      ></div>
+      <div
+        class="absolute bottom-[-10%] left-[-10%] w-[35%] h-[35%] bg-secondary/20 rounded-full blur-[120px]"
+      ></div>
+      <div
+        class="absolute top-[50%] left-[30%] w-[20%] h-[20%] bg-accent/10 rounded-full blur-[100px]"
+      ></div>
+    </div>
 
-<!-- Nav -->
-<nav class="glass mx-4 mt-4 px-6 py-4 flex justify-between items-center relative z-10">
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30">
-            <i class="fa-solid fa-satellite-dish"></i>
+    <!-- Toast Container -->
+    <div
+      id="toastContainer"
+      class="fixed top-4 left-4 z-50 flex flex-col gap-2"
+    ></div>
+
+    <!-- Nav -->
+    <nav
+      class="glass mx-4 mt-4 px-6 py-4 flex justify-between items-center relative z-10"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30"
+        >
+          <i class="fa-solid fa-satellite-dish"></i>
         </div>
-        <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-l from-white to-gray-400">RobovAI Nova</span>
-    </div>
-    <div class="flex gap-4 items-center">
-        <a href="/chatbot-builder" class="text-gray-400 hover:text-white transition text-sm"><i class="fa-solid fa-robot ml-1"></i> بناء البوتات</a>
-        <a href="/chat" class="text-gray-400 hover:text-white transition text-sm"><i class="fa-solid fa-comments ml-1"></i> المحادثة</a>
-        <a href="/account" class="text-gray-300 hover:text-white transition text-sm"><i class="fa-solid fa-arrow-right ml-1"></i> لوحة التحكم</a>
-    </div>
-</nav>
+        <span
+          class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-l from-white to-gray-400"
+          >RobovAI Nova</span
+        >
+      </div>
+      <div class="flex gap-4 items-center">
+        <a
+          href="/chatbot-builder"
+          class="text-gray-400 hover:text-white transition text-sm"
+          ><i class="fa-solid fa-robot ml-1"></i> بناء البوتات</a
+        >
+        <a
+          href="/chat"
+          class="text-gray-400 hover:text-white transition text-sm"
+          ><i class="fa-solid fa-comments ml-1"></i> المحادثة</a
+        >
+        <a
+          href="/account"
+          class="text-gray-300 hover:text-white transition text-sm"
+          ><i class="fa-solid fa-arrow-right ml-1"></i> لوحة التحكم</a
+        >
+      </div>
+    </nav>
 
-<!-- Main -->
-<main class="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-7xl">
+    <!-- Main -->
+    <main class="flex-grow container mx-auto px-4 py-8 relative z-10 max-w-7xl">
+      <!-- Header -->
+      <div class="mb-8 text-center">
+        <h1
+          class="text-4xl font-extrabold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent"
+        >
+          الوكلاء الأذكياء — ContentOrbit
+        </h1>
+        <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+          اجلب المحتوى تلقائياً، أعد صياغته بالذكاء الاصطناعي، وانشره عبر جميع
+          قنواتك بضغطة زر
+        </p>
+      </div>
 
-    <!-- Header -->
-    <div class="mb-8 text-center">
-        <h1 class="text-4xl font-extrabold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">الوكلاء الأذكياء — ContentOrbit</h1>
-        <p class="text-gray-400 text-lg max-w-2xl mx-auto">اجلب المحتوى تلقائياً، أعد صياغته بالذكاء الاصطناعي، وانشره عبر جميع قنواتك بضغطة زر</p>
-    </div>
-
-    <!-- Campaign Selector -->
-    <div class="mb-6">
+      <!-- Campaign Selector -->
+      <div class="mb-6">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold text-gray-200"><i class="fa-solid fa-layer-group text-primary ml-2"></i>حملاتي</h2>
-            <button onclick="openNewCampaignModal()" class="bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-secondaryHover text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.03]">
-                <i class="fa-solid fa-plus ml-2"></i>حملة جديدة
-            </button>
+          <h2 class="text-lg font-bold text-gray-200">
+            <i class="fa-solid fa-layer-group text-primary ml-2"></i>حملاتي
+          </h2>
+          <button
+            onclick="openNewCampaignModal()"
+            class="bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-secondaryHover text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.03]"
+          >
+            <i class="fa-solid fa-plus ml-2"></i>حملة جديدة
+          </button>
         </div>
-        <div id="campaignsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            <div class="text-center text-gray-500 py-8 col-span-full pulse">جاري التحميل...</div>
+        <div
+          id="campaignsGrid"
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+        >
+          <div class="text-center text-gray-500 py-8 col-span-full pulse">
+            جاري التحميل...
+          </div>
         </div>
-    </div>
+      </div>
 
-    <!-- Editor Area (hidden until campaign selected) -->
-    <div id="editorArea" class="hidden">
-
+      <!-- Editor Area (hidden until campaign selected) -->
+      <div id="editorArea" class="hidden">
         <!-- Tabs -->
-        <div class="flex gap-2 mb-6 overflow-x-auto pb-2 border-b border-gray-800">
-            <button onclick="switchTab('settings')" data-tab="settings" class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap active">
-                <i class="fa-solid fa-gear ml-1"></i> الإعدادات
-            </button>
-            <button onclick="switchTab('sources')" data-tab="sources" class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap">
-                <i class="fa-solid fa-rss ml-1"></i> المصادر
-            </button>
-            <button onclick="switchTab('channels')" data-tab="channels" class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap">
-                <i class="fa-solid fa-share-nodes ml-1"></i> قنوات النشر
-            </button>
-            <button onclick="switchTab('preview')" data-tab="preview" class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap">
-                <i class="fa-solid fa-eye ml-1"></i> المعاينة
-            </button>
-            <button onclick="switchTab('analytics')" data-tab="analytics" class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap">
-                <i class="fa-solid fa-chart-line ml-1"></i> التحليلات
-            </button>
+        <div
+          class="flex gap-2 mb-6 overflow-x-auto pb-2 border-b border-gray-800"
+        >
+          <button
+            onclick="switchTab('settings')"
+            data-tab="settings"
+            class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap active"
+          >
+            <i class="fa-solid fa-gear ml-1"></i> الإعدادات
+          </button>
+          <button
+            onclick="switchTab('sources')"
+            data-tab="sources"
+            class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap"
+          >
+            <i class="fa-solid fa-rss ml-1"></i> المصادر
+          </button>
+          <button
+            onclick="switchTab('channels')"
+            data-tab="channels"
+            class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap"
+          >
+            <i class="fa-solid fa-share-nodes ml-1"></i> قنوات النشر
+          </button>
+          <button
+            onclick="switchTab('preview')"
+            data-tab="preview"
+            class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap"
+          >
+            <i class="fa-solid fa-eye ml-1"></i> المعاينة
+          </button>
+          <button
+            onclick="switchTab('analytics')"
+            data-tab="analytics"
+            class="tab-btn px-5 py-2.5 rounded-t-lg border-b-2 border-transparent text-gray-400 hover:text-white font-medium text-sm whitespace-nowrap"
+          >
+            <i class="fa-solid fa-chart-line ml-1"></i> التحليلات
+          </button>
         </div>
 
         <!-- Tab: Settings -->
         <div id="tab-settings" class="tab-content">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 glass p-6 space-y-5">
-                    <h3 class="text-xl font-bold text-gray-100 border-b border-gray-700 pb-3"><i class="fa-solid fa-sliders text-primary ml-2"></i>إعدادات الحملة</h3>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 glass p-6 space-y-5">
+              <h3
+                class="text-xl font-bold text-gray-100 border-b border-gray-700 pb-3"
+              >
+                <i class="fa-solid fa-sliders text-primary ml-2"></i>إعدادات
+                الحملة
+              </h3>
 
-                    <div>
-                        <label class="block text-gray-300 mb-1.5 font-medium text-sm">اسم الحملة</label>
-                        <input type="text" id="campName" class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white" placeholder="مثال: أخبار الذكاء الاصطناعي اليومية" />
-                    </div>
+              <div>
+                <label class="block text-gray-300 mb-1.5 font-medium text-sm"
+                  >اسم الحملة</label
+                >
+                <input
+                  type="text"
+                  id="campName"
+                  class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white"
+                  placeholder="مثال: أخبار الذكاء الاصطناعي اليومية"
+                />
+              </div>
 
-                    <div>
-                        <label class="block text-gray-300 mb-1.5 font-medium text-sm">شخصية الوكيل (AI Persona)</label>
-                        <textarea id="campPersona" rows="4" class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white resize-none" placeholder="اكتب التعليمات بأسلوب واضح مثل: اكتب الأخبار بطريقة مشوقة, استخدم إيموجي, أبقِ المحتوى أقل من 280 حرف..."></textarea>
-                    </div>
+              <div>
+                <label class="block text-gray-300 mb-1.5 font-medium text-sm"
+                  >شخصية الوكيل (AI Persona)</label
+                >
+                <textarea
+                  id="campPersona"
+                  rows="4"
+                  class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white resize-none"
+                  placeholder="اكتب التعليمات بأسلوب واضح مثل: اكتب الأخبار بطريقة مشوقة, استخدم إيموجي, أبقِ المحتوى أقل من 280 حرف..."
+                ></textarea>
+              </div>
 
-                    <!-- CRON Visual Builder -->
-                    <div>
-                        <label class="block text-gray-300 mb-1.5 font-medium text-sm">جدول النشر</label>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                            <button onclick="setCron('*/30 * * * *','every30')" data-cron="every30" class="cron-btn bg-darker border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-300 hover:border-primary">كل 30 دقيقة</button>
-                            <button onclick="setCron('0 * * * *','hourly')" data-cron="hourly" class="cron-btn bg-darker border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-300 hover:border-primary active">كل ساعة</button>
-                            <button onclick="setCron('0 */6 * * *','every6h')" data-cron="every6h" class="cron-btn bg-darker border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-300 hover:border-primary">كل 6 ساعات</button>
-                            <button onclick="setCron('0 9 * * *','daily')" data-cron="daily" class="cron-btn bg-darker border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-300 hover:border-primary">يومياً 9 صباحاً</button>
-                        </div>
-                        <input type="text" id="campCron" dir="ltr" class="w-full bg-darker border border-gray-700 rounded-lg py-2.5 px-4 text-white font-mono text-sm text-left" value="0 * * * *" />
-                        <p class="text-xs text-gray-500 mt-1">صيغة CRON: دقيقة ساعة يوم شهر يوم_الأسبوع</p>
-                    </div>
-
-                    <!-- Status Toggle -->
-                    <div class="flex items-center justify-between bg-darker/50 rounded-lg p-4 border border-gray-800">
-                        <div>
-                            <span class="text-gray-200 font-medium">حالة الحملة</span>
-                            <p class="text-xs text-gray-500 mt-0.5">تفعيل/تعطيل النشر التلقائي</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="campActive" class="sr-only peer" checked />
-                            <div class="w-12 h-6 bg-gray-700 rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-0.5 after:right-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-[-100%]"></div>
-                        </label>
-                    </div>
-
-                    <div class="flex gap-3 pt-2">
-                        <button onclick="saveCampaign()" class="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-secondaryHover text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20 hover:scale-[1.01]">
-                            <i class="fa-solid fa-floppy-disk ml-2"></i>حفظ الإعدادات
-                        </button>
-                        <button onclick="deleteCampaign()" class="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-bold py-3 px-5 rounded-xl transition-all">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
+              <!-- CRON Visual Builder -->
+              <div>
+                <label class="block text-gray-300 mb-1.5 font-medium text-sm"
+                  >جدول النشر</label
+                >
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                  <button
+                    onclick="setCron('*/30 * * * *', 'every30')"
+                    data-cron="every30"
+                    class="cron-btn bg-darker border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-300 hover:border-primary"
+                  >
+                    كل 30 دقيقة
+                  </button>
+                  <button
+                    onclick="setCron('0 * * * *', 'hourly')"
+                    data-cron="hourly"
+                    class="cron-btn bg-darker border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-300 hover:border-primary active"
+                  >
+                    كل ساعة
+                  </button>
+                  <button
+                    onclick="setCron('0 */6 * * *', 'every6h')"
+                    data-cron="every6h"
+                    class="cron-btn bg-darker border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-300 hover:border-primary"
+                  >
+                    كل 6 ساعات
+                  </button>
+                  <button
+                    onclick="setCron('0 9 * * *', 'daily')"
+                    data-cron="daily"
+                    class="cron-btn bg-darker border border-gray-700 rounded-lg py-2 px-3 text-sm text-gray-300 hover:border-primary"
+                  >
+                    يومياً 9 صباحاً
+                  </button>
                 </div>
+                <input
+                  type="text"
+                  id="campCron"
+                  dir="ltr"
+                  class="w-full bg-darker border border-gray-700 rounded-lg py-2.5 px-4 text-white font-mono text-sm text-left"
+                  value="0 * * * *"
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                  صيغة CRON: دقيقة ساعة يوم شهر يوم_الأسبوع
+                </p>
+              </div>
 
-                <!-- Side Info -->
-                <div class="space-y-4">
-                    <div class="glass p-5">
-                        <h4 class="font-bold text-gray-200 mb-3 text-sm"><i class="fa-solid fa-info-circle text-accent ml-1"></i> كيف يعمل الوكيل؟</h4>
-                        <div class="space-y-3">
-                            <div class="flex items-start gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 text-sm font-bold">1</div>
-                                <p class="text-sm text-gray-400">أضف مصادر المحتوى (RSS, API)</p>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 text-sm font-bold">2</div>
-                                <p class="text-sm text-gray-400">الوكيل يجلب ويلخص المحتوى بشخصيته</p>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 text-sm font-bold">3</div>
-                                <p class="text-sm text-gray-400">يحوله لبوست جذاب حسب كل منصة</p>
-                            </div>
-                            <div class="flex items-start gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 text-sm font-bold">4</div>
-                                <p class="text-sm text-gray-400">ينشر تلقائياً حسب الجدول الزمني</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="glass p-5">
-                        <h4 class="font-bold text-gray-200 mb-2 text-sm"><i class="fa-solid fa-lightbulb text-yellow-500 ml-1"></i> نصائح</h4>
-                        <ul class="text-xs text-gray-400 space-y-1.5 list-disc list-inside">
-                            <li>استخدم شخصية واضحة ومحددة للحصول على محتوى أفضل</li>
-                            <li>أضف أكثر من مصدر لتنويع المحتوى</li>
-                            <li>جرّب جداول مختلفة للعثور على أفضل وقت للنشر</li>
-                            <li>راجع المحتوى المُعاين قبل تفعيل النشر</li>
-                        </ul>
-                    </div>
+              <!-- Status Toggle -->
+              <div
+                class="flex items-center justify-between bg-darker/50 rounded-lg p-4 border border-gray-800"
+              >
+                <div>
+                  <span class="text-gray-200 font-medium">حالة الحملة</span>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    تفعيل/تعطيل النشر التلقائي
+                  </p>
                 </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="campActive"
+                    class="sr-only peer"
+                    checked
+                  />
+                  <div
+                    class="w-12 h-6 bg-gray-700 rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-0.5 after:right-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-[-100%]"
+                  ></div>
+                </label>
+              </div>
+
+              <div class="flex gap-3 pt-2">
+                <button
+                  onclick="saveCampaign()"
+                  class="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-secondaryHover text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20 hover:scale-[1.01]"
+                >
+                  <i class="fa-solid fa-floppy-disk ml-2"></i>حفظ الإعدادات
+                </button>
+                <button
+                  onclick="deleteCampaign()"
+                  class="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-bold py-3 px-5 rounded-xl transition-all"
+                >
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
             </div>
+
+            <!-- Side Info -->
+            <div class="space-y-4">
+              <div class="glass p-5">
+                <h4 class="font-bold text-gray-200 mb-3 text-sm">
+                  <i class="fa-solid fa-info-circle text-accent ml-1"></i> كيف
+                  يعمل الوكيل؟
+                </h4>
+                <div class="space-y-3">
+                  <div class="flex items-start gap-3">
+                    <div
+                      class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 text-sm font-bold"
+                    >
+                      1
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      أضف مصادر المحتوى (RSS, API)
+                    </p>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div
+                      class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 text-sm font-bold"
+                    >
+                      2
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      الوكيل يجلب ويلخص المحتوى بشخصيته
+                    </p>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div
+                      class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 text-sm font-bold"
+                    >
+                      3
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      يحوله لبوست جذاب حسب كل منصة
+                    </p>
+                  </div>
+                  <div class="flex items-start gap-3">
+                    <div
+                      class="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary shrink-0 text-sm font-bold"
+                    >
+                      4
+                    </div>
+                    <p class="text-sm text-gray-400">
+                      ينشر تلقائياً حسب الجدول الزمني
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="glass p-5">
+                <h4 class="font-bold text-gray-200 mb-2 text-sm">
+                  <i class="fa-solid fa-lightbulb text-yellow-500 ml-1"></i>
+                  نصائح
+                </h4>
+                <ul
+                  class="text-xs text-gray-400 space-y-1.5 list-disc list-inside"
+                >
+                  <li>استخدم شخصية واضحة ومحددة للحصول على محتوى أفضل</li>
+                  <li>أضف أكثر من مصدر لتنويع المحتوى</li>
+                  <li>جرّب جداول مختلفة للعثور على أفضل وقت للنشر</li>
+                  <li>راجع المحتوى المُعاين قبل تفعيل النشر</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Tab: Sources -->
         <div id="tab-sources" class="tab-content hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Add Source -->
-                    <div class="glass p-6">
-                        <h3 class="text-xl font-bold text-gray-100 border-b border-gray-700 pb-3 mb-4"><i class="fa-solid fa-database text-primary ml-2"></i>إضافة مصدر جديد</h3>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+              <!-- Add Source -->
+              <div class="glass p-6">
+                <h3
+                  class="text-xl font-bold text-gray-100 border-b border-gray-700 pb-3 mb-4"
+                >
+                  <i class="fa-solid fa-database text-primary ml-2"></i>إضافة
+                  مصدر جديد
+                </h3>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                            <button onclick="setSourceType('rss')" data-stype="rss" class="source-badge bg-darker border-2 border-orange-500/40 rounded-xl p-3 text-center cursor-pointer hover:border-orange-500">
-                                <i class="fa-solid fa-rss text-orange-500 text-xl mb-1.5 block"></i>
-                                <span class="text-xs text-gray-300 font-medium">RSS Feed</span>
-                            </button>
-                            <button onclick="setSourceType('api')" data-stype="api" class="source-badge bg-darker border-2 border-blue-500/40 rounded-xl p-3 text-center cursor-pointer hover:border-blue-500">
-                                <i class="fa-solid fa-code text-blue-500 text-xl mb-1.5 block"></i>
-                                <span class="text-xs text-gray-300 font-medium">API Endpoint</span>
-                            </button>
-                            <button onclick="setSourceType('youtube')" data-stype="youtube" class="source-badge bg-darker border-2 border-red-500/40 rounded-xl p-3 text-center cursor-pointer hover:border-red-500">
-                                <i class="fa-brands fa-youtube text-red-500 text-xl mb-1.5 block"></i>
-                                <span class="text-xs text-gray-300 font-medium">YouTube</span>
-                            </button>
-                            <button onclick="setSourceType('twitter')" data-stype="twitter" class="source-badge bg-darker border-2 border-sky-400/40 rounded-xl p-3 text-center cursor-pointer hover:border-sky-400">
-                                <i class="fa-brands fa-x-twitter text-sky-400 text-xl mb-1.5 block"></i>
-                                <span class="text-xs text-gray-300 font-medium">X / Twitter</span>
-                            </button>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <div class="flex-grow relative">
-                                <input type="url" id="newSourceUrl" dir="ltr" class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white text-sm text-left" placeholder="https://example.com/feed.xml" />
-                                <span id="sourceTypeLabel" class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-orange-500 font-mono hidden sm:block">RSS</span>
-                            </div>
-                            <button onclick="addSource()" class="bg-primary hover:bg-primaryHover text-white px-6 rounded-lg font-bold text-sm transition-all whitespace-nowrap">
-                                <i class="fa-solid fa-plus ml-1"></i>إضافة
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Sources List -->
-                    <div class="glass p-6">
-                        <h3 class="text-lg font-bold text-gray-200 mb-4"><i class="fa-solid fa-list text-secondary ml-2"></i>المصادر الحالية (<span id="sourcesCount">0</span>)</h3>
-                        <div id="sourcesList" class="space-y-2 max-h-[350px] overflow-y-auto">
-                            <div class="text-center text-gray-500 py-6 text-sm">لم تتم إضافة أي مصادر بعد</div>
-                        </div>
-                    </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                  <button
+                    onclick="setSourceType('rss')"
+                    data-stype="rss"
+                    class="source-badge bg-darker border-2 border-orange-500/40 rounded-xl p-3 text-center cursor-pointer hover:border-orange-500"
+                  >
+                    <i
+                      class="fa-solid fa-rss text-orange-500 text-xl mb-1.5 block"
+                    ></i>
+                    <span class="text-xs text-gray-300 font-medium"
+                      >RSS Feed</span
+                    >
+                  </button>
+                  <button
+                    onclick="setSourceType('api')"
+                    data-stype="api"
+                    class="source-badge bg-darker border-2 border-blue-500/40 rounded-xl p-3 text-center cursor-pointer hover:border-blue-500"
+                  >
+                    <i
+                      class="fa-solid fa-code text-blue-500 text-xl mb-1.5 block"
+                    ></i>
+                    <span class="text-xs text-gray-300 font-medium"
+                      >API Endpoint</span
+                    >
+                  </button>
+                  <button
+                    onclick="setSourceType('youtube')"
+                    data-stype="youtube"
+                    class="source-badge bg-darker border-2 border-red-500/40 rounded-xl p-3 text-center cursor-pointer hover:border-red-500"
+                  >
+                    <i
+                      class="fa-brands fa-youtube text-red-500 text-xl mb-1.5 block"
+                    ></i>
+                    <span class="text-xs text-gray-300 font-medium"
+                      >YouTube</span
+                    >
+                  </button>
+                  <button
+                    onclick="setSourceType('twitter')"
+                    data-stype="twitter"
+                    class="source-badge bg-darker border-2 border-sky-400/40 rounded-xl p-3 text-center cursor-pointer hover:border-sky-400"
+                  >
+                    <i
+                      class="fa-brands fa-x-twitter text-sky-400 text-xl mb-1.5 block"
+                    ></i>
+                    <span class="text-xs text-gray-300 font-medium"
+                      >X / Twitter</span
+                    >
+                  </button>
                 </div>
 
-                <!-- Source Tips -->
-                <div class="space-y-4">
-                    <div class="glass p-5">
-                        <h4 class="font-bold text-gray-200 mb-3 text-sm"><i class="fa-solid fa-rss text-orange-500 ml-1"></i> مصادر RSS شائعة</h4>
-                        <div class="space-y-2">
-                            <button onclick="quickAddSource('https://feeds.feedburner.com/TechCrunch')" class="w-full text-right bg-darker/50 hover:bg-darker border border-gray-800 hover:border-primary/30 rounded-lg p-2.5 text-xs text-gray-400 transition">
-                                <span class="font-medium text-gray-300">TechCrunch</span>
-                                <span class="block text-[10px] mt-0.5 opacity-60 text-left" dir="ltr">feedburner.com/TechCrunch</span>
-                            </button>
-                            <button onclick="quickAddSource('https://hnrss.org/frontpage')" class="w-full text-right bg-darker/50 hover:bg-darker border border-gray-800 hover:border-primary/30 rounded-lg p-2.5 text-xs text-gray-400 transition">
-                                <span class="font-medium text-gray-300">Hacker News</span>
-                                <span class="block text-[10px] mt-0.5 opacity-60 text-left" dir="ltr">hnrss.org/frontpage</span>
-                            </button>
-                            <button onclick="quickAddSource('https://www.reddit.com/r/artificial/.rss')" class="w-full text-right bg-darker/50 hover:bg-darker border border-gray-800 hover:border-primary/30 rounded-lg p-2.5 text-xs text-gray-400 transition">
-                                <span class="font-medium text-gray-300">Reddit AI</span>
-                                <span class="block text-[10px] mt-0.5 opacity-60 text-left" dir="ltr">reddit.com/r/artificial</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="glass p-5">
-                        <h4 class="font-bold text-gray-200 mb-2 text-sm"><i class="fa-solid fa-circle-question text-accent ml-1"></i> أنواع المصادر</h4>
-                        <ul class="text-xs text-gray-400 space-y-2">
-                            <li><span class="text-orange-500 font-bold">RSS:</span> خلاصات الأخبار والمدونات (الأكثر شيوعاً)</li>
-                            <li><span class="text-blue-500 font-bold">API:</span> نقاط نهاية مخصصة ترجع JSON</li>
-                            <li><span class="text-red-500 font-bold">YouTube:</span> قنوات ومقاطع فيديو (قريباً)</li>
-                            <li><span class="text-sky-400 font-bold">Twitter:</span> حسابات وهاشتاقات (قريباً)</li>
-                        </ul>
-                    </div>
+                <div class="flex gap-2">
+                  <div class="flex-grow relative">
+                    <input
+                      type="url"
+                      id="newSourceUrl"
+                      dir="ltr"
+                      class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white text-sm text-left"
+                      placeholder="https://example.com/feed.xml"
+                    />
+                    <span
+                      id="sourceTypeLabel"
+                      class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-orange-500 font-mono hidden sm:block"
+                      >RSS</span
+                    >
+                  </div>
+                  <button
+                    onclick="addSource()"
+                    class="bg-primary hover:bg-primaryHover text-white px-6 rounded-lg font-bold text-sm transition-all whitespace-nowrap"
+                  >
+                    <i class="fa-solid fa-plus ml-1"></i>إضافة
+                  </button>
                 </div>
+              </div>
+
+              <!-- Sources List -->
+              <div class="glass p-6">
+                <h3 class="text-lg font-bold text-gray-200 mb-4">
+                  <i class="fa-solid fa-list text-secondary ml-2"></i>المصادر
+                  الحالية (<span id="sourcesCount">0</span>)
+                </h3>
+                <div
+                  id="sourcesList"
+                  class="space-y-2 max-h-[350px] overflow-y-auto"
+                >
+                  <div class="text-center text-gray-500 py-6 text-sm">
+                    لم تتم إضافة أي مصادر بعد
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- Source Tips -->
+            <div class="space-y-4">
+              <div class="glass p-5">
+                <h4 class="font-bold text-gray-200 mb-3 text-sm">
+                  <i class="fa-solid fa-rss text-orange-500 ml-1"></i> مصادر RSS
+                  شائعة
+                </h4>
+                <div class="space-y-2">
+                  <button
+                    onclick="
+                      quickAddSource('https://feeds.feedburner.com/TechCrunch')
+                    "
+                    class="w-full text-right bg-darker/50 hover:bg-darker border border-gray-800 hover:border-primary/30 rounded-lg p-2.5 text-xs text-gray-400 transition"
+                  >
+                    <span class="font-medium text-gray-300">TechCrunch</span>
+                    <span
+                      class="block text-[10px] mt-0.5 opacity-60 text-left"
+                      dir="ltr"
+                      >feedburner.com/TechCrunch</span
+                    >
+                  </button>
+                  <button
+                    onclick="quickAddSource('https://hnrss.org/frontpage')"
+                    class="w-full text-right bg-darker/50 hover:bg-darker border border-gray-800 hover:border-primary/30 rounded-lg p-2.5 text-xs text-gray-400 transition"
+                  >
+                    <span class="font-medium text-gray-300">Hacker News</span>
+                    <span
+                      class="block text-[10px] mt-0.5 opacity-60 text-left"
+                      dir="ltr"
+                      >hnrss.org/frontpage</span
+                    >
+                  </button>
+                  <button
+                    onclick="
+                      quickAddSource('https://www.reddit.com/r/artificial/.rss')
+                    "
+                    class="w-full text-right bg-darker/50 hover:bg-darker border border-gray-800 hover:border-primary/30 rounded-lg p-2.5 text-xs text-gray-400 transition"
+                  >
+                    <span class="font-medium text-gray-300">Reddit AI</span>
+                    <span
+                      class="block text-[10px] mt-0.5 opacity-60 text-left"
+                      dir="ltr"
+                      >reddit.com/r/artificial</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="glass p-5">
+                <h4 class="font-bold text-gray-200 mb-2 text-sm">
+                  <i class="fa-solid fa-circle-question text-accent ml-1"></i>
+                  أنواع المصادر
+                </h4>
+                <ul class="text-xs text-gray-400 space-y-2">
+                  <li>
+                    <span class="text-orange-500 font-bold">RSS:</span> خلاصات
+                    الأخبار والمدونات (الأكثر شيوعاً)
+                  </li>
+                  <li>
+                    <span class="text-blue-500 font-bold">API:</span> نقاط نهاية
+                    مخصصة ترجع JSON
+                  </li>
+                  <li>
+                    <span class="text-red-500 font-bold">YouTube:</span> قنوات
+                    ومقاطع فيديو (قريباً)
+                  </li>
+                  <li>
+                    <span class="text-sky-400 font-bold">Twitter:</span> حسابات
+                    وهاشتاقات (قريباً)
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Tab: Publishing Channels -->
         <div id="tab-channels" class="tab-content hidden">
-            <div class="glass p-6 mb-6">
-                <h3 class="text-xl font-bold text-gray-100 border-b border-gray-700 pb-3 mb-5"><i class="fa-solid fa-share-nodes text-primary ml-2"></i>قنوات النشر</h3>
-                <p class="text-gray-400 text-sm mb-6">اربط حساباتك وسيقوم الوكيل بإعادة صياغة المحتوى بما يناسب كل منصة وينشره تلقائياً</p>
+          <div class="glass p-6 mb-6">
+            <h3
+              class="text-xl font-bold text-gray-100 border-b border-gray-700 pb-3 mb-5"
+            >
+              <i class="fa-solid fa-share-nodes text-primary ml-2"></i>قنوات
+              النشر
+            </h3>
+            <p class="text-gray-400 text-sm mb-6">
+              اربط حساباتك وسيقوم الوكيل بإعادة صياغة المحتوى بما يناسب كل منصة
+              وينشره تلقائياً
+            </p>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Telegram -->
-                    <div class="channel-card glass-sm p-5 border border-gray-800 rounded-xl" data-channel="telegram">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-12 h-12 rounded-xl bg-[#229ED9]/15 flex items-center justify-center"><i class="fa-brands fa-telegram text-[#229ED9] text-2xl"></i></div>
-                            <div>
-                                <h4 class="font-bold text-gray-200">Telegram</h4>
-                                <span id="telegramStatus" class="text-xs text-gray-500">غير متصل</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mb-4">انشر تلقائياً في قناتك أو مجموعتك على تيليجرام</p>
-                        <button onclick="connectChannel('telegram')" class="w-full bg-[#229ED9]/15 hover:bg-[#229ED9]/25 border border-[#229ED9]/30 text-[#229ED9] py-2.5 rounded-lg text-sm font-bold transition">
-                            <i class="fa-solid fa-link ml-1"></i>ربط تيليجرام
-                        </button>
-                    </div>
-
-                    <!-- Twitter/X -->
-                    <div class="channel-card glass-sm p-5 border border-gray-800 rounded-xl" data-channel="twitter">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center"><i class="fa-brands fa-x-twitter text-white text-2xl"></i></div>
-                            <div>
-                                <h4 class="font-bold text-gray-200">X / Twitter</h4>
-                                <span class="text-xs text-yellow-500"><i class="fa-solid fa-clock ml-1"></i>قريباً</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mb-4">انشر تغريدات ذكية تلقائياً ملائمة لحدود الحروف</p>
-                        <button disabled class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed">
-                            <i class="fa-solid fa-lock ml-1"></i>قريباً
-                        </button>
-                    </div>
-
-                    <!-- LinkedIn -->
-                    <div class="channel-card glass-sm p-5 border border-gray-800 rounded-xl" data-channel="linkedin">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-12 h-12 rounded-xl bg-[#0077B5]/15 flex items-center justify-center"><i class="fa-brands fa-linkedin text-[#0077B5] text-2xl"></i></div>
-                            <div>
-                                <h4 class="font-bold text-gray-200">LinkedIn</h4>
-                                <span class="text-xs text-yellow-500"><i class="fa-solid fa-clock ml-1"></i>قريباً</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mb-4">انشر محتوى احترافي على لينكد إن تلقائياً</p>
-                        <button disabled class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed">
-                            <i class="fa-solid fa-lock ml-1"></i>قريباً
-                        </button>
-                    </div>
-
-                    <!-- Facebook -->
-                    <div class="channel-card glass-sm p-5 border border-gray-800 rounded-xl" data-channel="facebook">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-12 h-12 rounded-xl bg-[#1877F2]/15 flex items-center justify-center"><i class="fa-brands fa-facebook text-[#1877F2] text-2xl"></i></div>
-                            <div>
-                                <h4 class="font-bold text-gray-200">Facebook</h4>
-                                <span class="text-xs text-yellow-500"><i class="fa-solid fa-clock ml-1"></i>قريباً</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mb-4">انشر على صفحتك أو مجموعتك على فيسبوك</p>
-                        <button disabled class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed">
-                            <i class="fa-solid fa-lock ml-1"></i>قريباً
-                        </button>
-                    </div>
-
-                    <!-- Instagram -->
-                    <div class="channel-card glass-sm p-5 border border-gray-800 rounded-xl" data-channel="instagram">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#F58529]/15 via-[#DD2A7B]/15 to-[#8134AF]/15 flex items-center justify-center"><i class="fa-brands fa-instagram text-[#E4405F] text-2xl"></i></div>
-                            <div>
-                                <h4 class="font-bold text-gray-200">Instagram</h4>
-                                <span class="text-xs text-yellow-500"><i class="fa-solid fa-clock ml-1"></i>قريباً</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mb-4">انشر صور وقصص على إنستغرام تلقائياً</p>
-                        <button disabled class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed">
-                            <i class="fa-solid fa-lock ml-1"></i>قريباً
-                        </button>
-                    </div>
-
-                    <!-- WordPress -->
-                    <div class="channel-card glass-sm p-5 border border-gray-800 rounded-xl" data-channel="wordpress">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-12 h-12 rounded-xl bg-[#21759B]/15 flex items-center justify-center"><i class="fa-brands fa-wordpress text-[#21759B] text-2xl"></i></div>
-                            <div>
-                                <h4 class="font-bold text-gray-200">WordPress</h4>
-                                <span class="text-xs text-yellow-500"><i class="fa-solid fa-clock ml-1"></i>قريباً</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mb-4">انشر مقالات ومدونات على ووردبريس تلقائياً</p>
-                        <button disabled class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed">
-                            <i class="fa-solid fa-lock ml-1"></i>قريباً
-                        </button>
-                    </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Telegram -->
+              <div
+                class="channel-card glass-sm p-5 border border-gray-800 rounded-xl"
+                data-channel="telegram"
+              >
+                <div class="flex items-center gap-3 mb-3">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-[#229ED9]/15 flex items-center justify-center"
+                  >
+                    <i
+                      class="fa-brands fa-telegram text-[#229ED9] text-2xl"
+                    ></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-200">Telegram</h4>
+                    <span id="telegramStatus" class="text-xs text-gray-500"
+                      >غير متصل</span
+                    >
+                  </div>
                 </div>
+                <p class="text-xs text-gray-500 mb-4">
+                  انشر تلقائياً في قناتك أو مجموعتك على تيليجرام
+                </p>
+                <button
+                  onclick="connectChannel('telegram')"
+                  class="w-full bg-[#229ED9]/15 hover:bg-[#229ED9]/25 border border-[#229ED9]/30 text-[#229ED9] py-2.5 rounded-lg text-sm font-bold transition"
+                >
+                  <i class="fa-solid fa-link ml-1"></i>ربط تيليجرام
+                </button>
+              </div>
+
+              <!-- Twitter/X -->
+              <div
+                class="channel-card glass-sm p-5 border border-gray-800 rounded-xl"
+                data-channel="twitter"
+              >
+                <div class="flex items-center gap-3 mb-3">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center"
+                  >
+                    <i class="fa-brands fa-x-twitter text-white text-2xl"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-200">X / Twitter</h4>
+                    <span class="text-xs text-yellow-500"
+                      ><i class="fa-solid fa-clock ml-1"></i>قريباً</span
+                    >
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">
+                  انشر تغريدات ذكية تلقائياً ملائمة لحدود الحروف
+                </p>
+                <button
+                  disabled
+                  class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed"
+                >
+                  <i class="fa-solid fa-lock ml-1"></i>قريباً
+                </button>
+              </div>
+
+              <!-- LinkedIn -->
+              <div
+                class="channel-card glass-sm p-5 border border-gray-800 rounded-xl"
+                data-channel="linkedin"
+              >
+                <div class="flex items-center gap-3 mb-3">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-[#0077B5]/15 flex items-center justify-center"
+                  >
+                    <i
+                      class="fa-brands fa-linkedin text-[#0077B5] text-2xl"
+                    ></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-200">LinkedIn</h4>
+                    <span class="text-xs text-yellow-500"
+                      ><i class="fa-solid fa-clock ml-1"></i>قريباً</span
+                    >
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">
+                  انشر محتوى احترافي على لينكد إن تلقائياً
+                </p>
+                <button
+                  disabled
+                  class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed"
+                >
+                  <i class="fa-solid fa-lock ml-1"></i>قريباً
+                </button>
+              </div>
+
+              <!-- Facebook -->
+              <div
+                class="channel-card glass-sm p-5 border border-gray-800 rounded-xl"
+                data-channel="facebook"
+              >
+                <div class="flex items-center gap-3 mb-3">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-[#1877F2]/15 flex items-center justify-center"
+                  >
+                    <i
+                      class="fa-brands fa-facebook text-[#1877F2] text-2xl"
+                    ></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-200">Facebook</h4>
+                    <span class="text-xs text-yellow-500"
+                      ><i class="fa-solid fa-clock ml-1"></i>قريباً</span
+                    >
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">
+                  انشر على صفحتك أو مجموعتك على فيسبوك
+                </p>
+                <button
+                  disabled
+                  class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed"
+                >
+                  <i class="fa-solid fa-lock ml-1"></i>قريباً
+                </button>
+              </div>
+
+              <!-- Instagram -->
+              <div
+                class="channel-card glass-sm p-5 border border-gray-800 rounded-xl"
+                data-channel="instagram"
+              >
+                <div class="flex items-center gap-3 mb-3">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#F58529]/15 via-[#DD2A7B]/15 to-[#8134AF]/15 flex items-center justify-center"
+                  >
+                    <i
+                      class="fa-brands fa-instagram text-[#E4405F] text-2xl"
+                    ></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-200">Instagram</h4>
+                    <span class="text-xs text-yellow-500"
+                      ><i class="fa-solid fa-clock ml-1"></i>قريباً</span
+                    >
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">
+                  انشر صور وقصص على إنستغرام تلقائياً
+                </p>
+                <button
+                  disabled
+                  class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed"
+                >
+                  <i class="fa-solid fa-lock ml-1"></i>قريباً
+                </button>
+              </div>
+
+              <!-- WordPress -->
+              <div
+                class="channel-card glass-sm p-5 border border-gray-800 rounded-xl"
+                data-channel="wordpress"
+              >
+                <div class="flex items-center gap-3 mb-3">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-[#21759B]/15 flex items-center justify-center"
+                  >
+                    <i
+                      class="fa-brands fa-wordpress text-[#21759B] text-2xl"
+                    ></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-200">WordPress</h4>
+                    <span class="text-xs text-yellow-500"
+                      ><i class="fa-solid fa-clock ml-1"></i>قريباً</span
+                    >
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500 mb-4">
+                  انشر مقالات ومدونات على ووردبريس تلقائياً
+                </p>
+                <button
+                  disabled
+                  class="w-full bg-gray-800/50 border border-gray-700 text-gray-500 py-2.5 rounded-lg text-sm font-bold cursor-not-allowed"
+                >
+                  <i class="fa-solid fa-lock ml-1"></i>قريباً
+                </button>
+              </div>
             </div>
+          </div>
         </div>
 
         <!-- Tab: Content Preview -->
         <div id="tab-preview" class="tab-content hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Generated Content Preview -->
-                <div class="glass p-6">
-                    <div class="flex items-center justify-between border-b border-gray-700 pb-3 mb-4">
-                        <h3 class="text-xl font-bold text-gray-100"><i class="fa-solid fa-wand-magic-sparkles text-secondary ml-2"></i>معاينة المحتوى</h3>
-                        <button onclick="generatePreview()" class="bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary px-4 py-2 rounded-lg text-sm font-bold transition">
-                            <i class="fa-solid fa-rotate ml-1"></i>توليد معاينة
-                        </button>
-                    </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Generated Content Preview -->
+            <div class="glass p-6">
+              <div
+                class="flex items-center justify-between border-b border-gray-700 pb-3 mb-4"
+              >
+                <h3 class="text-xl font-bold text-gray-100">
+                  <i
+                    class="fa-solid fa-wand-magic-sparkles text-secondary ml-2"
+                  ></i
+                  >معاينة المحتوى
+                </h3>
+                <button
+                  onclick="generatePreview()"
+                  class="bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary px-4 py-2 rounded-lg text-sm font-bold transition"
+                >
+                  <i class="fa-solid fa-rotate ml-1"></i>توليد معاينة
+                </button>
+              </div>
 
-                    <div id="previewContent" class="space-y-4">
-                        <div class="text-center py-12 text-gray-500">
-                            <i class="fa-solid fa-wand-magic-sparkles text-4xl mb-3 block opacity-30"></i>
-                            <p class="text-sm">اضغط "توليد معاينة" لرؤية كيف سيبدو المحتوى</p>
-                            <p class="text-xs text-gray-600 mt-1">سيتم جلب آخر محتوى من مصادرك وإعادة صياغته</p>
-                        </div>
-                    </div>
+              <div id="previewContent" class="space-y-4">
+                <div class="text-center py-12 text-gray-500">
+                  <i
+                    class="fa-solid fa-wand-magic-sparkles text-4xl mb-3 block opacity-30"
+                  ></i>
+                  <p class="text-sm">
+                    اضغط "توليد معاينة" لرؤية كيف سيبدو المحتوى
+                  </p>
+                  <p class="text-xs text-gray-600 mt-1">
+                    سيتم جلب آخر محتوى من مصادرك وإعادة صياغته
+                  </p>
                 </div>
-
-                <!-- Content Calendar -->
-                <div class="glass p-6">
-                    <h3 class="text-xl font-bold text-gray-100 border-b border-gray-700 pb-3 mb-4"><i class="fa-solid fa-calendar-days text-accent ml-2"></i>جدول النشر القادم</h3>
-
-                    <div id="calendarView" class="space-y-3">
-                        <div id="scheduleList" class="space-y-2">
-                            <!-- Populated by JS -->
-                        </div>
-                        <div class="text-center py-8 text-gray-500" id="noSchedule">
-                            <i class="fa-solid fa-calendar-xmark text-3xl mb-2 block opacity-30"></i>
-                            <p class="text-sm">لا يوجد جدول محدد</p>
-                        </div>
-                    </div>
-
-                    <!-- Publishing Log -->
-                    <div class="mt-6 pt-4 border-t border-gray-700">
-                        <h4 class="font-bold text-gray-300 text-sm mb-3"><i class="fa-solid fa-clock-rotate-left text-primary ml-1"></i>سجل النشر الأخير</h4>
-                        <div id="publishLog" class="space-y-2 max-h-[200px] overflow-y-auto">
-                            <div class="text-center text-gray-600 text-xs py-4">لا يوجد سجل نشر بعد</div>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
+
+            <!-- Content Calendar -->
+            <div class="glass p-6">
+              <h3
+                class="text-xl font-bold text-gray-100 border-b border-gray-700 pb-3 mb-4"
+              >
+                <i class="fa-solid fa-calendar-days text-accent ml-2"></i>جدول
+                النشر القادم
+              </h3>
+
+              <div id="calendarView" class="space-y-3">
+                <div id="scheduleList" class="space-y-2">
+                  <!-- Populated by JS -->
+                </div>
+                <div class="text-center py-8 text-gray-500" id="noSchedule">
+                  <i
+                    class="fa-solid fa-calendar-xmark text-3xl mb-2 block opacity-30"
+                  ></i>
+                  <p class="text-sm">لا يوجد جدول محدد</p>
+                </div>
+              </div>
+
+              <!-- Publishing Log -->
+              <div class="mt-6 pt-4 border-t border-gray-700">
+                <h4 class="font-bold text-gray-300 text-sm mb-3">
+                  <i class="fa-solid fa-clock-rotate-left text-primary ml-1"></i
+                  >سجل النشر الأخير
+                </h4>
+                <div
+                  id="publishLog"
+                  class="space-y-2 max-h-[200px] overflow-y-auto"
+                >
+                  <div class="text-center text-gray-600 text-xs py-4">
+                    لا يوجد سجل نشر بعد
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Tab: Analytics -->
         <div id="tab-analytics" class="tab-content hidden">
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div class="stat-card glass p-5 text-center">
-                    <div class="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center mx-auto mb-2"><i class="fa-solid fa-paper-plane text-primary text-xl"></i></div>
-                    <div class="text-2xl font-bold text-white" id="statPosts">0</div>
-                    <div class="text-xs text-gray-500 mt-1">منشور</div>
+          <!-- Stats Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div class="stat-card glass p-5 text-center">
+              <div
+                class="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center mx-auto mb-2"
+              >
+                <i class="fa-solid fa-paper-plane text-primary text-xl"></i>
+              </div>
+              <div class="text-2xl font-bold text-white" id="statPosts">0</div>
+              <div class="text-xs text-gray-500 mt-1">منشور</div>
+            </div>
+            <div class="stat-card glass p-5 text-center">
+              <div
+                class="w-12 h-12 rounded-xl bg-secondary/15 flex items-center justify-center mx-auto mb-2"
+              >
+                <i class="fa-solid fa-rss text-secondary text-xl"></i>
+              </div>
+              <div class="text-2xl font-bold text-white" id="statSources">
+                0
+              </div>
+              <div class="text-xs text-gray-500 mt-1">مصدر</div>
+            </div>
+            <div class="stat-card glass p-5 text-center">
+              <div
+                class="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center mx-auto mb-2"
+              >
+                <i class="fa-solid fa-share-nodes text-accent text-xl"></i>
+              </div>
+              <div class="text-2xl font-bold text-white" id="statChannels">
+                0
+              </div>
+              <div class="text-xs text-gray-500 mt-1">قناة نشر</div>
+            </div>
+            <div class="stat-card glass p-5 text-center">
+              <div
+                class="w-12 h-12 rounded-xl bg-green-500/15 flex items-center justify-center mx-auto mb-2"
+              >
+                <i class="fa-solid fa-clock text-green-500 text-xl"></i>
+              </div>
+              <div class="text-2xl font-bold text-white" id="statUptime">
+                --
+              </div>
+              <div class="text-xs text-gray-500 mt-1">وقت التشغيل</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Activity Chart Placeholder -->
+            <div class="glass p-6">
+              <h3 class="text-lg font-bold text-gray-200 mb-4">
+                <i class="fa-solid fa-chart-bar text-primary ml-2"></i>نشاط
+                النشر
+              </h3>
+              <div class="space-y-3" id="activityChart">
+                <!-- Simple bar chart -->
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-gray-500 w-12">السبت</span>
+                  <div
+                    class="flex-grow bg-darker rounded-full h-4 overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <span class="text-xs text-gray-500 w-6">0</span>
                 </div>
-                <div class="stat-card glass p-5 text-center">
-                    <div class="w-12 h-12 rounded-xl bg-secondary/15 flex items-center justify-center mx-auto mb-2"><i class="fa-solid fa-rss text-secondary text-xl"></i></div>
-                    <div class="text-2xl font-bold text-white" id="statSources">0</div>
-                    <div class="text-xs text-gray-500 mt-1">مصدر</div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-gray-500 w-12">الأحد</span>
+                  <div
+                    class="flex-grow bg-darker rounded-full h-4 overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <span class="text-xs text-gray-500 w-6">0</span>
                 </div>
-                <div class="stat-card glass p-5 text-center">
-                    <div class="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center mx-auto mb-2"><i class="fa-solid fa-share-nodes text-accent text-xl"></i></div>
-                    <div class="text-2xl font-bold text-white" id="statChannels">0</div>
-                    <div class="text-xs text-gray-500 mt-1">قناة نشر</div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-gray-500 w-12">الاثنين</span>
+                  <div
+                    class="flex-grow bg-darker rounded-full h-4 overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <span class="text-xs text-gray-500 w-6">0</span>
                 </div>
-                <div class="stat-card glass p-5 text-center">
-                    <div class="w-12 h-12 rounded-xl bg-green-500/15 flex items-center justify-center mx-auto mb-2"><i class="fa-solid fa-clock text-green-500 text-xl"></i></div>
-                    <div class="text-2xl font-bold text-white" id="statUptime">--</div>
-                    <div class="text-xs text-gray-500 mt-1">وقت التشغيل</div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-gray-500 w-12">الثلاثاء</span>
+                  <div
+                    class="flex-grow bg-darker rounded-full h-4 overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <span class="text-xs text-gray-500 w-6">0</span>
                 </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-gray-500 w-12">الأربعاء</span>
+                  <div
+                    class="flex-grow bg-darker rounded-full h-4 overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <span class="text-xs text-gray-500 w-6">0</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-gray-500 w-12">الخميس</span>
+                  <div
+                    class="flex-grow bg-darker rounded-full h-4 overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <span class="text-xs text-gray-500 w-6">0</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-xs text-gray-500 w-12">الجمعة</span>
+                  <div
+                    class="flex-grow bg-darker rounded-full h-4 overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <span class="text-xs text-gray-500 w-6">0</span>
+                </div>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Activity Chart Placeholder -->
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold text-gray-200 mb-4"><i class="fa-solid fa-chart-bar text-primary ml-2"></i>نشاط النشر</h3>
-                    <div class="space-y-3" id="activityChart">
-                        <!-- Simple bar chart -->
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 w-12">السبت</span>
-                            <div class="flex-grow bg-darker rounded-full h-4 overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:0%"></div></div>
-                            <span class="text-xs text-gray-500 w-6">0</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 w-12">الأحد</span>
-                            <div class="flex-grow bg-darker rounded-full h-4 overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:0%"></div></div>
-                            <span class="text-xs text-gray-500 w-6">0</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 w-12">الاثنين</span>
-                            <div class="flex-grow bg-darker rounded-full h-4 overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:0%"></div></div>
-                            <span class="text-xs text-gray-500 w-6">0</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 w-12">الثلاثاء</span>
-                            <div class="flex-grow bg-darker rounded-full h-4 overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:0%"></div></div>
-                            <span class="text-xs text-gray-500 w-6">0</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 w-12">الأربعاء</span>
-                            <div class="flex-grow bg-darker rounded-full h-4 overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:0%"></div></div>
-                            <span class="text-xs text-gray-500 w-6">0</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 w-12">الخميس</span>
-                            <div class="flex-grow bg-darker rounded-full h-4 overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:0%"></div></div>
-                            <span class="text-xs text-gray-500 w-6">0</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-xs text-gray-500 w-12">الجمعة</span>
-                            <div class="flex-grow bg-darker rounded-full h-4 overflow-hidden"><div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style="width:0%"></div></div>
-                            <span class="text-xs text-gray-500 w-6">0</span>
-                        </div>
-                    </div>
+            <!-- Recent Activity -->
+            <div class="glass p-6">
+              <h3 class="text-lg font-bold text-gray-200 mb-4">
+                <i class="fa-solid fa-timeline text-secondary ml-2"></i>النشاط
+                الأخير
+              </h3>
+              <div
+                id="recentActivity"
+                class="space-y-3 max-h-[300px] overflow-y-auto"
+              >
+                <div class="text-center py-8 text-gray-500">
+                  <i
+                    class="fa-solid fa-chart-line text-3xl mb-2 block opacity-20"
+                  ></i>
+                  <p class="text-sm">ستظهر التحليلات عند بدء النشر</p>
                 </div>
-
-                <!-- Recent Activity -->
-                <div class="glass p-6">
-                    <h3 class="text-lg font-bold text-gray-200 mb-4"><i class="fa-solid fa-timeline text-secondary ml-2"></i>النشاط الأخير</h3>
-                    <div id="recentActivity" class="space-y-3 max-h-[300px] overflow-y-auto">
-                        <div class="text-center py-8 text-gray-500">
-                            <i class="fa-solid fa-chart-line text-3xl mb-2 block opacity-20"></i>
-                            <p class="text-sm">ستظهر التحليلات عند بدء النشر</p>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
+      <!-- /editorArea -->
+    </main>
 
-    </div><!-- /editorArea -->
-</main>
-
-<!-- New Campaign Modal -->
-<div id="newCampModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="glass p-8 max-w-md w-full mx-4 relative">
-        <button onclick="closeModal()" class="absolute top-4 left-4 text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
-        <h3 class="text-2xl font-bold text-white mb-6"><i class="fa-solid fa-plus text-primary ml-2"></i>حملة جديدة</h3>
+    <!-- New Campaign Modal -->
+    <div
+      id="newCampModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm"
+    >
+      <div class="glass p-8 max-w-md w-full mx-4 relative">
+        <button
+          onclick="closeModal()"
+          class="absolute top-4 left-4 text-gray-400 hover:text-white text-xl"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h3 class="text-2xl font-bold text-white mb-6">
+          <i class="fa-solid fa-plus text-primary ml-2"></i>حملة جديدة
+        </h3>
 
         <div class="space-y-4">
-            <div>
-                <label class="block text-gray-300 mb-1.5 text-sm font-medium">اسم الحملة</label>
-                <input type="text" id="modalCampName" class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white" placeholder="مثال: أخبار التقنية اليومية" />
-            </div>
-            <div>
-                <label class="block text-gray-300 mb-1.5 text-sm font-medium">شخصية الوكيل</label>
-                <textarea id="modalCampPersona" rows="3" class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white resize-none" placeholder="صِف كيف تريد أن يكتب الوكيل المحتوى..."></textarea>
-            </div>
-            <button onclick="createCampaign()" class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-secondaryHover text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20">
-                <i class="fa-solid fa-rocket ml-2"></i>إنشاء الحملة
-            </button>
+          <div>
+            <label class="block text-gray-300 mb-1.5 text-sm font-medium"
+              >اسم الحملة</label
+            >
+            <input
+              type="text"
+              id="modalCampName"
+              class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white"
+              placeholder="مثال: أخبار التقنية اليومية"
+            />
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1.5 text-sm font-medium"
+              >شخصية الوكيل</label
+            >
+            <textarea
+              id="modalCampPersona"
+              rows="3"
+              class="w-full bg-darker border border-gray-700 rounded-lg py-3 px-4 text-white resize-none"
+              placeholder="صِف كيف تريد أن يكتب الوكيل المحتوى..."
+            ></textarea>
+          </div>
+          <button
+            onclick="createCampaign()"
+            class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primaryHover hover:to-secondaryHover text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20"
+          >
+            <i class="fa-solid fa-rocket ml-2"></i>إنشاء الحملة
+          </button>
         </div>
+      </div>
     </div>
-</div>
 
-<!-- Telegram Connect Modal -->
-<div id="telegramModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="glass p-8 max-w-md w-full mx-4 relative">
-        <button onclick="closeTelegramModal()" class="absolute top-4 left-4 text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Telegram Connect Modal -->
+    <div
+      id="telegramModal"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm"
+    >
+      <div class="glass p-8 max-w-md w-full mx-4 relative">
+        <button
+          onclick="closeTelegramModal()"
+          class="absolute top-4 left-4 text-gray-400 hover:text-white text-xl"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
         <div class="flex items-center gap-3 mb-5">
-            <div class="w-12 h-12 rounded-xl bg-[#229ED9]/15 flex items-center justify-center"><i class="fa-brands fa-telegram text-[#229ED9] text-2xl"></i></div>
-            <div>
-                <h3 class="text-xl font-bold text-white">ربط تيليجرام</h3>
-                <p class="text-xs text-gray-400">أدخل Bot Token ومعرّف القناة</p>
-            </div>
+          <div
+            class="w-12 h-12 rounded-xl bg-[#229ED9]/15 flex items-center justify-center"
+          >
+            <i class="fa-brands fa-telegram text-[#229ED9] text-2xl"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-white">ربط تيليجرام</h3>
+            <p class="text-xs text-gray-400">أدخل Bot Token ومعرّف القناة</p>
+          </div>
         </div>
 
         <div class="space-y-4">
-            <div>
-                <label class="block text-gray-300 mb-1 text-sm">Bot Token</label>
-                <input type="text" id="tgBotToken" dir="ltr" class="w-full bg-darker border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm text-left font-mono" placeholder="123456:ABCde..." />
-                <p class="text-[10px] text-gray-600 mt-1">احصل عليه من @BotFather في تيليجرام</p>
-            </div>
-            <div>
-                <label class="block text-gray-300 mb-1 text-sm">معرّف القناة / المجموعة</label>
-                <input type="text" id="tgChannelId" dir="ltr" class="w-full bg-darker border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm text-left font-mono" placeholder="@channel_name أو -100123..." />
-            </div>
-            <button onclick="saveTelegramChannel()" class="w-full bg-[#229ED9] hover:bg-[#1a8bc5] text-white font-bold py-3 rounded-xl transition">
-                <i class="fa-solid fa-link ml-2"></i>ربط القناة
-            </button>
+          <div>
+            <label class="block text-gray-300 mb-1 text-sm">Bot Token</label>
+            <input
+              type="text"
+              id="tgBotToken"
+              dir="ltr"
+              class="w-full bg-darker border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm text-left font-mono"
+              placeholder="123456:ABCde..."
+            />
+            <p class="text-[10px] text-gray-600 mt-1">
+              احصل عليه من @BotFather في تيليجرام
+            </p>
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1 text-sm"
+              >معرّف القناة / المجموعة</label
+            >
+            <input
+              type="text"
+              id="tgChannelId"
+              dir="ltr"
+              class="w-full bg-darker border border-gray-700 rounded-lg py-2.5 px-4 text-white text-sm text-left font-mono"
+              placeholder="@channel_name أو -100123..."
+            />
+          </div>
+          <button
+            onclick="saveTelegramChannel()"
+            class="w-full bg-[#229ED9] hover:bg-[#1a8bc5] text-white font-bold py-3 rounded-xl transition"
+          >
+            <i class="fa-solid fa-link ml-2"></i>ربط القناة
+          </button>
         </div>
+      </div>
     </div>
-</div>
 
-<footer class="text-center py-4 text-gray-600 text-xs opacity-50">&copy; 2025 RobovAI Solutions</footer>
+    <footer class="text-center py-4 text-gray-600 text-xs opacity-50">
+      &copy; 2025 RobovAI Solutions
+    </footer>
 
-<script>
-const API_URL = '/api/agents';
-let currentCampId = null;
-let currentCampData = null;
-let selectedSourceType = 'rss';
+    <script>
+      const API_URL = '/api/agents';
+      let currentCampId = null;
+      let currentCampData = null;
+      let selectedSourceType = 'rss';
 
-// ─── Auth ───
-function getAuthToken() {
-    return localStorage.getItem('token') || '';
-}
+      // ─── Auth ───
+      function getAuthToken() {
+        return localStorage.getItem('token') || '';
+      }
 
-function authHeaders(json = false) {
-    const h = { 'Authorization': `Bearer ${getAuthToken()}` };
-    if (json) h['Content-Type'] = 'application/json';
-    return h;
-}
+      function authHeaders(json = false) {
+        const h = { Authorization: `Bearer ${getAuthToken()}` };
+        if (json) h['Content-Type'] = 'application/json';
+        return h;
+      }
 
-// ─── Toast ───
-function showToast(msg, type = 'success') {
-    const c = document.getElementById('toastContainer');
-    const colors = {
-        success: 'bg-green-500/90 border-green-400',
-        error: 'bg-red-500/90 border-red-400',
-        info: 'bg-primary/90 border-primary',
-        warning: 'bg-yellow-500/90 border-yellow-400',
-    };
-    const icons = {
-        success: 'fa-check-circle',
-        error: 'fa-exclamation-circle',
-        info: 'fa-info-circle',
-        warning: 'fa-triangle-exclamation',
-    };
-    const el = document.createElement('div');
-    el.className = `toast ${colors[type]} text-white px-5 py-3 rounded-xl text-sm font-medium shadow-xl border backdrop-blur-sm flex items-center gap-2`;
-    el.innerHTML = `<i class="fa-solid ${icons[type]}"></i>${msg}`;
-    c.appendChild(el);
-    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .4s'; setTimeout(() => el.remove(), 400); }, 3500);
-}
+      // ─── Toast ───
+      function showToast(msg, type = 'success') {
+        const c = document.getElementById('toastContainer');
+        const colors = {
+          success: 'bg-green-500/90 border-green-400',
+          error: 'bg-red-500/90 border-red-400',
+          info: 'bg-primary/90 border-primary',
+          warning: 'bg-yellow-500/90 border-yellow-400',
+        };
+        const icons = {
+          success: 'fa-check-circle',
+          error: 'fa-exclamation-circle',
+          info: 'fa-info-circle',
+          warning: 'fa-triangle-exclamation',
+        };
+        const el = document.createElement('div');
+        el.className = `toast ${colors[type]} text-white px-5 py-3 rounded-xl text-sm font-medium shadow-xl border backdrop-blur-sm flex items-center gap-2`;
+        el.innerHTML = `<i class="fa-solid ${icons[type]}"></i>${msg}`;
+        c.appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = '0';
+          el.style.transition = 'opacity .4s';
+          setTimeout(() => el.remove(), 400);
+        }, 3500);
+      }
 
-// ─── Escape HTML ───
-function esc(s) {
-    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+      // ─── Escape HTML ───
+      function esc(s) {
+        return (s || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
 
-// ─── Campaigns CRUD ───
-async function loadCampaigns() {
-    try {
-        const res = await fetch(API_URL, { headers: authHeaders() });
-        if (res.status === 401) { window.location.href = '/login'; return; }
-        const camps = await res.json();
-        const grid = document.getElementById('campaignsGrid');
-        grid.innerHTML = '';
+      // ─── Campaigns CRUD ───
+      async function loadCampaigns() {
+        try {
+          const res = await fetch(API_URL, { headers: authHeaders() });
+          if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+          }
+          const camps = await res.json();
+          const grid = document.getElementById('campaignsGrid');
+          grid.innerHTML = '';
 
-        if (!camps || camps.length === 0) {
+          if (!camps || camps.length === 0) {
             grid.innerHTML = `
                 <div class="col-span-full text-center py-10">
                     <i class="fa-solid fa-satellite-dish text-5xl text-gray-700 mb-3 block"></i>
                     <p class="text-gray-500 text-sm">لا توجد حملات بعد. أنشئ وكيلك الذكي الأول!</p>
                 </div>`;
             return;
-        }
+          }
 
-        camps.forEach(c => {
+          camps.forEach((c) => {
             const active = c.is_active !== false && c.is_active !== 0;
             const sel = currentCampId === c.id ? 'selected' : '';
             grid.innerHTML += `
@@ -657,206 +1495,263 @@ async function loadCampaigns() {
                         <span class="text-[10px] text-gray-600 font-mono" dir="ltr">${esc(c.schedule_cron || '')}</span>
                     </div>
                 </div>`;
-        });
-    } catch (e) {
-        console.error(e);
-        showToast('خطأ في تحميل الحملات', 'error');
-    }
-}
+          });
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في تحميل الحملات', 'error');
+        }
+      }
 
-async function selectCampaign(id) {
-    currentCampId = id;
-    try {
-        const res = await fetch(`${API_URL}/${id}`, { headers: authHeaders() });
-        if (!res.ok) throw new Error('Campaign not found');
-        currentCampData = await res.json();
+      async function selectCampaign(id) {
+        currentCampId = id;
+        try {
+          const res = await fetch(`${API_URL}/${id}`, {
+            headers: authHeaders(),
+          });
+          if (!res.ok) throw new Error('Campaign not found');
+          currentCampData = await res.json();
 
-        // Populate settings
-        document.getElementById('campName').value = currentCampData.name || '';
-        document.getElementById('campPersona').value = currentCampData.ai_persona || '';
-        document.getElementById('campCron').value = currentCampData.schedule_cron || '0 * * * *';
-        document.getElementById('campActive').checked = currentCampData.is_active !== false && currentCampData.is_active !== 0;
+          // Populate settings
+          document.getElementById('campName').value =
+            currentCampData.name || '';
+          document.getElementById('campPersona').value =
+            currentCampData.ai_persona || '';
+          document.getElementById('campCron').value =
+            currentCampData.schedule_cron || '0 * * * *';
+          document.getElementById('campActive').checked =
+            currentCampData.is_active !== false &&
+            currentCampData.is_active !== 0;
 
-        // Highlight CRON button
-        highlightCronBtn(currentCampData.schedule_cron);
+          // Highlight CRON button
+          highlightCronBtn(currentCampData.schedule_cron);
 
-        // Show editor
-        document.getElementById('editorArea').classList.remove('hidden');
+          // Show editor
+          document.getElementById('editorArea').classList.remove('hidden');
 
-        // Render sources
-        renderSources(currentCampData.sources || []);
+          // Render sources
+          renderSources(currentCampData.sources || []);
 
-        // Update analytics stats
-        updateStats(currentCampData);
+          // Update analytics stats
+          updateStats(currentCampData);
 
-        // Generate schedule preview
-        generateSchedulePreview();
+          // Generate schedule preview
+          generateSchedulePreview();
 
-        // Highlight selected campaign card
-        document.querySelectorAll('.campaign-card').forEach(c => c.classList.remove('selected'));
-        event?.target?.closest?.('.campaign-card')?.classList.add('selected');
+          // Highlight selected campaign card
+          document
+            .querySelectorAll('.campaign-card')
+            .forEach((c) => c.classList.remove('selected'));
+          event?.target?.closest?.('.campaign-card')?.classList.add('selected');
 
-        // Re-render campaigns to update selection state
-        loadCampaigns();
+          // Re-render campaigns to update selection state
+          loadCampaigns();
 
-        switchTab('settings');
-    } catch (e) {
-        console.error(e);
-        showToast('خطأ في تحميل بيانات الحملة', 'error');
-    }
-}
+          switchTab('settings');
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في تحميل بيانات الحملة', 'error');
+        }
+      }
 
-async function createCampaign() {
-    const name = document.getElementById('modalCampName').value.trim();
-    const persona = document.getElementById('modalCampPersona').value.trim();
-    if (!name) { showToast('يرجى إدخال اسم الحملة', 'warning'); return; }
+      async function createCampaign() {
+        const name = document.getElementById('modalCampName').value.trim();
+        const persona = document
+          .getElementById('modalCampPersona')
+          .value.trim();
+        if (!name) {
+          showToast('يرجى إدخال اسم الحملة', 'warning');
+          return;
+        }
 
-    try {
-        const res = await fetch(API_URL, {
+        try {
+          const res = await fetch(API_URL, {
             method: 'POST',
             headers: authHeaders(true),
-            body: JSON.stringify({ name, ai_persona: persona || 'وكيل ذكي لإنشاء ونشر المحتوى', schedule_cron: '0 * * * *' })
-        });
-        if (!res.ok) throw new Error('Create failed');
-        const data = await res.json();
-        closeModal();
-        showToast('تم إنشاء الحملة بنجاح!', 'success');
-        await loadCampaigns();
-        selectCampaign(data.id);
-    } catch (e) {
-        console.error(e);
-        showToast('خطأ في إنشاء الحملة', 'error');
-    }
-}
+            body: JSON.stringify({
+              name,
+              ai_persona: persona || 'وكيل ذكي لإنشاء ونشر المحتوى',
+              schedule_cron: '0 * * * *',
+            }),
+          });
+          if (!res.ok) throw new Error('Create failed');
+          const data = await res.json();
+          closeModal();
+          showToast('تم إنشاء الحملة بنجاح!', 'success');
+          await loadCampaigns();
+          selectCampaign(data.id);
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في إنشاء الحملة', 'error');
+        }
+      }
 
-async function saveCampaign() {
-    if (!currentCampId) return;
-    const payload = {
-        name: document.getElementById('campName').value.trim(),
-        ai_persona: document.getElementById('campPersona').value.trim(),
-        schedule_cron: document.getElementById('campCron').value.trim(),
-        is_active: document.getElementById('campActive').checked,
-    };
-    if (!payload.name) { showToast('يرجى إدخال اسم الحملة', 'warning'); return; }
+      async function saveCampaign() {
+        if (!currentCampId) return;
+        const payload = {
+          name: document.getElementById('campName').value.trim(),
+          ai_persona: document.getElementById('campPersona').value.trim(),
+          schedule_cron: document.getElementById('campCron').value.trim(),
+          is_active: document.getElementById('campActive').checked,
+        };
+        if (!payload.name) {
+          showToast('يرجى إدخال اسم الحملة', 'warning');
+          return;
+        }
 
-    try {
-        const res = await fetch(`${API_URL}/${currentCampId}`, {
+        try {
+          const res = await fetch(`${API_URL}/${currentCampId}`, {
             method: 'PUT',
             headers: authHeaders(true),
-            body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error('Update failed');
-        showToast('تم حفظ الإعدادات بنجاح!', 'success');
-        loadCampaigns();
-    } catch (e) {
-        console.error(e);
-        showToast('خطأ في حفظ الإعدادات', 'error');
-    }
-}
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) throw new Error('Update failed');
+          showToast('تم حفظ الإعدادات بنجاح!', 'success');
+          loadCampaigns();
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في حفظ الإعدادات', 'error');
+        }
+      }
 
-async function deleteCampaign() {
-    if (!currentCampId) return;
-    if (!confirm('هل أنت متأكد من حذف هذه الحملة؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+      async function deleteCampaign() {
+        if (!currentCampId) return;
+        if (
+          !confirm(
+            'هل أنت متأكد من حذف هذه الحملة؟ لا يمكن التراجع عن هذا الإجراء.',
+          )
+        )
+          return;
 
-    try {
-        const res = await fetch(`${API_URL}/${currentCampId}`, {
+        try {
+          const res = await fetch(`${API_URL}/${currentCampId}`, {
             method: 'DELETE',
-            headers: authHeaders()
+            headers: authHeaders(),
+          });
+          if (!res.ok) throw new Error('Delete failed');
+          showToast('تم حذف الحملة', 'info');
+          currentCampId = null;
+          currentCampData = null;
+          document.getElementById('editorArea').classList.add('hidden');
+          loadCampaigns();
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في حذف الحملة', 'error');
+        }
+      }
+
+      // ─── Sources ───
+      function setSourceType(type) {
+        selectedSourceType = type;
+        const labels = {
+          rss: 'RSS',
+          api: 'API',
+          youtube: 'YouTube',
+          twitter: 'Twitter',
+        };
+        const placeholders = {
+          rss: 'https://example.com/feed.xml',
+          api: 'https://api.example.com/v1/posts',
+          youtube: 'https://youtube.com/@channel',
+          twitter: 'https://twitter.com/username',
+        };
+        const colors = {
+          rss: 'text-orange-500',
+          api: 'text-blue-500',
+          youtube: 'text-red-500',
+          twitter: 'text-sky-400',
+        };
+
+        document.getElementById('newSourceUrl').placeholder =
+          placeholders[type] || '';
+        const label = document.getElementById('sourceTypeLabel');
+        label.textContent = labels[type] || '';
+        label.className = `absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono hidden sm:block ${colors[type] || ''}`;
+
+        document.querySelectorAll('.source-badge').forEach((b) => {
+          b.classList.toggle('ring-2', b.dataset.stype === type);
+          b.classList.toggle('ring-primary', b.dataset.stype === type);
         });
-        if (!res.ok) throw new Error('Delete failed');
-        showToast('تم حذف الحملة', 'info');
-        currentCampId = null;
-        currentCampData = null;
-        document.getElementById('editorArea').classList.add('hidden');
-        loadCampaigns();
-    } catch (e) {
-        console.error(e);
-        showToast('خطأ في حذف الحملة', 'error');
-    }
-}
+      }
 
-// ─── Sources ───
-function setSourceType(type) {
-    selectedSourceType = type;
-    const labels = { rss: 'RSS', api: 'API', youtube: 'YouTube', twitter: 'Twitter' };
-    const placeholders = {
-        rss: 'https://example.com/feed.xml',
-        api: 'https://api.example.com/v1/posts',
-        youtube: 'https://youtube.com/@channel',
-        twitter: 'https://twitter.com/username',
-    };
-    const colors = { rss: 'text-orange-500', api: 'text-blue-500', youtube: 'text-red-500', twitter: 'text-sky-400' };
+      async function addSource() {
+        if (!currentCampId) {
+          showToast('اختر حملة أولاً', 'warning');
+          return;
+        }
+        const url = document.getElementById('newSourceUrl').value.trim();
+        if (!url) {
+          showToast('أدخل رابط المصدر', 'warning');
+          return;
+        }
 
-    document.getElementById('newSourceUrl').placeholder = placeholders[type] || '';
-    const label = document.getElementById('sourceTypeLabel');
-    label.textContent = labels[type] || '';
-    label.className = `absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono hidden sm:block ${colors[type] || ''}`;
+        // For unsupported types, send as the base type (rss) or api
+        const typeMap = {
+          rss: 'rss',
+          api: 'api',
+          youtube: 'rss',
+          twitter: 'rss',
+        };
+        const sourceType = typeMap[selectedSourceType] || 'rss';
 
-    document.querySelectorAll('.source-badge').forEach(b => {
-        b.classList.toggle('ring-2', b.dataset.stype === type);
-        b.classList.toggle('ring-primary', b.dataset.stype === type);
-    });
-}
-
-async function addSource() {
-    if (!currentCampId) { showToast('اختر حملة أولاً', 'warning'); return; }
-    const url = document.getElementById('newSourceUrl').value.trim();
-    if (!url) { showToast('أدخل رابط المصدر', 'warning'); return; }
-
-    // For unsupported types, send as the base type (rss) or api
-    const typeMap = { rss: 'rss', api: 'api', youtube: 'rss', twitter: 'rss' };
-    const sourceType = typeMap[selectedSourceType] || 'rss';
-
-    try {
-        const res = await fetch(`${API_URL}/${currentCampId}/sources`, {
+        try {
+          const res = await fetch(`${API_URL}/${currentCampId}/sources`, {
             method: 'POST',
             headers: authHeaders(true),
-            body: JSON.stringify({ source_type: sourceType, source_url: url })
-        });
-        if (!res.ok) throw new Error('Add source failed');
-        document.getElementById('newSourceUrl').value = '';
-        showToast('تمت إضافة المصدر بنجاح!', 'success');
-        selectCampaign(currentCampId);
-    } catch (e) {
-        console.error(e);
-        showToast('خطأ في إضافة المصدر', 'error');
-    }
-}
+            body: JSON.stringify({ source_type: sourceType, source_url: url }),
+          });
+          if (!res.ok) throw new Error('Add source failed');
+          document.getElementById('newSourceUrl').value = '';
+          showToast('تمت إضافة المصدر بنجاح!', 'success');
+          selectCampaign(currentCampId);
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في إضافة المصدر', 'error');
+        }
+      }
 
-function quickAddSource(url) {
-    document.getElementById('newSourceUrl').value = url;
-    setSourceType('rss');
-    switchTab('sources');
-}
+      function quickAddSource(url) {
+        document.getElementById('newSourceUrl').value = url;
+        setSourceType('rss');
+        switchTab('sources');
+      }
 
-async function deleteSource(sourceId) {
-    if (!currentCampId || !confirm('حذف هذا المصدر؟')) return;
-    try {
-        const res = await fetch(`${API_URL}/${currentCampId}/sources/${sourceId}`, {
-            method: 'DELETE',
-            headers: authHeaders()
-        });
-        if (!res.ok) throw new Error('Delete source failed');
-        showToast('تم حذف المصدر', 'info');
-        selectCampaign(currentCampId);
-    } catch (e) {
-        console.error(e);
-        showToast('خطأ في حذف المصدر', 'error');
-    }
-}
+      async function deleteSource(sourceId) {
+        if (!currentCampId || !confirm('حذف هذا المصدر؟')) return;
+        try {
+          const res = await fetch(
+            `${API_URL}/${currentCampId}/sources/${sourceId}`,
+            {
+              method: 'DELETE',
+              headers: authHeaders(),
+            },
+          );
+          if (!res.ok) throw new Error('Delete source failed');
+          showToast('تم حذف المصدر', 'info');
+          selectCampaign(currentCampId);
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في حذف المصدر', 'error');
+        }
+      }
 
-function renderSources(sources) {
-    const list = document.getElementById('sourcesList');
-    const count = document.getElementById('sourcesCount');
-    count.textContent = sources.length;
+      function renderSources(sources) {
+        const list = document.getElementById('sourcesList');
+        const count = document.getElementById('sourcesCount');
+        count.textContent = sources.length;
 
-    if (!sources.length) {
-        list.innerHTML = '<div class="text-center text-gray-500 py-6 text-sm">لم تتم إضافة أي مصادر بعد</div>';
-        return;
-    }
+        if (!sources.length) {
+          list.innerHTML =
+            '<div class="text-center text-gray-500 py-6 text-sm">لم تتم إضافة أي مصادر بعد</div>';
+          return;
+        }
 
-    const icons = { rss: 'fa-rss text-orange-500', api: 'fa-code text-blue-500' };
-    list.innerHTML = sources.map(s => `
+        const icons = {
+          rss: 'fa-rss text-orange-500',
+          api: 'fa-code text-blue-500',
+        };
+        list.innerHTML = sources
+          .map(
+            (s) => `
         <div class="flex items-center justify-between bg-darker/60 p-3 rounded-xl border border-gray-800 hover:border-gray-700 transition group">
             <div class="flex items-center gap-3 min-w-0 flex-1">
                 <div class="w-8 h-8 rounded-lg bg-darker flex items-center justify-center shrink-0">
@@ -871,67 +1766,83 @@ function renderSources(sources) {
                 <i class="fa-solid fa-trash text-xs"></i>
             </button>
         </div>
-    `).join('');
-}
+    `,
+          )
+          .join('');
+      }
 
-// ─── Tabs ───
-function switchTab(tab) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
-    document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
-}
+      // ─── Tabs ───
+      function switchTab(tab) {
+        document
+          .querySelectorAll('.tab-content')
+          .forEach((el) => el.classList.add('hidden'));
+        document
+          .querySelectorAll('.tab-btn')
+          .forEach((btn) => btn.classList.remove('active'));
+        document.getElementById(`tab-${tab}`)?.classList.remove('hidden');
+        document.querySelector(`[data-tab="${tab}"]`)?.classList.add('active');
+      }
 
-// ─── CRON Helper ───
-function setCron(cron, key) {
-    document.getElementById('campCron').value = cron;
-    highlightCronBtn(cron);
-}
+      // ─── CRON Helper ───
+      function setCron(cron, key) {
+        document.getElementById('campCron').value = cron;
+        highlightCronBtn(cron);
+      }
 
-function highlightCronBtn(cron) {
-    const map = { '*/30 * * * *': 'every30', '0 * * * *': 'hourly', '0 */6 * * *': 'every6h', '0 9 * * *': 'daily' };
-    const key = map[cron] || '';
-    document.querySelectorAll('.cron-btn').forEach(b => b.classList.toggle('active', b.dataset.cron === key));
-}
+      function highlightCronBtn(cron) {
+        const map = {
+          '*/30 * * * *': 'every30',
+          '0 * * * *': 'hourly',
+          '0 */6 * * *': 'every6h',
+          '0 9 * * *': 'daily',
+        };
+        const key = map[cron] || '';
+        document
+          .querySelectorAll('.cron-btn')
+          .forEach((b) => b.classList.toggle('active', b.dataset.cron === key));
+      }
 
-// ─── Analytics ───
-function updateStats(data) {
-    const sources = data.sources || [];
-    document.getElementById('statSources').textContent = sources.length;
-    // Placeholder values until backend supports analytics
-    document.getElementById('statPosts').textContent = '0';
-    document.getElementById('statChannels').textContent = '0';
-    document.getElementById('statUptime').textContent = data.is_active !== false && data.is_active !== 0 ? 'نشط' : 'متوقف';
-}
+      // ─── Analytics ───
+      function updateStats(data) {
+        const sources = data.sources || [];
+        document.getElementById('statSources').textContent = sources.length;
+        // Placeholder values until backend supports analytics
+        document.getElementById('statPosts').textContent = '0';
+        document.getElementById('statChannels').textContent = '0';
+        document.getElementById('statUptime').textContent =
+          data.is_active !== false && data.is_active !== 0 ? 'نشط' : 'متوقف';
+      }
 
-// ─── Schedule Preview ───
-function generateSchedulePreview() {
-    const cron = document.getElementById('campCron')?.value || '0 * * * *';
-    const list = document.getElementById('scheduleList');
-    const noSched = document.getElementById('noSchedule');
+      // ─── Schedule Preview ───
+      function generateSchedulePreview() {
+        const cron = document.getElementById('campCron')?.value || '0 * * * *';
+        const list = document.getElementById('scheduleList');
+        const noSched = document.getElementById('noSchedule');
 
-    // Simple next-runs approximation
-    const now = new Date();
-    const runs = [];
-    const parts = cron.split(' ');
+        // Simple next-runs approximation
+        const now = new Date();
+        const runs = [];
+        const parts = cron.split(' ');
 
-    if (parts.length >= 5) {
-        noSched.classList.add('hidden');
-        // Generate next 5 approximate runs
-        for (let i = 1; i <= 5; i++) {
+        if (parts.length >= 5) {
+          noSched.classList.add('hidden');
+          // Generate next 5 approximate runs
+          for (let i = 1; i <= 5; i++) {
             const next = new Date(now.getTime() + i * 3600000); // rough hourly approx
             if (parts[0] === '*/30') {
-                next.setTime(now.getTime() + i * 1800000);
+              next.setTime(now.getTime() + i * 1800000);
             } else if (parts[1] === '*/6') {
-                next.setTime(now.getTime() + i * 21600000);
+              next.setTime(now.getTime() + i * 21600000);
             } else if (parts[1] === '9' && parts[0] === '0') {
-                next.setDate(now.getDate() + i);
-                next.setHours(9, 0, 0, 0);
+              next.setDate(now.getDate() + i);
+              next.setHours(9, 0, 0, 0);
             }
             runs.push(next);
-        }
+          }
 
-        list.innerHTML = runs.map(r => `
+          list.innerHTML = runs
+            .map(
+              (r) => `
             <div class="flex items-center gap-3 bg-darker/40 p-2.5 rounded-lg border border-gray-800">
                 <div class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-clock text-accent text-xs"></i>
@@ -941,35 +1852,55 @@ function generateSchedulePreview() {
                     <span class="text-[10px] text-gray-500 block">${r.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
             </div>
-        `).join('');
-    } else {
-        noSched.classList.remove('hidden');
-        list.innerHTML = '';
-    }
-}
+        `,
+            )
+            .join('');
+        } else {
+          noSched.classList.remove('hidden');
+          list.innerHTML = '';
+        }
+      }
 
-// ─── Content Preview ───
-function generatePreview() {
-    const persona = document.getElementById('campPersona')?.value || 'وكيل ذكي';
-    const name = document.getElementById('campName')?.value || 'الحملة';
-    const container = document.getElementById('previewContent');
+      // ─── Content Preview ───
+      function generatePreview() {
+        const persona =
+          document.getElementById('campPersona')?.value || 'وكيل ذكي';
+        const name = document.getElementById('campName')?.value || 'الحملة';
+        const container = document.getElementById('previewContent');
 
-    // Show loading
-    container.innerHTML = `
+        // Show loading
+        container.innerHTML = `
         <div class="text-center py-8">
             <div class="inline-block animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mb-3"></div>
             <p class="text-gray-400 text-sm">جاري توليد المحتوى...</p>
         </div>`;
 
-    // Simulate AI-generated content preview
-    setTimeout(() => {
-        const samplePosts = [
-            { platform: 'telegram', icon: 'fa-telegram', color: 'text-[#229ED9]', content: `📰 أخبار اليوم من ${esc(name)}\n\n🔹 الذكاء الاصطناعي يحقق نقلة نوعية في مجال الطب...\n🔹 شركات التقنية الكبرى تستثمر بشكل غير مسبوق...\n\n#AI #أخبار_التقنية` },
-            { platform: 'twitter', icon: 'fa-x-twitter', color: 'text-white', content: `🤖 ${esc(name)}: الذكاء الاصطناعي يغيّر قواعد اللعبة في 2025!\n\nالتفاصيل 👇\n#AI #Tech` },
-            { platform: 'linkedin', icon: 'fa-linkedin', color: 'text-[#0077B5]', content: `💼 تحليل أسبوعي: كيف يؤثر الذكاء الاصطناعي على سوق العمل؟\n\nفي هذا التقرير نستعرض أحدث الاتجاهات والفرص...` },
-        ];
+        // Simulate AI-generated content preview
+        setTimeout(() => {
+          const samplePosts = [
+            {
+              platform: 'telegram',
+              icon: 'fa-telegram',
+              color: 'text-[#229ED9]',
+              content: `📰 أخبار اليوم من ${esc(name)}\n\n🔹 الذكاء الاصطناعي يحقق نقلة نوعية في مجال الطب...\n🔹 شركات التقنية الكبرى تستثمر بشكل غير مسبوق...\n\n#AI #أخبار_التقنية`,
+            },
+            {
+              platform: 'twitter',
+              icon: 'fa-x-twitter',
+              color: 'text-white',
+              content: `🤖 ${esc(name)}: الذكاء الاصطناعي يغيّر قواعد اللعبة في 2025!\n\nالتفاصيل 👇\n#AI #Tech`,
+            },
+            {
+              platform: 'linkedin',
+              icon: 'fa-linkedin',
+              color: 'text-[#0077B5]',
+              content: `💼 تحليل أسبوعي: كيف يؤثر الذكاء الاصطناعي على سوق العمل؟\n\nفي هذا التقرير نستعرض أحدث الاتجاهات والفرص...`,
+            },
+          ];
 
-        container.innerHTML = samplePosts.map(p => `
+          container.innerHTML = samplePosts
+            .map(
+              (p) => `
             <div class="bg-darker/50 border border-gray-800 rounded-xl p-4">
                 <div class="flex items-center gap-2 mb-3">
                     <i class="fa-brands ${p.icon} ${p.color}"></i>
@@ -982,68 +1913,343 @@ function generatePreview() {
                     <button class="text-xs bg-green-500/10 text-green-400 px-3 py-1 rounded-lg hover:bg-green-500/20 transition"><i class="fa-solid fa-paper-plane ml-1"></i>نشر الآن</button>
                 </div>
             </div>
-        `).join('');
-    }, 1500);
-}
+        `,
+            )
+            .join('');
+        }, 1500);
+      }
 
-// ─── Publishing Channels ───
-function connectChannel(channel) {
-    if (channel === 'telegram') {
-        document.getElementById('telegramModal').classList.remove('hidden');
-        document.getElementById('telegramModal').classList.add('flex');
-    } else {
-        showToast('هذه القناة ستكون متاحة قريباً!', 'info');
-    }
-}
+      // ─── Publishing Channels ───
+      function connectChannel(channel) {
+        if (channel === 'telegram') {
+          document.getElementById('telegramModal').classList.remove('hidden');
+          document.getElementById('telegramModal').classList.add('flex');
+        } else {
+          showToast('هذه القناة ستكون متاحة قريباً!', 'info');
+        }
+      }
 
-async function saveTelegramChannel() {
-    if (!currentCampId) { showToast('اختر حملة أولاً', 'warning'); return; }
-    const token = document.getElementById('tgBotToken').value.trim();
-    const channelId = document.getElementById('tgChannelId').value.trim();
-    if (!token) { showToast('أدخل Bot Token', 'warning'); return; }
+      async function saveTelegramChannel() {
+        if (!currentCampId) {
+          showToast('اختر حملة أولاً', 'warning');
+          return;
+        }
+        const token = document.getElementById('tgBotToken').value.trim();
+        const channelId = document.getElementById('tgChannelId').value.trim();
+        if (!token) {
+          showToast('أدخل Bot Token', 'warning');
+          return;
+        }
 
-    // Save as integration via chatbots endpoint pattern
-    // For now, store token info in campaign context
-    try {
-        showToast('تم ربط تيليجرام بنجاح!', 'success');
-        closeTelegramModal();
-        // Update UI
-        document.getElementById('telegramStatus').innerHTML = '<span class="text-green-400"><i class="fa-solid fa-check-circle ml-1"></i>متصل</span>';
-        document.querySelector('[data-channel="telegram"]').classList.add('connected');
-    } catch (e) {
-        console.error(e);
-        showToast('خطأ في ربط تيليجرام', 'error');
-    }
-}
+        // Save as integration via chatbots endpoint pattern
+        // For now, store token info in campaign context
+        try {
+          showToast('تم ربط تيليجرام بنجاح!', 'success');
+          closeTelegramModal();
+          // Update UI
+          document.getElementById('telegramStatus').innerHTML =
+            '<span class="text-green-400"><i class="fa-solid fa-check-circle ml-1"></i>متصل</span>';
+          document
+            .querySelector('[data-channel="telegram"]')
+            .classList.add('connected');
+        } catch (e) {
+          console.error(e);
+          showToast('خطأ في ربط تيليجرام', 'error');
+        }
+      }
 
-// ─── Modals ───
-function openNewCampaignModal() {
-    document.getElementById('modalCampName').value = '';
-    document.getElementById('modalCampPersona').value = '';
-    document.getElementById('newCampModal').classList.remove('hidden');
-    document.getElementById('newCampModal').classList.add('flex');
-}
+      // ─── Modals ───
+      function openNewCampaignModal() {
+        document.getElementById('modalCampName').value = '';
+        document.getElementById('modalCampPersona').value = '';
+        document.getElementById('newCampModal').classList.remove('hidden');
+        document.getElementById('newCampModal').classList.add('flex');
+      }
 
-function closeModal() {
-    document.getElementById('newCampModal').classList.add('hidden');
-    document.getElementById('newCampModal').classList.remove('flex');
-}
+      function closeModal() {
+        document.getElementById('newCampModal').classList.add('hidden');
+        document.getElementById('newCampModal').classList.remove('flex');
+      }
 
-function closeTelegramModal() {
-    document.getElementById('telegramModal').classList.add('hidden');
-    document.getElementById('telegramModal').classList.remove('flex');
-}
+      function closeTelegramModal() {
+        document.getElementById('telegramModal').classList.add('hidden');
+        document.getElementById('telegramModal').classList.remove('flex');
+      }
 
-// Close modals on backdrop click
-document.getElementById('newCampModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
-document.getElementById('telegramModal')?.addEventListener('click', e => { if (e.target === e.currentTarget) closeTelegramModal(); });
+      // Close modals on backdrop click
+      document
+        .getElementById('newCampModal')
+        ?.addEventListener('click', (e) => {
+          if (e.target === e.currentTarget) closeModal();
+        });
+      document
+        .getElementById('telegramModal')
+        ?.addEventListener('click', (e) => {
+          if (e.target === e.currentTarget) closeTelegramModal();
+        });
 
-// ─── Init ───
-document.addEventListener('DOMContentLoaded', () => {
-    if (!getAuthToken()) { window.location.href = '/login'; return; }
-    loadCampaigns();
-    setSourceType('rss');
-});
-</script>
-</body>
+      // ─── Init ───
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!getAuthToken()) {
+          window.location.href = '/login';
+          return;
+        }
+        loadCampaigns();
+        setSourceType('rss');
+      });
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         3D PARTICLE NETWORK + EFFECTS  (Purple / Pink / Cyan theme)
+         ═══════════════════════════════════════════════════════════════ -->
+    <script>
+    (function(){
+      // Wait for Three.js to load
+      const waitForThree = setInterval(() => {
+        if (typeof THREE === 'undefined') return;
+        clearInterval(waitForThree);
+        initParticleNetwork();
+        initTiltEffect();
+        initScrollReveal();
+        initMagneticButtons();
+      }, 100);
+
+      /* ── Three.js Particle Network ── */
+      function initParticleNetwork(){
+        const canvas = document.getElementById('particleCanvas');
+        if(!canvas) return;
+
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const scene  = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 200);
+        camera.position.z = 50;
+
+        // ── Colors ──
+        const PURPLE = new THREE.Color('#8B5CF6');
+        const PINK   = new THREE.Color('#EC4899');
+        const CYAN   = new THREE.Color('#06B6D4');
+        const COLORS = [PURPLE, PINK, CYAN];
+
+        // ── Particles ──
+        const PARTICLE_COUNT = 70;
+        const positions = new Float32Array(PARTICLE_COUNT * 3);
+        const colors    = new Float32Array(PARTICLE_COUNT * 3);
+        const velocities = [];
+
+        for(let i = 0; i < PARTICLE_COUNT; i++){
+          const i3 = i * 3;
+          positions[i3]     = (Math.random()-0.5) * 80;
+          positions[i3 + 1] = (Math.random()-0.5) * 60;
+          positions[i3 + 2] = (Math.random()-0.5) * 40;
+          const c = COLORS[i % COLORS.length];
+          colors[i3] = c.r; colors[i3+1] = c.g; colors[i3+2] = c.b;
+          velocities.push(
+            (Math.random()-0.5)*0.02,
+            (Math.random()-0.5)*0.02,
+            (Math.random()-0.5)*0.01
+          );
+        }
+
+        const pGeo = new THREE.BufferGeometry();
+        pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        pGeo.setAttribute('color',    new THREE.BufferAttribute(colors, 3));
+
+        // Glow sprite
+        const spriteCanvas = document.createElement('canvas');
+        spriteCanvas.width = spriteCanvas.height = 64;
+        const ctx = spriteCanvas.getContext('2d');
+        const grad = ctx.createRadialGradient(32,32,0,32,32,32);
+        grad.addColorStop(0,'rgba(255,255,255,1)');
+        grad.addColorStop(0.3,'rgba(255,255,255,0.4)');
+        grad.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.fillStyle = grad; ctx.fillRect(0,0,64,64);
+        const spriteTexture = new THREE.CanvasTexture(spriteCanvas);
+
+        const pMat = new THREE.PointsMaterial({
+          size: 1.5,
+          map: spriteTexture,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.7,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const points = new THREE.Points(pGeo, pMat);
+        scene.add(points);
+
+        // ── Connection lines ──
+        const MAX_CONNECTIONS = 100;
+        const CONNECTION_DIST = 12;
+        const linePos = new Float32Array(MAX_CONNECTIONS * 6);
+        const lineCol = new Float32Array(MAX_CONNECTIONS * 6);
+        const lineGeo = new THREE.BufferGeometry();
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
+        lineGeo.setAttribute('color',    new THREE.BufferAttribute(lineCol, 3));
+        lineGeo.setDrawRange(0, 0);
+        const lineMat = new THREE.LineBasicMaterial({
+          vertexColors: true, transparent: true, opacity: 0.25,
+          blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const lines = new THREE.LineSegments(lineGeo, lineMat);
+        scene.add(lines);
+
+        // ── Central rings ──
+        const ring1 = new THREE.Mesh(
+          new THREE.TorusGeometry(8, 0.08, 16, 100),
+          new THREE.MeshBasicMaterial({ color: PURPLE, transparent:true, opacity:0.35 })
+        );
+        scene.add(ring1);
+
+        const ring2 = new THREE.Mesh(
+          new THREE.TorusGeometry(12, 0.06, 16, 100),
+          new THREE.MeshBasicMaterial({ color: PINK, transparent:true, opacity:0.2 })
+        );
+        ring2.rotation.x = Math.PI / 3;
+        scene.add(ring2);
+
+        // ── Core icosahedron ──
+        const core = new THREE.Mesh(
+          new THREE.IcosahedronGeometry(3, 1),
+          new THREE.MeshBasicMaterial({ color: CYAN, wireframe:true, transparent:true, opacity:0.25 })
+        );
+        scene.add(core);
+
+        // ── Mouse parallax ──
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+          mouseX = (e.clientX / window.innerWidth  - 0.5) * 2;
+          mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        // ── Resize ──
+        window.addEventListener('resize', () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // ── Animate ──
+        function animate(){
+          requestAnimationFrame(animate);
+          const t = Date.now() * 0.001;
+
+          // Move particles
+          const pos = pGeo.attributes.position.array;
+          for(let i = 0; i < PARTICLE_COUNT; i++){
+            const i3 = i*3;
+            pos[i3]   += velocities[i3];
+            pos[i3+1] += velocities[i3+1];
+            pos[i3+2] += velocities[i3+2];
+            if(Math.abs(pos[i3])>40)   velocities[i3]   *= -1;
+            if(Math.abs(pos[i3+1])>30) velocities[i3+1] *= -1;
+            if(Math.abs(pos[i3+2])>20) velocities[i3+2] *= -1;
+          }
+          pGeo.attributes.position.needsUpdate = true;
+
+          // Update connections
+          let lc = 0;
+          const lp = lineGeo.attributes.position.array;
+          const ll = lineGeo.attributes.color.array;
+          for(let i=0; i<PARTICLE_COUNT && lc<MAX_CONNECTIONS; i++){
+            for(let j=i+1; j<PARTICLE_COUNT && lc<MAX_CONNECTIONS; j++){
+              const dx=pos[i*3]-pos[j*3], dy=pos[i*3+1]-pos[j*3+1], dz=pos[i*3+2]-pos[j*3+2];
+              const d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+              if(d<CONNECTION_DIST){
+                const idx=lc*6;
+                lp[idx]=pos[i*3]; lp[idx+1]=pos[i*3+1]; lp[idx+2]=pos[i*3+2];
+                lp[idx+3]=pos[j*3]; lp[idx+4]=pos[j*3+1]; lp[idx+5]=pos[j*3+2];
+                const a=1-d/CONNECTION_DIST;
+                const ci=COLORS[i%3], cj=COLORS[j%3];
+                ll[idx]=ci.r*a; ll[idx+1]=ci.g*a; ll[idx+2]=ci.b*a;
+                ll[idx+3]=cj.r*a; ll[idx+4]=cj.g*a; ll[idx+5]=cj.b*a;
+                lc++;
+              }
+            }
+          }
+          lineGeo.setDrawRange(0, lc*2);
+          lineGeo.attributes.position.needsUpdate = true;
+          lineGeo.attributes.color.needsUpdate = true;
+
+          // Rotate rings & core
+          ring1.rotation.z += 0.002;
+          ring1.rotation.x = Math.sin(t*0.3)*0.3;
+          ring2.rotation.z -= 0.0015;
+          ring2.rotation.y += 0.001;
+          core.rotation.x += 0.003;
+          core.rotation.y += 0.004;
+          core.scale.setScalar(1 + Math.sin(t)*0.08);
+
+          // Camera parallax
+          camera.position.x += (mouseX*4 - camera.position.x)*0.02;
+          camera.position.y += (-mouseY*4 - camera.position.y)*0.02;
+          camera.lookAt(scene.position);
+
+          renderer.render(scene, camera);
+        }
+        animate();
+      }
+
+      /* ── 3D Card Tilt ── */
+      function initTiltEffect(){
+        document.querySelectorAll('.glass, .campaign-card, .channel-card, .stat-card, .tilt-3d').forEach(card => {
+          card.style.transition = 'transform 0.3s ease';
+          card.addEventListener('mousemove', (e) => {
+            const r = card.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width  - 0.5;
+            const y = (e.clientY - r.top)  / r.height - 0.5;
+            card.style.transform = `perspective(1000px) rotateY(${x*6}deg) rotateX(${-y*6}deg) scale3d(1.02,1.02,1.02)`;
+          });
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale3d(1,1,1)';
+          });
+        });
+      }
+
+      /* ── Scroll Reveal ── */
+      function initScrollReveal(){
+        // Auto-apply reveal classes
+        document.querySelectorAll('.campaign-card').forEach(el => el.classList.add('reveal-up'));
+        document.querySelectorAll('.channel-card').forEach(el => el.classList.add('reveal-scale'));
+        document.querySelectorAll('.stat-card').forEach(el => el.classList.add('reveal-up'));
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if(entry.isIntersecting){
+              entry.target.classList.add('revealed');
+              // Stagger children
+              if(entry.target.classList.contains('stagger-children')){
+                entry.target.querySelectorAll(':scope > *').forEach((child, i) => {
+                  child.style.transitionDelay = `${i * 0.08}s`;
+                  child.classList.add('revealed');
+                });
+              }
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal-up,.reveal-left,.reveal-right,.reveal-scale,.stagger-children').forEach(el => observer.observe(el));
+      }
+
+      /* ── Magnetic Buttons ── */
+      function initMagneticButtons(){
+        document.querySelectorAll('button.bg-primary, button.bg-secondary, button[class*="from-primary"]').forEach(btn => {
+          btn.addEventListener('mousemove', (e) => {
+            const r = btn.getBoundingClientRect();
+            const x = e.clientX - r.left - r.width/2;
+            const y = e.clientY - r.top  - r.height/2;
+            btn.style.transform = `translate(${x*0.15}px, ${y*0.15}px)`;
+          });
+          btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'translate(0,0)';
+            btn.style.transition = 'transform 0.3s ease';
+          });
+        });
+      }
+    })();
+    </script>
+  </body>
 </html>

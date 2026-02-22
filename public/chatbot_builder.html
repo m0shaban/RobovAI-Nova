@@ -1,720 +1,1416 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>بناء البوتات - RobovAI Nova</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: '#0F172A',
-                        darker: '#020617',
-                        primary: '#10B981',
-                        secondary: '#3B82F6',
-                        accent: '#8B5CF6',
-                        surface: '#1E293B',
-                        'surface-light': '#334155',
-                    }
-                }
-            }
-        }
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              dark: '#0F172A',
+              darker: '#020617',
+              primary: '#10B981',
+              secondary: '#3B82F6',
+              accent: '#8B5CF6',
+              surface: '#1E293B',
+              'surface-light': '#334155',
+            },
+          },
+        },
+      };
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
-        * { font-family: 'Tajawal', sans-serif; }
-        body { background: #020617; color: #e2e8f0; min-height: 100vh; overflow-y: auto; }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0F172A; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
-        /* Stepper */
-        .step-item { position: relative; flex: 1; text-align: center; }
-        .step-item::before {
-            content: '';
-            position: absolute;
-            top: 18px;
-            left: -50%;
-            width: 100%;
-            height: 2px;
-            background: #334155;
-            z-index: 0;
+      @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+      * {
+        font-family: 'Tajawal', sans-serif;
+      }
+      body {
+        background: #020617;
+        color: #e2e8f0;
+        min-height: 100vh;
+        overflow-y: auto;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+
+      /* Stepper */
+      .step-item {
+        position: relative;
+        flex: 1;
+        text-align: center;
+      }
+      .step-item::before {
+        content: '';
+        position: absolute;
+        top: 18px;
+        left: -50%;
+        width: 100%;
+        height: 2px;
+        background: #334155;
+        z-index: 0;
+      }
+      .step-item:first-child::before {
+        display: none;
+      }
+      .step-item.active::before,
+      .step-item.completed::before {
+        background: #10b981;
+      }
+      .step-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        font-weight: 700;
+        font-size: 14px;
+        transition: all 0.3s;
+      }
+      .step-item .step-circle {
+        background: #334155;
+        color: #94a3b8;
+      }
+      .step-item.active .step-circle {
+        background: #10b981;
+        color: white;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+      }
+      .step-item.completed .step-circle {
+        background: #10b981;
+        color: white;
+      }
+
+      /* Animated gradient border */
+      .glow-card {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .glow-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        padding: 1px;
+        background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6);
+        -webkit-mask:
+          linear-gradient(#fff 0 0) content-box,
+          linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0.5;
+        transition: opacity 0.3s;
+      }
+      .glow-card:hover::before {
+        opacity: 1;
+      }
+
+      /* Platform cards */
+      .platform-card {
+        transition: all 0.3s;
+        cursor: pointer;
+      }
+      .platform-card:hover {
+        transform: translateY(-4px);
+      }
+      .platform-card.connected {
+        border-color: #10b981 !important;
+      }
+      .platform-card.connected::after {
+        content: '✓ متصل';
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: #10b981;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      /* Chat preview */
+      .chat-bubble-bot {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        border-radius: 16px 16px 4px 16px;
+        max-width: 80%;
+      }
+      .chat-bubble-user {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 16px 16px 16px 4px;
+        max-width: 80%;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        z-index: 9999;
+        transition: transform 0.4s ease;
+        min-width: 300px;
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Tab active */
+      .tab-btn.active {
+        background: #10b981;
+        color: white;
+      }
+      .tab-btn {
+        transition: all 0.2s;
+      }
+
+      /* Fade sections */
+      .wizard-step {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+      .wizard-step.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
-        .step-item:first-child::before { display: none; }
-        .step-item.active::before, .step-item.completed::before { background: #10B981; }
-        .step-circle {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 1;
-            font-weight: 700;
-            font-size: 14px;
-            transition: all 0.3s;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        .step-item .step-circle { background: #334155; color: #94a3b8; }
-        .step-item.active .step-circle { background: #10B981; color: white; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
-        .step-item.completed .step-circle { background: #10B981; color: white; }
-        
-        /* Animated gradient border */
-        .glow-card {
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .glow-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 12px;
-            padding: 1px;
-            background: linear-gradient(135deg, #10B981, #3B82F6, #8B5CF6);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0.5;
-            transition: opacity 0.3s;
-        }
-        .glow-card:hover::before { opacity: 1; }
-        
-        /* Platform cards */
-        .platform-card {
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        .platform-card:hover { transform: translateY(-4px); }
-        .platform-card.connected { border-color: #10B981 !important; }
-        .platform-card.connected::after {
-            content: '✓ متصل';
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: #10B981;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-        
-        /* Chat preview */
-        .chat-bubble-bot {
-            background: linear-gradient(135deg, #1E293B, #334155);
-            border-radius: 16px 16px 4px 16px;
-            max-width: 80%;
-        }
-        .chat-bubble-user {
-            background: linear-gradient(135deg, #10B981, #059669);
-            border-radius: 16px 16px 16px 4px;
-            max-width: 80%;
-        }
-        
-        /* Toast */
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            z-index: 9999;
-            transition: transform 0.4s ease;
-            min-width: 300px;
-        }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        
-        /* Tab active */
-        .tab-btn.active { background: #10B981; color: white; }
-        .tab-btn { transition: all 0.2s; }
-        
-        /* Fade sections */
-        .wizard-step { display: none; animation: fadeIn 0.3s ease; }
-        .wizard-step.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Toggle switch */
-        .toggle-switch { position: relative; width: 48px; height: 24px; }
-        .toggle-switch input { display: none; }
-        .toggle-slider {
-            position: absolute; inset: 0; background: #334155; border-radius: 24px; cursor: pointer; transition: 0.3s;
-        }
-        .toggle-slider::before {
-            content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white;
-            bottom: 3px; right: 3px; transition: 0.3s;
-        }
-        .toggle-switch input:checked + .toggle-slider { background: #10B981; }
-        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(-24px); }
+      }
+
+      /* Toggle switch */
+      .toggle-switch {
+        position: relative;
+        width: 48px;
+        height: 24px;
+      }
+      .toggle-switch input {
+        display: none;
+      }
+      .toggle-slider {
+        position: absolute;
+        inset: 0;
+        background: #334155;
+        border-radius: 24px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .toggle-slider::before {
+        content: '';
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: white;
+        bottom: 3px;
+        right: 3px;
+        transition: 0.3s;
+      }
+      .toggle-switch input:checked + .toggle-slider {
+        background: #10b981;
+      }
+      .toggle-switch input:checked + .toggle-slider::before {
+        transform: translateX(-24px);
+      }
+
+      /* ===== 3D & Animation Effects ===== */
+      #particleCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* Floating 3D geometric shapes */
+      .floating-shapes {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .geo-shape {
+        position: absolute;
+        border: 1.5px solid;
+        opacity: 0.07;
+        animation: floatRotate var(--dur, 20s) ease-in-out infinite;
+      }
+      .geo-shape.shape-1 {
+        width: 120px; height: 120px;
+        border-color: #10B981;
+        top: 10%; right: 8%;
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        --dur: 18s;
+      }
+      .geo-shape.shape-2 {
+        width: 80px; height: 80px;
+        border-color: #3B82F6;
+        top: 60%; left: 5%;
+        clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+        --dur: 22s;
+        animation-delay: -5s;
+      }
+      .geo-shape.shape-3 {
+        width: 60px; height: 60px;
+        border-color: #8B5CF6;
+        bottom: 20%; right: 15%;
+        border-radius: 50%;
+        --dur: 15s;
+        animation-delay: -8s;
+      }
+      .geo-shape.shape-4 {
+        width: 100px; height: 100px;
+        border-color: #10B981;
+        top: 35%; left: 20%;
+        clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        --dur: 25s;
+        animation-delay: -12s;
+      }
+      .geo-shape.shape-5 {
+        width: 50px; height: 50px;
+        border-color: #3B82F6;
+        top: 80%; right: 40%;
+        border-radius: 10%;
+        --dur: 20s;
+        animation-delay: -3s;
+      }
+
+      @keyframes floatRotate {
+        0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+        25% { transform: translateY(-30px) rotate(90deg) scale(1.08); }
+        50% { transform: translateY(-15px) rotate(180deg) scale(0.95); }
+        75% { transform: translateY(-40px) rotate(270deg) scale(1.05); }
+      }
+
+      /* Glow orbs background */
+      .bg-orbs {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .bg-orbs .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        animation: orbFloat 12s ease-in-out infinite alternate;
+      }
+      .bg-orbs .orb-1 {
+        width: 400px; height: 400px;
+        background: rgba(16, 185, 129, 0.12);
+        top: -10%; right: -5%;
+        animation-duration: 14s;
+      }
+      .bg-orbs .orb-2 {
+        width: 350px; height: 350px;
+        background: rgba(59, 130, 246, 0.08);
+        bottom: -10%; left: -8%;
+        animation-duration: 18s;
+        animation-delay: -4s;
+      }
+      .bg-orbs .orb-3 {
+        width: 250px; height: 250px;
+        background: rgba(139, 92, 246, 0.06);
+        top: 40%; left: 30%;
+        animation-duration: 16s;
+        animation-delay: -8s;
+      }
+      @keyframes orbFloat {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(30px, -30px) scale(1.15); }
+      }
+
+      /* 3D Card Tilt */
+      .tilt-3d {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transform-style: preserve-3d;
+        perspective: 1000px;
+      }
+      .tilt-3d:hover {
+        box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.15), 0 0 30px rgba(16, 185, 129, 0.08);
+      }
+
+      /* Scroll entrance animations */
+      .reveal-up {
+        opacity: 0;
+        transform: translateY(40px) scale(0.96);
+        transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-up.revealed {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      .reveal-left {
+        opacity: 0;
+        transform: translateX(-40px) rotateY(8deg);
+        transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-left.revealed {
+        opacity: 1;
+        transform: translateX(0) rotateY(0);
+      }
+      .reveal-right {
+        opacity: 0;
+        transform: translateX(40px) rotateY(-8deg);
+        transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-right.revealed {
+        opacity: 1;
+        transform: translateX(0) rotateY(0);
+      }
+      .reveal-scale {
+        opacity: 0;
+        transform: scale(0.85) rotateX(6deg);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-scale.revealed {
+        opacity: 1;
+        transform: scale(1) rotateX(0);
+      }
+
+      /* Staggered children animation */
+      .stagger-children > * {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .stagger-children.revealed > * {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .stagger-children.revealed > *:nth-child(1) { transition-delay: 0.05s; }
+      .stagger-children.revealed > *:nth-child(2) { transition-delay: 0.1s; }
+      .stagger-children.revealed > *:nth-child(3) { transition-delay: 0.15s; }
+      .stagger-children.revealed > *:nth-child(4) { transition-delay: 0.2s; }
+      .stagger-children.revealed > *:nth-child(5) { transition-delay: 0.25s; }
+      .stagger-children.revealed > *:nth-child(6) { transition-delay: 0.3s; }
+
+      /* Glowing line accent */
+      .glow-line {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #10B981, #3B82F6, #8B5CF6, transparent);
+        animation: glowPulse 3s ease-in-out infinite;
+      }
+      @keyframes glowPulse {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 1; }
+      }
+
+      /* Particle glow effect on nav */
+      nav {
+        position: relative;
+        z-index: 50;
+      }
+      nav::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #10B981, #3B82F6, transparent);
+        opacity: 0.5;
+      }
+
+      /* Enhanced wizard step with 3D flip */
+      .wizard-step.active {
+        display: block;
+        animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes fadeInScale {
+        from { opacity: 0; transform: translateY(15px) scale(0.97) rotateX(3deg); }
+        to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
+      }
+
+      /* Main content above background */
+      body > *:not(#particleCanvas):not(.floating-shapes):not(.bg-orbs) {
+        position: relative;
+        z-index: 1;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <!-- 3D Particle Background -->
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Floating 3D Geometric Shapes -->
+    <div class="floating-shapes">
+      <div class="geo-shape shape-1"></div>
+      <div class="geo-shape shape-2"></div>
+      <div class="geo-shape shape-3"></div>
+      <div class="geo-shape shape-4"></div>
+      <div class="geo-shape shape-5"></div>
+    </div>
+
+    <!-- Animated Glow Orbs -->
+    <div class="bg-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast">
-        <div class="bg-surface border border-surface-light rounded-xl px-6 py-4 shadow-2xl flex items-center gap-3">
-            <i id="toast-icon" class="fas fa-check-circle text-primary text-xl"></i>
-            <span id="toast-msg" class="text-sm font-medium"></span>
-        </div>
+      <div
+        class="bg-surface border border-surface-light rounded-xl px-6 py-4 shadow-2xl flex items-center gap-3"
+      >
+        <i id="toast-icon" class="fas fa-check-circle text-primary text-xl"></i>
+        <span id="toast-msg" class="text-sm font-medium"></span>
+      </div>
     </div>
 
     <!-- Top Nav -->
-    <nav class="bg-dark/80 backdrop-blur-xl border-b border-surface-light/30 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <a href="/chat" class="text-gray-400 hover:text-white transition">
-                    <i class="fas fa-arrow-right text-lg"></i>
-                </a>
-                <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-                    <i class="fas fa-robot text-white"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold text-white">بناء البوتات</h1>
-                    <p class="text-xs text-gray-400">أنشئ بوتات ذكية بدون كود</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="openNewBotModal()" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2">
-                    <i class="fas fa-plus"></i>
-                    <span class="hidden sm:inline">بوت جديد</span>
-                </button>
-            </div>
+    <nav
+      class="bg-dark/80 backdrop-blur-xl border-b border-surface-light/30 sticky top-0 z-50"
+    >
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <a href="/chat" class="text-gray-400 hover:text-white transition">
+            <i class="fas fa-arrow-right text-lg"></i>
+          </a>
+          <div
+            class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center"
+          >
+            <i class="fas fa-robot text-white"></i>
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-white">بناء البوتات</h1>
+            <p class="text-xs text-gray-400">أنشئ بوتات ذكية بدون كود</p>
+          </div>
         </div>
+        <div class="flex items-center gap-2">
+          <button
+            onclick="openNewBotModal()"
+            class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-2"
+          >
+            <i class="fas fa-plus"></i>
+            <span class="hidden sm:inline">بوت جديد</span>
+          </button>
+        </div>
+      </div>
     </nav>
 
     <!-- Main Layout -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <!-- Bot Selection Bar -->
-        <div id="bot-selector" class="mb-6">
-            <div class="flex items-center gap-3 mb-3">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider">البوتات الخاصة بك</h2>
-                <span id="bots-count" class="bg-surface px-2 py-0.5 rounded-full text-xs text-gray-400">0</span>
+      <!-- Bot Selection Bar -->
+      <div id="bot-selector" class="mb-6">
+        <div class="flex items-center gap-3 mb-3">
+          <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider">
+            البوتات الخاصة بك
+          </h2>
+          <span
+            id="bots-count"
+            class="bg-surface px-2 py-0.5 rounded-full text-xs text-gray-400"
+            >0</span
+          >
+        </div>
+        <div
+          id="bots-grid"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
+        >
+          <!-- Bot cards rendered here -->
+        </div>
+        <div id="no-bots" class="hidden text-center py-16">
+          <div
+            class="w-20 h-20 bg-surface rounded-2xl flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-robot text-3xl text-gray-600"></i>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">لا توجد بوتات بعد</h3>
+          <p class="text-gray-400 mb-6">ابدأ بإنشاء أول بوت ذكي لك</p>
+          <button
+            onclick="openNewBotModal()"
+            class="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl font-bold transition"
+          >
+            <i class="fas fa-plus ml-2"></i>إنشاء بوت جديد
+          </button>
+        </div>
+      </div>
+
+      <!-- Bot Editor (hidden until a bot is selected) -->
+      <div id="bot-editor" class="hidden">
+        <!-- Stepper -->
+        <div
+          class="bg-dark/50 rounded-2xl p-4 mb-6 border border-surface-light/20"
+        >
+          <div class="flex items-center" id="stepper">
+            <div class="step-item active" data-step="1" onclick="goToStep(1)">
+              <div class="step-circle">1</div>
+              <p class="text-xs mt-1 text-gray-400">الإعدادات</p>
             </div>
-            <div id="bots-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                <!-- Bot cards rendered here -->
+            <div class="step-item" data-step="2" onclick="goToStep(2)">
+              <div class="step-circle">2</div>
+              <p class="text-xs mt-1 text-gray-400">الشخصية</p>
             </div>
-            <div id="no-bots" class="hidden text-center py-16">
-                <div class="w-20 h-20 bg-surface rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-robot text-3xl text-gray-600"></i>
-                </div>
-                <h3 class="text-xl font-bold text-white mb-2">لا توجد بوتات بعد</h3>
-                <p class="text-gray-400 mb-6">ابدأ بإنشاء أول بوت ذكي لك</p>
-                <button onclick="openNewBotModal()" class="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl font-bold transition">
-                    <i class="fas fa-plus ml-2"></i>إنشاء بوت جديد
-                </button>
+            <div class="step-item" data-step="3" onclick="goToStep(3)">
+              <div class="step-circle">3</div>
+              <p class="text-xs mt-1 text-gray-400">قاعدة المعرفة</p>
             </div>
+            <div class="step-item" data-step="4" onclick="goToStep(4)">
+              <div class="step-circle">4</div>
+              <p class="text-xs mt-1 text-gray-400">المنصات</p>
+            </div>
+            <div class="step-item" data-step="5" onclick="goToStep(5)">
+              <div class="step-circle">5</div>
+              <p class="text-xs mt-1 text-gray-400">النشر</p>
+            </div>
+          </div>
         </div>
 
-        <!-- Bot Editor (hidden until a bot is selected) -->
-        <div id="bot-editor" class="hidden">
-            <!-- Stepper -->
-            <div class="bg-dark/50 rounded-2xl p-4 mb-6 border border-surface-light/20">
-                <div class="flex items-center" id="stepper">
-                    <div class="step-item active" data-step="1" onclick="goToStep(1)">
-                        <div class="step-circle">1</div>
-                        <p class="text-xs mt-1 text-gray-400">الإعدادات</p>
-                    </div>
-                    <div class="step-item" data-step="2" onclick="goToStep(2)">
-                        <div class="step-circle">2</div>
-                        <p class="text-xs mt-1 text-gray-400">الشخصية</p>
-                    </div>
-                    <div class="step-item" data-step="3" onclick="goToStep(3)">
-                        <div class="step-circle">3</div>
-                        <p class="text-xs mt-1 text-gray-400">قاعدة المعرفة</p>
-                    </div>
-                    <div class="step-item" data-step="4" onclick="goToStep(4)">
-                        <div class="step-circle">4</div>
-                        <p class="text-xs mt-1 text-gray-400">المنصات</p>
-                    </div>
-                    <div class="step-item" data-step="5" onclick="goToStep(5)">
-                        <div class="step-circle">5</div>
-                        <p class="text-xs mt-1 text-gray-400">النشر</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ========== STEP 1: Basic Settings ========== -->
-            <div class="wizard-step active" id="step-1">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="glow-card bg-surface rounded-2xl p-6">
-                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <i class="fas fa-cog text-primary"></i> الإعدادات الأساسية
-                            </h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-1">اسم البوت <span class="text-red-400">*</span></label>
-                                    <input id="bot-name" type="text" placeholder="مثال: بوت خدمة العملاء" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-1">الوصف</label>
-                                    <textarea id="bot-desc" rows="3" placeholder="وصف مختصر لوظيفة البوت..." class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none"></textarea>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-300 mb-1">نوع البوت</label>
-                                        <select id="bot-type" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white focus:border-primary outline-none transition">
-                                            <option value="hybrid">هجين (ذكاء اصطناعي + قواعد)</option>
-                                            <option value="ai">ذكاء اصطناعي بالكامل</option>
-                                            <option value="rules">قائم على القواعد</option>
-                                            <option value="support">دعم فني</option>
-                                            <option value="sales">مبيعات</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-300 mb-1">اللغة الافتراضية</label>
-                                        <select id="bot-lang" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white focus:border-primary outline-none transition">
-                                            <option value="ar">العربية</option>
-                                            <option value="en">English</option>
-                                            <option value="both">ثنائي اللغة</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-2">
-                                        درجة الإبداع: <span id="temp-value" class="text-primary font-bold">0.7</span>
-                                    </label>
-                                    <input id="bot-temp" type="range" min="0" max="1" step="0.1" value="0.7" class="w-full accent-primary" oninput="document.getElementById('temp-value').textContent = this.value">
-                                    <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                        <span>دقيق ومحدد</span>
-                                        <span>إبداعي ومتنوع</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Side Info -->
-                    <div class="space-y-4">
-                        <div class="bg-surface rounded-2xl p-5 border border-surface-light/20">
-                            <h4 class="font-bold text-white mb-3 flex items-center gap-2">
-                                <i class="fas fa-lightbulb text-yellow-400"></i> نصائح
-                            </h4>
-                            <ul class="space-y-2 text-sm text-gray-400">
-                                <li class="flex items-start gap-2"><i class="fas fa-check text-primary mt-1 text-xs"></i> اختر اسمًا واضحًا يعكس وظيفة البوت</li>
-                                <li class="flex items-start gap-2"><i class="fas fa-check text-primary mt-1 text-xs"></i> البوت الهجين يجمع بين الذكاء الاصطناعي والقواعد الثابتة</li>
-                                <li class="flex items-start gap-2"><i class="fas fa-check text-primary mt-1 text-xs"></i> درجة إبداع أقل = ردود أدق وأكثر اتساقًا</li>
-                            </ul>
-                        </div>
-                        <div id="bot-stats-card" class="bg-surface rounded-2xl p-5 border border-surface-light/20 hidden">
-                            <h4 class="font-bold text-white mb-3 flex items-center gap-2">
-                                <i class="fas fa-chart-bar text-secondary"></i> إحصائيات
-                            </h4>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-dark rounded-xl p-3 text-center">
-                                    <div id="stat-contacts" class="text-2xl font-bold text-primary">0</div>
-                                    <div class="text-xs text-gray-400">جهات اتصال</div>
-                                </div>
-                                <div class="bg-dark rounded-xl p-3 text-center">
-                                    <div id="stat-platforms" class="text-2xl font-bold text-secondary">0</div>
-                                    <div class="text-xs text-gray-400">منصات</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ========== STEP 2: Personality & Responses ========== -->
-            <div class="wizard-step" id="step-2">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="space-y-6">
-                        <div class="glow-card bg-surface rounded-2xl p-6">
-                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <i class="fas fa-brain text-accent"></i> شخصية البوت
-                            </h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-1">تعليمات النظام (System Prompt) <span class="text-red-400">*</span></label>
-                                    <textarea id="system-prompt" rows="6" placeholder="أنت مساعد ذكي لخدمة العملاء. تتحدث بالعربية الفصحى. ترد بشكل مهذب ومهني..." class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"></textarea>
-                                    <p class="text-xs text-gray-500 mt-1">هذا النص يحدد شخصية وسلوك البوت في كل المحادثات</p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-1">رسالة الترحيب</label>
-                                    <textarea id="welcome-msg" rows="2" placeholder="مرحبًا! 👋 أنا هنا لمساعدتك. كيف يمكنني خدمتك؟" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-1">رسالة عدم الفهم (Fallback)</label>
-                                    <textarea id="fallback-msg" rows="2" placeholder="عذرًا، لم أفهم سؤالك. هل يمكنك إعادة صياغته؟" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"></textarea>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Quick Replies -->
-                        <div class="glow-card bg-surface rounded-2xl p-6">
-                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <i class="fas fa-reply text-secondary"></i> الردود السريعة
-                            </h3>
-                            <div id="quick-replies" class="space-y-2 mb-3">
-                                <!-- rendered dynamically -->
-                            </div>
-                            <div class="flex gap-2">
-                                <input id="new-quick-reply" type="text" placeholder="أضف رد سريع..." class="flex-1 bg-dark border border-surface-light rounded-xl px-4 py-2 text-white placeholder-gray-500 text-sm focus:border-primary outline-none transition">
-                                <button onclick="addQuickReply()" class="bg-secondary hover:bg-secondary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Live Preview -->
-                    <div>
-                        <div class="bg-surface rounded-2xl border border-surface-light/20 overflow-hidden sticky top-24">
-                            <div class="bg-gradient-to-r from-primary/20 to-secondary/20 px-5 py-3 border-b border-surface-light/20">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                                        <i class="fas fa-robot text-white text-sm"></i>
-                                    </div>
-                                    <div>
-                                        <h4 id="preview-name" class="text-sm font-bold text-white">البوت</h4>
-                                        <p class="text-xs text-green-400">متصل الآن</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="chat-preview" class="p-4 space-y-3 min-h-[300px] max-h-[400px] overflow-y-auto">
-                                <div class="chat-bubble-bot p-3">
-                                    <p class="text-sm text-gray-200" id="preview-welcome">مرحبًا! 👋 أنا هنا لمساعدتك.</p>
-                                </div>
-                            </div>
-                            <div class="border-t border-surface-light/20 p-3">
-                                <div class="flex gap-2">
-                                    <input id="preview-input" type="text" placeholder="اكتب رسالة تجريبية..." class="flex-1 bg-dark border border-surface-light rounded-xl px-3 py-2 text-white text-sm placeholder-gray-500 outline-none focus:border-primary transition" onkeydown="if(event.key==='Enter')testChat()">
-                                    <button onclick="testChat()" class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
-                                </div>
-                                <div id="quick-reply-chips" class="flex flex-wrap gap-2 mt-2">
-                                    <!-- quick reply buttons -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ========== STEP 3: Knowledge Base ========== -->
-            <div class="wizard-step" id="step-3">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- URL Training (RAG) -->
-                    <div class="glow-card bg-surface rounded-2xl p-6">
-                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <i class="fas fa-globe text-primary"></i> تدريب من المواقع
-                        </h3>
-                        <p class="text-sm text-gray-400 mb-4">أدخل روابط المواقع التي يتعلم منها البوت</p>
-                        <div id="training-urls" class="space-y-2 mb-3">
-                            <div class="flex gap-2 url-row">
-                                <input type="url" placeholder="https://example.com" class="train-url flex-1 bg-dark border border-surface-light rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition">
-                                <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 px-2"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="flex gap-2 mb-4">
-                            <button onclick="addUrlRow()" class="flex-1 bg-dark border border-dashed border-surface-light rounded-xl py-2 text-gray-400 hover:text-white hover:border-primary transition text-sm">
-                                <i class="fas fa-plus ml-1"></i> إضافة رابط
-                            </button>
-                        </div>
-                        <button onclick="trainBot()" id="train-btn" class="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
-                            <i class="fas fa-graduation-cap"></i> بدء التدريب
-                        </button>
-                        <div id="train-progress" class="hidden mt-3">
-                            <div class="bg-dark rounded-full h-2 overflow-hidden">
-                                <div class="bg-gradient-to-r from-primary to-secondary h-full rounded-full animate-pulse" style="width: 100%"></div>
-                            </div>
-                            <p class="text-xs text-gray-400 mt-1 text-center">جاري التدريب...</p>
-                        </div>
-                    </div>
-
-                    <!-- Q&A Builder -->
-                    <div class="glow-card bg-surface rounded-2xl p-6">
-                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <i class="fas fa-comments text-accent"></i> أسئلة وأجوبة مخصصة
-                        </h3>
-                        <p class="text-sm text-gray-400 mb-4">أضف أسئلة وأجوبة يحفظها البوت</p>
-                        <div id="qa-list" class="space-y-3 mb-4 max-h-[300px] overflow-y-auto">
-                            <!-- QA items rendered here -->
-                        </div>
-                        <div class="space-y-2 bg-dark rounded-xl p-3">
-                            <input id="qa-question" type="text" placeholder="السؤال: ما هي ساعات العمل؟" class="w-full bg-surface border border-surface-light rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition">
-                            <textarea id="qa-answer" rows="2" placeholder="الإجابة: ساعات العمل من 9 صباحاً إلى 5 مساءً" class="w-full bg-surface border border-surface-light rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition resize-none"></textarea>
-                            <button onclick="addQA()" class="w-full bg-accent hover:bg-accent/80 text-white py-2 rounded-lg text-sm font-bold transition">
-                                <i class="fas fa-plus ml-1"></i> إضافة سؤال وجواب
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ========== STEP 4: Platform Integrations ========== -->
-            <div class="wizard-step" id="step-4">
-                <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                    <i class="fas fa-plug text-secondary"></i> ربط المنصات
+        <!-- ========== STEP 1: Basic Settings ========== -->
+        <div class="wizard-step active" id="step-1">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+              <div class="glow-card bg-surface rounded-2xl p-6">
+                <h3
+                  class="text-lg font-bold text-white mb-4 flex items-center gap-2"
+                >
+                  <i class="fas fa-cog text-primary"></i> الإعدادات الأساسية
                 </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    <!-- Telegram -->
-                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-blue-400/50" id="platform-telegram" onclick="showPlatformSetup('telegram')">
-                        <div class="w-12 h-12 bg-[#229ED9]/20 rounded-xl flex items-center justify-center mb-3">
-                            <i class="fab fa-telegram text-[#229ED9] text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-white mb-1">تيليجرام</h4>
-                        <p class="text-xs text-gray-400">اربط بوتك بتيليجرام عبر BotFather</p>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1"
+                      >اسم البوت <span class="text-red-400">*</span></label
+                    >
+                    <input
+                      id="bot-name"
+                      type="text"
+                      placeholder="مثال: بوت خدمة العملاء"
+                      class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1"
+                      >الوصف</label
+                    >
+                    <textarea
+                      id="bot-desc"
+                      rows="3"
+                      placeholder="وصف مختصر لوظيفة البوت..."
+                      class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none"
+                    ></textarea>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-300 mb-1"
+                        >نوع البوت</label
+                      >
+                      <select
+                        id="bot-type"
+                        class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white focus:border-primary outline-none transition"
+                      >
+                        <option value="hybrid">
+                          هجين (ذكاء اصطناعي + قواعد)
+                        </option>
+                        <option value="ai">ذكاء اصطناعي بالكامل</option>
+                        <option value="rules">قائم على القواعد</option>
+                        <option value="support">دعم فني</option>
+                        <option value="sales">مبيعات</option>
+                      </select>
                     </div>
-                    <!-- Website Widget -->
-                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-primary/50" id="platform-web" onclick="showPlatformSetup('web')">
-                        <div class="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center mb-3">
-                            <i class="fas fa-globe text-primary text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-white mb-1">ويدجت الموقع</h4>
-                        <p class="text-xs text-gray-400">أضف البوت مباشرة لموقعك الإلكتروني</p>
+                    <div>
+                      <label
+                        class="block text-sm font-medium text-gray-300 mb-1"
+                        >اللغة الافتراضية</label
+                      >
+                      <select
+                        id="bot-lang"
+                        class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white focus:border-primary outline-none transition"
+                      >
+                        <option value="ar">العربية</option>
+                        <option value="en">English</option>
+                        <option value="both">ثنائي اللغة</option>
+                      </select>
                     </div>
-                    <!-- WhatsApp -->
-                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-green-400/50" id="platform-whatsapp" onclick="showPlatformSetup('whatsapp')">
-                        <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-3">
-                            <i class="fab fa-whatsapp text-green-500 text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-white mb-1">واتساب</h4>
-                        <p class="text-xs text-gray-400">WhatsApp Business API</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                      درجة الإبداع:
+                      <span id="temp-value" class="text-primary font-bold"
+                        >0.7</span
+                      >
+                    </label>
+                    <input
+                      id="bot-temp"
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value="0.7"
+                      class="w-full accent-primary"
+                      oninput="
+                        document.getElementById('temp-value').textContent =
+                          this.value
+                      "
+                    />
+                    <div
+                      class="flex justify-between text-xs text-gray-500 mt-1"
+                    >
+                      <span>دقيق ومحدد</span>
+                      <span>إبداعي ومتنوع</span>
                     </div>
-                    <!-- Facebook -->
-                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-blue-500/50" id="platform-facebook" onclick="showPlatformSetup('facebook')">
-                        <div class="w-12 h-12 bg-[#1877F2]/20 rounded-xl flex items-center justify-center mb-3">
-                            <i class="fab fa-facebook-messenger text-[#1877F2] text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-white mb-1">فيسبوك ماسنجر</h4>
-                        <p class="text-xs text-gray-400">Page Access Token</p>
-                    </div>
-                    <!-- Instagram -->
-                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-pink-400/50" id="platform-instagram" onclick="showPlatformSetup('instagram')">
-                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center mb-3">
-                            <i class="fab fa-instagram text-pink-400 text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-white mb-1">إنستاجرام</h4>
-                        <p class="text-xs text-gray-400">Instagram Messaging API</p>
-                    </div>
-                    <!-- Custom API -->
-                    <div class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-accent/50" id="platform-api" onclick="showPlatformSetup('api')">
-                        <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center mb-3">
-                            <i class="fas fa-code text-accent text-2xl"></i>
-                        </div>
-                        <h4 class="font-bold text-white mb-1">API مخصص</h4>
-                        <p class="text-xs text-gray-400">Webhook & REST API</p>
-                    </div>
+                  </div>
                 </div>
-
-                <!-- Platform Setup Modal (inline) -->
-                <div id="platform-setup" class="hidden bg-surface rounded-2xl p-6 border border-surface-light/30">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 id="platform-setup-title" class="text-lg font-bold text-white flex items-center gap-2"></h4>
-                        <button onclick="closePlatformSetup()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+            <!-- Side Info -->
+            <div class="space-y-4">
+              <div
+                class="bg-surface rounded-2xl p-5 border border-surface-light/20"
+              >
+                <h4 class="font-bold text-white mb-3 flex items-center gap-2">
+                  <i class="fas fa-lightbulb text-yellow-400"></i> نصائح
+                </h4>
+                <ul class="space-y-2 text-sm text-gray-400">
+                  <li class="flex items-start gap-2">
+                    <i class="fas fa-check text-primary mt-1 text-xs"></i> اختر
+                    اسمًا واضحًا يعكس وظيفة البوت
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <i class="fas fa-check text-primary mt-1 text-xs"></i> البوت
+                    الهجين يجمع بين الذكاء الاصطناعي والقواعد الثابتة
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <i class="fas fa-check text-primary mt-1 text-xs"></i> درجة
+                    إبداع أقل = ردود أدق وأكثر اتساقًا
+                  </li>
+                </ul>
+              </div>
+              <div
+                id="bot-stats-card"
+                class="bg-surface rounded-2xl p-5 border border-surface-light/20 hidden"
+              >
+                <h4 class="font-bold text-white mb-3 flex items-center gap-2">
+                  <i class="fas fa-chart-bar text-secondary"></i> إحصائيات
+                </h4>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="bg-dark rounded-xl p-3 text-center">
+                    <div
+                      id="stat-contacts"
+                      class="text-2xl font-bold text-primary"
+                    >
+                      0
                     </div>
-                    <div id="platform-setup-body"></div>
+                    <div class="text-xs text-gray-400">جهات اتصال</div>
+                  </div>
+                  <div class="bg-dark rounded-xl p-3 text-center">
+                    <div
+                      id="stat-platforms"
+                      class="text-2xl font-bold text-secondary"
+                    >
+                      0
+                    </div>
+                    <div class="text-xs text-gray-400">منصات</div>
+                  </div>
                 </div>
+              </div>
             </div>
-
-            <!-- ========== STEP 5: Deploy & CRM ========== -->
-            <div class="wizard-step" id="step-5">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 space-y-6">
-                        <!-- Bot Summary -->
-                        <div class="glow-card bg-surface rounded-2xl p-6">
-                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <i class="fas fa-rocket text-primary"></i> ملخص البوت
-                            </h3>
-                            <div id="bot-summary" class="space-y-3">
-                                <!-- rendered dynamically -->
-                            </div>
-                            <div class="flex gap-3 mt-6">
-                                <button onclick="saveBotSettings()" class="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">
-                                    <i class="fas fa-save"></i> حفظ التغييرات
-                                </button>
-                                <button onclick="deleteBotConfirm()" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-5 py-3 rounded-xl font-bold transition">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- CRM -->
-                        <div class="glow-card bg-surface rounded-2xl p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                                    <i class="fas fa-users text-secondary"></i> جهات الاتصال (CRM)
-                                </h3>
-                                <button onclick="loadCRM()" class="text-sm text-primary hover:text-primary/80 transition">
-                                    <i class="fas fa-refresh ml-1"></i> تحديث
-                                </button>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm">
-                                    <thead>
-                                        <tr class="border-b border-surface-light text-gray-400">
-                                            <th class="text-right py-2 px-3">الاسم</th>
-                                            <th class="text-right py-2 px-3">الهاتف</th>
-                                            <th class="text-right py-2 px-3">المنصة</th>
-                                            <th class="text-right py-2 px-3">التفاعلات</th>
-                                            <th class="text-right py-2 px-3">آخر تواصل</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="crm-table">
-                                        <tr><td colspan="5" class="text-center py-8 text-gray-500">لا توجد جهات اتصال بعد</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Analytics Sidebar -->
-                    <div class="space-y-4">
-                        <div class="bg-surface rounded-2xl p-5 border border-surface-light/20">
-                            <h4 class="font-bold text-white mb-4 flex items-center gap-2">
-                                <i class="fas fa-chart-pie text-primary"></i> تحليلات
-                            </h4>
-                            <div class="space-y-3">
-                                <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-                                        <i class="fas fa-users text-primary"></i>
-                                    </div>
-                                    <div>
-                                        <div id="analytics-contacts" class="text-xl font-bold text-white">0</div>
-                                        <div class="text-xs text-gray-400">إجمالي جهات الاتصال</div>
-                                    </div>
-                                </div>
-                                <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center">
-                                        <i class="fas fa-comments text-secondary"></i>
-                                    </div>
-                                    <div>
-                                        <div id="analytics-interactions" class="text-xl font-bold text-white">0</div>
-                                        <div class="text-xs text-gray-400">إجمالي التفاعلات</div>
-                                    </div>
-                                </div>
-                                <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
-                                    <div class="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
-                                        <i class="fas fa-plug text-accent"></i>
-                                    </div>
-                                    <div>
-                                        <div id="analytics-platforms" class="text-xl font-bold text-white">0</div>
-                                        <div class="text-xs text-gray-400">منصات متصلة</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Webhook Info -->
-                        <div class="bg-surface rounded-2xl p-5 border border-surface-light/20">
-                            <h4 class="font-bold text-white mb-3 flex items-center gap-2">
-                                <i class="fas fa-link text-primary"></i> Webhook URL
-                            </h4>
-                            <div class="bg-dark rounded-lg p-3 flex items-center gap-2">
-                                <code id="webhook-url" class="text-xs text-primary flex-1 break-all" dir="ltr">—</code>
-                                <button onclick="copyWebhook()" class="text-gray-400 hover:text-white transition"><i class="fas fa-copy"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation Buttons -->
-            <div class="flex items-center justify-between mt-6 pb-8">
-                <button id="prev-btn" onclick="prevStep()" class="hidden bg-surface hover:bg-surface-light text-white px-6 py-3 rounded-xl font-bold transition flex items-center gap-2">
-                    <i class="fas fa-arrow-right"></i> السابق
-                </button>
-                <div></div>
-                <button id="next-btn" onclick="nextStep()" class="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl font-bold transition flex items-center gap-2">
-                    التالي <i class="fas fa-arrow-left"></i>
-                </button>
-            </div>
+          </div>
         </div>
+
+        <!-- ========== STEP 2: Personality & Responses ========== -->
+        <div class="wizard-step" id="step-2">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-6">
+              <div class="glow-card bg-surface rounded-2xl p-6">
+                <h3
+                  class="text-lg font-bold text-white mb-4 flex items-center gap-2"
+                >
+                  <i class="fas fa-brain text-accent"></i> شخصية البوت
+                </h3>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1"
+                      >تعليمات النظام (System Prompt)
+                      <span class="text-red-400">*</span></label
+                    >
+                    <textarea
+                      id="system-prompt"
+                      rows="6"
+                      placeholder="أنت مساعد ذكي لخدمة العملاء. تتحدث بالعربية الفصحى. ترد بشكل مهذب ومهني..."
+                      class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"
+                    ></textarea>
+                    <p class="text-xs text-gray-500 mt-1">
+                      هذا النص يحدد شخصية وسلوك البوت في كل المحادثات
+                    </p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1"
+                      >رسالة الترحيب</label
+                    >
+                    <textarea
+                      id="welcome-msg"
+                      rows="2"
+                      placeholder="مرحبًا! 👋 أنا هنا لمساعدتك. كيف يمكنني خدمتك؟"
+                      class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"
+                    ></textarea>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1"
+                      >رسالة عدم الفهم (Fallback)</label
+                    >
+                    <textarea
+                      id="fallback-msg"
+                      rows="2"
+                      placeholder="عذرًا، لم أفهم سؤالك. هل يمكنك إعادة صياغته؟"
+                      class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition resize-none text-sm"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Replies -->
+              <div class="glow-card bg-surface rounded-2xl p-6">
+                <h3
+                  class="text-lg font-bold text-white mb-4 flex items-center gap-2"
+                >
+                  <i class="fas fa-reply text-secondary"></i> الردود السريعة
+                </h3>
+                <div id="quick-replies" class="space-y-2 mb-3">
+                  <!-- rendered dynamically -->
+                </div>
+                <div class="flex gap-2">
+                  <input
+                    id="new-quick-reply"
+                    type="text"
+                    placeholder="أضف رد سريع..."
+                    class="flex-1 bg-dark border border-surface-light rounded-xl px-4 py-2 text-white placeholder-gray-500 text-sm focus:border-primary outline-none transition"
+                  />
+                  <button
+                    onclick="addQuickReply()"
+                    class="bg-secondary hover:bg-secondary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition"
+                  >
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Preview -->
+            <div>
+              <div
+                class="bg-surface rounded-2xl border border-surface-light/20 overflow-hidden sticky top-24"
+              >
+                <div
+                  class="bg-gradient-to-r from-primary/20 to-secondary/20 px-5 py-3 border-b border-surface-light/20"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-8 h-8 bg-primary rounded-full flex items-center justify-center"
+                    >
+                      <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div>
+                      <h4
+                        id="preview-name"
+                        class="text-sm font-bold text-white"
+                      >
+                        البوت
+                      </h4>
+                      <p class="text-xs text-green-400">متصل الآن</p>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  id="chat-preview"
+                  class="p-4 space-y-3 min-h-[300px] max-h-[400px] overflow-y-auto"
+                >
+                  <div class="chat-bubble-bot p-3">
+                    <p class="text-sm text-gray-200" id="preview-welcome">
+                      مرحبًا! 👋 أنا هنا لمساعدتك.
+                    </p>
+                  </div>
+                </div>
+                <div class="border-t border-surface-light/20 p-3">
+                  <div class="flex gap-2">
+                    <input
+                      id="preview-input"
+                      type="text"
+                      placeholder="اكتب رسالة تجريبية..."
+                      class="flex-1 bg-dark border border-surface-light rounded-xl px-3 py-2 text-white text-sm placeholder-gray-500 outline-none focus:border-primary transition"
+                      onkeydown="if (event.key === 'Enter') testChat();"
+                    />
+                    <button
+                      onclick="testChat()"
+                      class="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-xl text-sm font-bold transition"
+                    >
+                      <i class="fas fa-paper-plane"></i>
+                    </button>
+                  </div>
+                  <div id="quick-reply-chips" class="flex flex-wrap gap-2 mt-2">
+                    <!-- quick reply buttons -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== STEP 3: Knowledge Base ========== -->
+        <div class="wizard-step" id="step-3">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- URL Training (RAG) -->
+            <div class="glow-card bg-surface rounded-2xl p-6">
+              <h3
+                class="text-lg font-bold text-white mb-4 flex items-center gap-2"
+              >
+                <i class="fas fa-globe text-primary"></i> تدريب من المواقع
+              </h3>
+              <p class="text-sm text-gray-400 mb-4">
+                أدخل روابط المواقع التي يتعلم منها البوت
+              </p>
+              <div id="training-urls" class="space-y-2 mb-3">
+                <div class="flex gap-2 url-row">
+                  <input
+                    type="url"
+                    placeholder="https://example.com"
+                    class="train-url flex-1 bg-dark border border-surface-light rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition"
+                  />
+                  <button
+                    onclick="this.parentElement.remove()"
+                    class="text-red-400 hover:text-red-300 px-2"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="flex gap-2 mb-4">
+                <button
+                  onclick="addUrlRow()"
+                  class="flex-1 bg-dark border border-dashed border-surface-light rounded-xl py-2 text-gray-400 hover:text-white hover:border-primary transition text-sm"
+                >
+                  <i class="fas fa-plus ml-1"></i> إضافة رابط
+                </button>
+              </div>
+              <button
+                onclick="trainBot()"
+                id="train-btn"
+                class="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
+              >
+                <i class="fas fa-graduation-cap"></i> بدء التدريب
+              </button>
+              <div id="train-progress" class="hidden mt-3">
+                <div class="bg-dark rounded-full h-2 overflow-hidden">
+                  <div
+                    class="bg-gradient-to-r from-primary to-secondary h-full rounded-full animate-pulse"
+                    style="width: 100%"
+                  ></div>
+                </div>
+                <p class="text-xs text-gray-400 mt-1 text-center">
+                  جاري التدريب...
+                </p>
+              </div>
+            </div>
+
+            <!-- Q&A Builder -->
+            <div class="glow-card bg-surface rounded-2xl p-6">
+              <h3
+                class="text-lg font-bold text-white mb-4 flex items-center gap-2"
+              >
+                <i class="fas fa-comments text-accent"></i> أسئلة وأجوبة مخصصة
+              </h3>
+              <p class="text-sm text-gray-400 mb-4">
+                أضف أسئلة وأجوبة يحفظها البوت
+              </p>
+              <div
+                id="qa-list"
+                class="space-y-3 mb-4 max-h-[300px] overflow-y-auto"
+              >
+                <!-- QA items rendered here -->
+              </div>
+              <div class="space-y-2 bg-dark rounded-xl p-3">
+                <input
+                  id="qa-question"
+                  type="text"
+                  placeholder="السؤال: ما هي ساعات العمل؟"
+                  class="w-full bg-surface border border-surface-light rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition"
+                />
+                <textarea
+                  id="qa-answer"
+                  rows="2"
+                  placeholder="الإجابة: ساعات العمل من 9 صباحاً إلى 5 مساءً"
+                  class="w-full bg-surface border border-surface-light rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition resize-none"
+                ></textarea>
+                <button
+                  onclick="addQA()"
+                  class="w-full bg-accent hover:bg-accent/80 text-white py-2 rounded-lg text-sm font-bold transition"
+                >
+                  <i class="fas fa-plus ml-1"></i> إضافة سؤال وجواب
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== STEP 4: Platform Integrations ========== -->
+        <div class="wizard-step" id="step-4">
+          <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <i class="fas fa-plug text-secondary"></i> ربط المنصات
+          </h3>
+          <div
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
+          >
+            <!-- Telegram -->
+            <div
+              class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-blue-400/50"
+              id="platform-telegram"
+              onclick="showPlatformSetup('telegram')"
+            >
+              <div
+                class="w-12 h-12 bg-[#229ED9]/20 rounded-xl flex items-center justify-center mb-3"
+              >
+                <i class="fab fa-telegram text-[#229ED9] text-2xl"></i>
+              </div>
+              <h4 class="font-bold text-white mb-1">تيليجرام</h4>
+              <p class="text-xs text-gray-400">
+                اربط بوتك بتيليجرام عبر BotFather
+              </p>
+            </div>
+            <!-- Website Widget -->
+            <div
+              class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-primary/50"
+              id="platform-web"
+              onclick="showPlatformSetup('web')"
+            >
+              <div
+                class="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center mb-3"
+              >
+                <i class="fas fa-globe text-primary text-2xl"></i>
+              </div>
+              <h4 class="font-bold text-white mb-1">ويدجت الموقع</h4>
+              <p class="text-xs text-gray-400">
+                أضف البوت مباشرة لموقعك الإلكتروني
+              </p>
+            </div>
+            <!-- WhatsApp -->
+            <div
+              class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-green-400/50"
+              id="platform-whatsapp"
+              onclick="showPlatformSetup('whatsapp')"
+            >
+              <div
+                class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-3"
+              >
+                <i class="fab fa-whatsapp text-green-500 text-2xl"></i>
+              </div>
+              <h4 class="font-bold text-white mb-1">واتساب</h4>
+              <p class="text-xs text-gray-400">WhatsApp Business API</p>
+            </div>
+            <!-- Facebook -->
+            <div
+              class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-blue-500/50"
+              id="platform-facebook"
+              onclick="showPlatformSetup('facebook')"
+            >
+              <div
+                class="w-12 h-12 bg-[#1877F2]/20 rounded-xl flex items-center justify-center mb-3"
+              >
+                <i
+                  class="fab fa-facebook-messenger text-[#1877F2] text-2xl"
+                ></i>
+              </div>
+              <h4 class="font-bold text-white mb-1">فيسبوك ماسنجر</h4>
+              <p class="text-xs text-gray-400">Page Access Token</p>
+            </div>
+            <!-- Instagram -->
+            <div
+              class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-pink-400/50"
+              id="platform-instagram"
+              onclick="showPlatformSetup('instagram')"
+            >
+              <div
+                class="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl flex items-center justify-center mb-3"
+              >
+                <i class="fab fa-instagram text-pink-400 text-2xl"></i>
+              </div>
+              <h4 class="font-bold text-white mb-1">إنستاجرام</h4>
+              <p class="text-xs text-gray-400">Instagram Messaging API</p>
+            </div>
+            <!-- Custom API -->
+            <div
+              class="platform-card relative bg-surface rounded-2xl p-5 border border-surface-light/30 hover:border-accent/50"
+              id="platform-api"
+              onclick="showPlatformSetup('api')"
+            >
+              <div
+                class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center mb-3"
+              >
+                <i class="fas fa-code text-accent text-2xl"></i>
+              </div>
+              <h4 class="font-bold text-white mb-1">API مخصص</h4>
+              <p class="text-xs text-gray-400">Webhook & REST API</p>
+            </div>
+          </div>
+
+          <!-- Platform Setup Modal (inline) -->
+          <div
+            id="platform-setup"
+            class="hidden bg-surface rounded-2xl p-6 border border-surface-light/30"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h4
+                id="platform-setup-title"
+                class="text-lg font-bold text-white flex items-center gap-2"
+              ></h4>
+              <button
+                onclick="closePlatformSetup()"
+                class="text-gray-400 hover:text-white"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div id="platform-setup-body"></div>
+          </div>
+        </div>
+
+        <!-- ========== STEP 5: Deploy & CRM ========== -->
+        <div class="wizard-step" id="step-5">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+              <!-- Bot Summary -->
+              <div class="glow-card bg-surface rounded-2xl p-6">
+                <h3
+                  class="text-lg font-bold text-white mb-4 flex items-center gap-2"
+                >
+                  <i class="fas fa-rocket text-primary"></i> ملخص البوت
+                </h3>
+                <div id="bot-summary" class="space-y-3">
+                  <!-- rendered dynamically -->
+                </div>
+                <div class="flex gap-3 mt-6">
+                  <button
+                    onclick="saveBotSettings()"
+                    class="flex-1 bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"
+                  >
+                    <i class="fas fa-save"></i> حفظ التغييرات
+                  </button>
+                  <button
+                    onclick="deleteBotConfirm()"
+                    class="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-5 py-3 rounded-xl font-bold transition"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- CRM -->
+              <div class="glow-card bg-surface rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h3
+                    class="text-lg font-bold text-white flex items-center gap-2"
+                  >
+                    <i class="fas fa-users text-secondary"></i> جهات الاتصال
+                    (CRM)
+                  </h3>
+                  <button
+                    onclick="loadCRM()"
+                    class="text-sm text-primary hover:text-primary/80 transition"
+                  >
+                    <i class="fas fa-refresh ml-1"></i> تحديث
+                  </button>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="border-b border-surface-light text-gray-400">
+                        <th class="text-right py-2 px-3">الاسم</th>
+                        <th class="text-right py-2 px-3">الهاتف</th>
+                        <th class="text-right py-2 px-3">المنصة</th>
+                        <th class="text-right py-2 px-3">التفاعلات</th>
+                        <th class="text-right py-2 px-3">آخر تواصل</th>
+                      </tr>
+                    </thead>
+                    <tbody id="crm-table">
+                      <tr>
+                        <td colspan="5" class="text-center py-8 text-gray-500">
+                          لا توجد جهات اتصال بعد
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Analytics Sidebar -->
+            <div class="space-y-4">
+              <div
+                class="bg-surface rounded-2xl p-5 border border-surface-light/20"
+              >
+                <h4 class="font-bold text-white mb-4 flex items-center gap-2">
+                  <i class="fas fa-chart-pie text-primary"></i> تحليلات
+                </h4>
+                <div class="space-y-3">
+                  <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center"
+                    >
+                      <i class="fas fa-users text-primary"></i>
+                    </div>
+                    <div>
+                      <div
+                        id="analytics-contacts"
+                        class="text-xl font-bold text-white"
+                      >
+                        0
+                      </div>
+                      <div class="text-xs text-gray-400">
+                        إجمالي جهات الاتصال
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 bg-secondary/20 rounded-lg flex items-center justify-center"
+                    >
+                      <i class="fas fa-comments text-secondary"></i>
+                    </div>
+                    <div>
+                      <div
+                        id="analytics-interactions"
+                        class="text-xl font-bold text-white"
+                      >
+                        0
+                      </div>
+                      <div class="text-xs text-gray-400">إجمالي التفاعلات</div>
+                    </div>
+                  </div>
+                  <div class="bg-dark rounded-xl p-4 flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center"
+                    >
+                      <i class="fas fa-plug text-accent"></i>
+                    </div>
+                    <div>
+                      <div
+                        id="analytics-platforms"
+                        class="text-xl font-bold text-white"
+                      >
+                        0
+                      </div>
+                      <div class="text-xs text-gray-400">منصات متصلة</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Webhook Info -->
+              <div
+                class="bg-surface rounded-2xl p-5 border border-surface-light/20"
+              >
+                <h4 class="font-bold text-white mb-3 flex items-center gap-2">
+                  <i class="fas fa-link text-primary"></i> Webhook URL
+                </h4>
+                <div class="bg-dark rounded-lg p-3 flex items-center gap-2">
+                  <code
+                    id="webhook-url"
+                    class="text-xs text-primary flex-1 break-all"
+                    dir="ltr"
+                    >—</code
+                  >
+                  <button
+                    onclick="copyWebhook()"
+                    class="text-gray-400 hover:text-white transition"
+                  >
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center justify-between mt-6 pb-8">
+          <button
+            id="prev-btn"
+            onclick="prevStep()"
+            class="hidden bg-surface hover:bg-surface-light text-white px-6 py-3 rounded-xl font-bold transition flex items-center gap-2"
+          >
+            <i class="fas fa-arrow-right"></i> السابق
+          </button>
+          <div></div>
+          <button
+            id="next-btn"
+            onclick="nextStep()"
+            class="bg-primary hover:bg-primary/80 text-white px-6 py-3 rounded-xl font-bold transition flex items-center gap-2"
+          >
+            التالي <i class="fas fa-arrow-left"></i>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- New Bot Modal -->
-    <div id="new-bot-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-surface rounded-2xl p-6 w-full max-w-md border border-surface-light/30">
-            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <i class="fas fa-plus-circle text-primary"></i> إنشاء بوت جديد
-            </h3>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">اسم البوت <span class="text-red-400">*</span></label>
-                    <input id="modal-bot-name" type="text" placeholder="بوت خدمة العملاء" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">تعليمات النظام <span class="text-red-400">*</span></label>
-                    <textarea id="modal-system-prompt" rows="3" placeholder="أنت مساعد ذكي لخدمة العملاء..." class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary outline-none transition resize-none text-sm"></textarea>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-5">
-                <button onclick="createNewBot()" class="flex-1 bg-primary hover:bg-primary/80 text-white py-3 rounded-xl font-bold transition">إنشاء</button>
-                <button onclick="closeNewBotModal()" class="bg-dark hover:bg-surface-light text-gray-300 px-5 py-3 rounded-xl font-bold transition">إلغاء</button>
-            </div>
+    <div
+      id="new-bot-modal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-surface rounded-2xl p-6 w-full max-w-md border border-surface-light/30"
+      >
+        <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <i class="fas fa-plus-circle text-primary"></i> إنشاء بوت جديد
+        </h3>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1"
+              >اسم البوت <span class="text-red-400">*</span></label
+            >
+            <input
+              id="modal-bot-name"
+              type="text"
+              placeholder="بوت خدمة العملاء"
+              class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary outline-none transition"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1"
+              >تعليمات النظام <span class="text-red-400">*</span></label
+            >
+            <textarea
+              id="modal-system-prompt"
+              rows="3"
+              placeholder="أنت مساعد ذكي لخدمة العملاء..."
+              class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:border-primary outline-none transition resize-none text-sm"
+            ></textarea>
+          </div>
         </div>
+        <div class="flex gap-3 mt-5">
+          <button
+            onclick="createNewBot()"
+            class="flex-1 bg-primary hover:bg-primary/80 text-white py-3 rounded-xl font-bold transition"
+          >
+            إنشاء
+          </button>
+          <button
+            onclick="closeNewBotModal()"
+            class="bg-dark hover:bg-surface-light text-gray-300 px-5 py-3 rounded-xl font-bold transition"
+          >
+            إلغاء
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- ============ JAVASCRIPT ============ -->
     <script>
-        const API_URL = '/api/chatbots';
-        let currentBotId = null;
-        let currentStep = 1;
-        let quickReplies = [];
-        let qaList = [];
-        let connectedPlatforms = {};
-        let allBots = [];
+      const API_URL = '/api/chatbots';
+      let currentBotId = null;
+      let currentStep = 1;
+      let quickReplies = [];
+      let qaList = [];
+      let connectedPlatforms = {};
+      let allBots = [];
 
-        // ---- Auth ----
-        function getAuthToken() {
-            return localStorage.getItem('token') || localStorage.getItem('auth_token');
+      // ---- Auth ----
+      function getAuthToken() {
+        return (
+          localStorage.getItem('token') || localStorage.getItem('auth_token')
+        );
+      }
+      function authHeaders() {
+        const token = getAuthToken();
+        if (!token) {
+          window.location.href = '/login';
+          return {};
         }
-        function authHeaders() {
-            const token = getAuthToken();
-            if (!token) { window.location.href = '/login'; return {}; }
-            return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-        }
+        return {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        };
+      }
 
-        // ---- Toast ----
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const msgEl = document.getElementById('toast-msg');
-            msgEl.textContent = msg;
-            icon.className = type === 'success' ? 'fas fa-check-circle text-primary text-xl' :
-                             type === 'error' ? 'fas fa-times-circle text-red-400 text-xl' :
-                             'fas fa-info-circle text-secondary text-xl';
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+      // ---- Toast ----
+      function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        const icon = document.getElementById('toast-icon');
+        const msgEl = document.getElementById('toast-msg');
+        msgEl.textContent = msg;
+        icon.className =
+          type === 'success'
+            ? 'fas fa-check-circle text-primary text-xl'
+            : type === 'error'
+              ? 'fas fa-times-circle text-red-400 text-xl'
+              : 'fas fa-info-circle text-secondary text-xl';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
 
-        // ---- Escape HTML ----
-        function escapeHtml(text) {
-            const d = document.createElement('div');
-            d.textContent = text;
-            return d.innerHTML;
-        }
+      // ---- Escape HTML ----
+      function escapeHtml(text) {
+        const d = document.createElement('div');
+        d.textContent = text;
+        return d.innerHTML;
+      }
 
-        // ---- Load Bots ----
-        async function loadBots() {
-            try {
-                const res = await fetch(API_URL, { headers: authHeaders() });
-                if (res.status === 401) { window.location.href = '/login'; return; }
-                allBots = await res.json();
-                renderBotsList();
-            } catch(e) {
-                showToast('فشل في تحميل البوتات', 'error');
-            }
+      // ---- Load Bots ----
+      async function loadBots() {
+        try {
+          const res = await fetch(API_URL, { headers: authHeaders() });
+          if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+          }
+          allBots = await res.json();
+          renderBotsList();
+        } catch (e) {
+          showToast('فشل في تحميل البوتات', 'error');
         }
+      }
 
-        function renderBotsList() {
-            const grid = document.getElementById('bots-grid');
-            const noBots = document.getElementById('no-bots');
-            document.getElementById('bots-count').textContent = allBots.length;
-            
-            if (allBots.length === 0) {
-                grid.classList.add('hidden');
-                noBots.classList.remove('hidden');
-                return;
-            }
-            grid.classList.remove('hidden');
-            noBots.classList.add('hidden');
-            
-            grid.innerHTML = allBots.map(bot => `
+      function renderBotsList() {
+        const grid = document.getElementById('bots-grid');
+        const noBots = document.getElementById('no-bots');
+        document.getElementById('bots-count').textContent = allBots.length;
+
+        if (allBots.length === 0) {
+          grid.classList.add('hidden');
+          noBots.classList.remove('hidden');
+          return;
+        }
+        grid.classList.remove('hidden');
+        noBots.classList.add('hidden');
+
+        grid.innerHTML = allBots
+          .map(
+            (bot) => `
                 <div onclick="selectBot('${bot.id}')" class="cursor-pointer bg-surface hover:bg-surface-light rounded-xl p-4 border transition ${currentBotId === bot.id ? 'border-primary shadow-lg shadow-primary/10' : 'border-surface-light/20 hover:border-surface-light'}">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-gradient-to-br from-primary/30 to-secondary/30 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -726,241 +1422,300 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `,
+          )
+          .join('');
+      }
+
+      // ---- Select Bot ----
+      async function selectBot(botId) {
+        currentBotId = botId;
+        renderBotsList();
+        document.getElementById('bot-editor').classList.remove('hidden');
+
+        try {
+          const res = await fetch(`${API_URL}/${botId}`, {
+            headers: authHeaders(),
+          });
+          const bot = await res.json();
+
+          // Populate Step 1
+          document.getElementById('bot-name').value = bot.name || '';
+          document.getElementById('bot-desc').value = bot.description || '';
+          document.getElementById('bot-type').value = bot.bot_type || 'hybrid';
+          document.getElementById('bot-temp').value = bot.temperature ?? 0.7;
+          document.getElementById('temp-value').textContent =
+            bot.temperature ?? 0.7;
+
+          // Populate Step 2
+          document.getElementById('system-prompt').value =
+            bot.system_prompt || '';
+          document.getElementById('preview-name').textContent =
+            bot.name || 'البوت';
+
+          // Stats
+          const stats = bot.crm_stats || {};
+          const integrations = bot.integrations || [];
+          document.getElementById('stat-contacts').textContent =
+            stats.total_contacts || 0;
+          document.getElementById('stat-platforms').textContent =
+            integrations.length;
+          document.getElementById('bot-stats-card').classList.remove('hidden');
+          document.getElementById('analytics-contacts').textContent =
+            stats.total_contacts || 0;
+          document.getElementById('analytics-platforms').textContent =
+            integrations.length;
+
+          // Mark connected platforms
+          connectedPlatforms = {};
+          document
+            .querySelectorAll('.platform-card')
+            .forEach((c) => c.classList.remove('connected'));
+          integrations.forEach((intg) => {
+            connectedPlatforms[intg.platform] = intg;
+            const card = document.getElementById(`platform-${intg.platform}`);
+            if (card) card.classList.add('connected');
+          });
+
+          // Webhook URL
+          const base = window.location.origin;
+          document.getElementById('webhook-url').textContent =
+            `${base}/webhook/${botId}/web`;
+
+          // Bot Summary
+          renderSummary(bot);
+
+          // Load CRM
+          loadCRM();
+
+          goToStep(1);
+        } catch (e) {
+          showToast('فشل في تحميل بيانات البوت', 'error');
+        }
+      }
+
+      // ---- Create Bot ----
+      function openNewBotModal() {
+        document.getElementById('new-bot-modal').classList.remove('hidden');
+      }
+      function closeNewBotModal() {
+        document.getElementById('new-bot-modal').classList.add('hidden');
+      }
+
+      async function createNewBot() {
+        const name = document.getElementById('modal-bot-name').value.trim();
+        const prompt = document
+          .getElementById('modal-system-prompt')
+          .value.trim();
+        if (!name || !prompt) {
+          showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
+          return;
         }
 
-        // ---- Select Bot ----
-        async function selectBot(botId) {
-            currentBotId = botId;
-            renderBotsList();
-            document.getElementById('bot-editor').classList.remove('hidden');
-            
-            try {
-                const res = await fetch(`${API_URL}/${botId}`, { headers: authHeaders() });
-                const bot = await res.json();
-                
-                // Populate Step 1
-                document.getElementById('bot-name').value = bot.name || '';
-                document.getElementById('bot-desc').value = bot.description || '';
-                document.getElementById('bot-type').value = bot.bot_type || 'hybrid';
-                document.getElementById('bot-temp').value = bot.temperature ?? 0.7;
-                document.getElementById('temp-value').textContent = bot.temperature ?? 0.7;
-                
-                // Populate Step 2
-                document.getElementById('system-prompt').value = bot.system_prompt || '';
-                document.getElementById('preview-name').textContent = bot.name || 'البوت';
-                
-                // Stats
-                const stats = bot.crm_stats || {};
-                const integrations = bot.integrations || [];
-                document.getElementById('stat-contacts').textContent = stats.total_contacts || 0;
-                document.getElementById('stat-platforms').textContent = integrations.length;
-                document.getElementById('bot-stats-card').classList.remove('hidden');
-                document.getElementById('analytics-contacts').textContent = stats.total_contacts || 0;
-                document.getElementById('analytics-platforms').textContent = integrations.length;
-                
-                // Mark connected platforms
-                connectedPlatforms = {};
-                document.querySelectorAll('.platform-card').forEach(c => c.classList.remove('connected'));
-                integrations.forEach(intg => {
-                    connectedPlatforms[intg.platform] = intg;
-                    const card = document.getElementById(`platform-${intg.platform}`);
-                    if (card) card.classList.add('connected');
-                });
-                
-                // Webhook URL
-                const base = window.location.origin;
-                document.getElementById('webhook-url').textContent = `${base}/webhook/${botId}/web`;
-                
-                // Bot Summary
-                renderSummary(bot);
-                
-                // Load CRM
-                loadCRM();
-                
-                goToStep(1);
-            } catch(e) {
-                showToast('فشل في تحميل بيانات البوت', 'error');
-            }
+        try {
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+              name,
+              system_prompt: prompt,
+              bot_type: 'hybrid',
+              description: '',
+              temperature: 0.7,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast('تم إنشاء البوت بنجاح! 🎉');
+            closeNewBotModal();
+            document.getElementById('modal-bot-name').value = '';
+            document.getElementById('modal-system-prompt').value = '';
+            await loadBots();
+            selectBot(data.id);
+          } else {
+            showToast(data.detail || 'فشل في إنشاء البوت', 'error');
+          }
+        } catch (e) {
+          showToast('خطأ في الاتصال بالسيرفر', 'error');
+        }
+      }
+
+      // ---- Save Bot ----
+      async function saveBotSettings() {
+        if (!currentBotId) return;
+        const payload = {
+          name: document.getElementById('bot-name').value.trim(),
+          description: document.getElementById('bot-desc').value.trim(),
+          bot_type: document.getElementById('bot-type').value,
+          system_prompt: document.getElementById('system-prompt').value.trim(),
+          temperature: parseFloat(document.getElementById('bot-temp').value),
+        };
+        if (!payload.name) {
+          showToast('اسم البوت مطلوب', 'error');
+          return;
         }
 
-        // ---- Create Bot ----
-        function openNewBotModal() { document.getElementById('new-bot-modal').classList.remove('hidden'); }
-        function closeNewBotModal() { document.getElementById('new-bot-modal').classList.add('hidden'); }
-        
-        async function createNewBot() {
-            const name = document.getElementById('modal-bot-name').value.trim();
-            const prompt = document.getElementById('modal-system-prompt').value.trim();
-            if (!name || !prompt) { showToast('يرجى ملء جميع الحقول المطلوبة', 'error'); return; }
-            
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: authHeaders(),
-                    body: JSON.stringify({ name, system_prompt: prompt, bot_type: 'hybrid', description: '', temperature: 0.7 })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast('تم إنشاء البوت بنجاح! 🎉');
-                    closeNewBotModal();
-                    document.getElementById('modal-bot-name').value = '';
-                    document.getElementById('modal-system-prompt').value = '';
-                    await loadBots();
-                    selectBot(data.id);
-                } else {
-                    showToast(data.detail || 'فشل في إنشاء البوت', 'error');
-                }
-            } catch(e) {
-                showToast('خطأ في الاتصال بالسيرفر', 'error');
-            }
+        try {
+          const res = await fetch(`${API_URL}/${currentBotId}`, {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) {
+            showToast('تم حفظ التغييرات بنجاح! ✅');
+            loadBots();
+          } else {
+            const data = await res.json();
+            showToast(data.detail || 'فشل في الحفظ', 'error');
+          }
+        } catch (e) {
+          showToast('خطأ في الاتصال', 'error');
+        }
+      }
+
+      // ---- Delete Bot ----
+      async function deleteBotConfirm() {
+        if (!currentBotId) return;
+        if (
+          !confirm(
+            'هل أنت متأكد من حذف هذا البوت؟ لا يمكن التراجع عن هذا الإجراء.',
+          )
+        )
+          return;
+
+        try {
+          const res = await fetch(`${API_URL}/${currentBotId}`, {
+            method: 'DELETE',
+            headers: authHeaders(),
+          });
+          if (res.ok) {
+            showToast('تم حذف البوت');
+            currentBotId = null;
+            document.getElementById('bot-editor').classList.add('hidden');
+            document.getElementById('bot-stats-card').classList.add('hidden');
+            loadBots();
+          }
+        } catch (e) {
+          showToast('فشل في حذف البوت', 'error');
+        }
+      }
+
+      // ---- Train Bot (RAG) ----
+      async function trainBot() {
+        if (!currentBotId) {
+          showToast('يرجى اختيار بوت أولاً', 'error');
+          return;
+        }
+        const urls = [...document.querySelectorAll('.train-url')]
+          .map((i) => i.value.trim())
+          .filter((u) => u);
+        if (urls.length === 0) {
+          showToast('أضف رابط واحد على الأقل', 'error');
+          return;
         }
 
-        // ---- Save Bot ----
-        async function saveBotSettings() {
-            if (!currentBotId) return;
-            const payload = {
-                name: document.getElementById('bot-name').value.trim(),
-                description: document.getElementById('bot-desc').value.trim(),
-                bot_type: document.getElementById('bot-type').value,
-                system_prompt: document.getElementById('system-prompt').value.trim(),
-                temperature: parseFloat(document.getElementById('bot-temp').value)
-            };
-            if (!payload.name) { showToast('اسم البوت مطلوب', 'error'); return; }
-            
-            try {
-                const res = await fetch(`${API_URL}/${currentBotId}`, {
-                    method: 'PUT',
-                    headers: authHeaders(),
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    showToast('تم حفظ التغييرات بنجاح! ✅');
-                    loadBots();
-                } else {
-                    const data = await res.json();
-                    showToast(data.detail || 'فشل في الحفظ', 'error');
-                }
-            } catch(e) {
-                showToast('خطأ في الاتصال', 'error');
-            }
-        }
+        document.getElementById('train-btn').disabled = true;
+        document.getElementById('train-progress').classList.remove('hidden');
 
-        // ---- Delete Bot ----
-        async function deleteBotConfirm() {
-            if (!currentBotId) return;
-            if (!confirm('هل أنت متأكد من حذف هذا البوت؟ لا يمكن التراجع عن هذا الإجراء.')) return;
-            
-            try {
-                const res = await fetch(`${API_URL}/${currentBotId}`, {
-                    method: 'DELETE',
-                    headers: authHeaders()
-                });
-                if (res.ok) {
-                    showToast('تم حذف البوت');
-                    currentBotId = null;
-                    document.getElementById('bot-editor').classList.add('hidden');
-                    document.getElementById('bot-stats-card').classList.add('hidden');
-                    loadBots();
-                }
-            } catch(e) {
-                showToast('فشل في حذف البوت', 'error');
-            }
+        try {
+          const res = await fetch(`${API_URL}/${currentBotId}/train`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ urls }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast(data.message || 'تم التدريب بنجاح! 🎓');
+          } else {
+            showToast(data.detail || 'فشل في التدريب', 'error');
+          }
+        } catch (e) {
+          showToast('خطأ في التدريب', 'error');
+        } finally {
+          document.getElementById('train-btn').disabled = false;
+          document.getElementById('train-progress').classList.add('hidden');
         }
+      }
 
-        // ---- Train Bot (RAG) ----
-        async function trainBot() {
-            if (!currentBotId) { showToast('يرجى اختيار بوت أولاً', 'error'); return; }
-            const urls = [...document.querySelectorAll('.train-url')].map(i => i.value.trim()).filter(u => u);
-            if (urls.length === 0) { showToast('أضف رابط واحد على الأقل', 'error'); return; }
-            
-            document.getElementById('train-btn').disabled = true;
-            document.getElementById('train-progress').classList.remove('hidden');
-            
-            try {
-                const res = await fetch(`${API_URL}/${currentBotId}/train`, {
-                    method: 'POST',
-                    headers: authHeaders(),
-                    body: JSON.stringify({ urls })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(data.message || 'تم التدريب بنجاح! 🎓');
-                } else {
-                    showToast(data.detail || 'فشل في التدريب', 'error');
-                }
-            } catch(e) {
-                showToast('خطأ في التدريب', 'error');
-            } finally {
-                document.getElementById('train-btn').disabled = false;
-                document.getElementById('train-progress').classList.add('hidden');
-            }
-        }
-
-        function addUrlRow() {
-            const container = document.getElementById('training-urls');
-            const div = document.createElement('div');
-            div.className = 'flex gap-2 url-row';
-            div.innerHTML = `
+      function addUrlRow() {
+        const container = document.getElementById('training-urls');
+        const div = document.createElement('div');
+        div.className = 'flex gap-2 url-row';
+        div.innerHTML = `
                 <input type="url" placeholder="https://example.com" class="train-url flex-1 bg-dark border border-surface-light rounded-xl px-4 py-2 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition">
                 <button onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-300 px-2"><i class="fas fa-trash"></i></button>
             `;
-            container.appendChild(div);
-        }
+        container.appendChild(div);
+      }
 
-        // ---- Quick Replies ----
-        function addQuickReply() {
-            const input = document.getElementById('new-quick-reply');
-            const text = input.value.trim();
-            if (!text) return;
-            quickReplies.push(text);
-            input.value = '';
-            renderQuickReplies();
-        }
+      // ---- Quick Replies ----
+      function addQuickReply() {
+        const input = document.getElementById('new-quick-reply');
+        const text = input.value.trim();
+        if (!text) return;
+        quickReplies.push(text);
+        input.value = '';
+        renderQuickReplies();
+      }
 
-        function removeQuickReply(index) {
-            quickReplies.splice(index, 1);
-            renderQuickReplies();
-        }
+      function removeQuickReply(index) {
+        quickReplies.splice(index, 1);
+        renderQuickReplies();
+      }
 
-        function renderQuickReplies() {
-            const container = document.getElementById('quick-replies');
-            container.innerHTML = quickReplies.map((reply, i) => `
+      function renderQuickReplies() {
+        const container = document.getElementById('quick-replies');
+        container.innerHTML = quickReplies
+          .map(
+            (reply, i) => `
                 <div class="flex items-center gap-2 bg-dark rounded-lg px-3 py-2">
                     <span class="flex-1 text-sm text-gray-200">${escapeHtml(reply)}</span>
                     <button onclick="removeQuickReply(${i})" class="text-red-400 hover:text-red-300 text-xs"><i class="fas fa-times"></i></button>
                 </div>
-            `).join('');
-            
-            // Update preview chips
-            const chips = document.getElementById('quick-reply-chips');
-            chips.innerHTML = quickReplies.map(r => `
+            `,
+          )
+          .join('');
+
+        // Update preview chips
+        const chips = document.getElementById('quick-reply-chips');
+        chips.innerHTML = quickReplies
+          .map(
+            (r) => `
                 <button onclick="document.getElementById('preview-input').value='${escapeHtml(r)}';testChat()" class="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs hover:bg-primary/30 transition">${escapeHtml(r)}</button>
-            `).join('');
-        }
+            `,
+          )
+          .join('');
+      }
 
-        // ---- Q&A ----
-        function addQA() {
-            const q = document.getElementById('qa-question').value.trim();
-            const a = document.getElementById('qa-answer').value.trim();
-            if (!q || !a) { showToast('يرجى كتابة السؤال والجواب', 'error'); return; }
-            qaList.push({ question: q, answer: a });
-            document.getElementById('qa-question').value = '';
-            document.getElementById('qa-answer').value = '';
-            renderQAList();
+      // ---- Q&A ----
+      function addQA() {
+        const q = document.getElementById('qa-question').value.trim();
+        const a = document.getElementById('qa-answer').value.trim();
+        if (!q || !a) {
+          showToast('يرجى كتابة السؤال والجواب', 'error');
+          return;
         }
+        qaList.push({ question: q, answer: a });
+        document.getElementById('qa-question').value = '';
+        document.getElementById('qa-answer').value = '';
+        renderQAList();
+      }
 
-        function removeQA(index) {
-            qaList.splice(index, 1);
-            renderQAList();
+      function removeQA(index) {
+        qaList.splice(index, 1);
+        renderQAList();
+      }
+
+      function renderQAList() {
+        const container = document.getElementById('qa-list');
+        if (qaList.length === 0) {
+          container.innerHTML =
+            '<p class="text-sm text-gray-500 text-center py-4">لم تتم إضافة أسئلة بعد</p>';
+          return;
         }
-
-        function renderQAList() {
-            const container = document.getElementById('qa-list');
-            if (qaList.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">لم تتم إضافة أسئلة بعد</p>';
-                return;
-            }
-            container.innerHTML = qaList.map((item, i) => `
+        container.innerHTML = qaList
+          .map(
+            (item, i) => `
                 <div class="bg-dark rounded-xl p-3 border border-surface-light/20">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
@@ -970,56 +1725,60 @@
                         <button onclick="removeQA(${i})" class="text-red-400 hover:text-red-300 text-xs mr-2"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-            `).join('');
-        }
+            `,
+          )
+          .join('');
+      }
 
-        // ---- Chat Preview ----
-        function testChat() {
-            const input = document.getElementById('preview-input');
-            const msg = input.value.trim();
-            if (!msg) return;
-            input.value = '';
-            
-            const container = document.getElementById('chat-preview');
-            
-            // User bubble
-            container.innerHTML += `<div class="flex justify-start"><div class="chat-bubble-user p-3"><p class="text-sm text-white">${escapeHtml(msg)}</p></div></div>`;
-            
-            // Simulate Bot response
-            setTimeout(() => {
-                // Check Q&A first
-                const match = qaList.find(q => msg.includes(q.question) || q.question.includes(msg));
-                let reply;
-                if (match) {
-                    reply = match.answer;
-                } else {
-                    const prompts = [
-                        'شكرًا لتواصلك! كيف يمكنني مساعدتك؟',
-                        'هذا سؤال رائع! دعني أساعدك.',
-                        'أفهم ما تحتاجه. إليك ما يمكنني تقديمه...',
-                        'مرحبًا! أنا هنا لمساعدتك في أي وقت.',
-                    ];
-                    reply = prompts[Math.floor(Math.random() * prompts.length)];
-                }
-                container.innerHTML += `<div class="flex justify-end"><div class="chat-bubble-bot p-3"><p class="text-sm text-gray-200">${escapeHtml(reply)}</p></div></div>`;
-                container.scrollTop = container.scrollHeight;
-            }, 600);
-            
-            container.scrollTop = container.scrollHeight;
-        }
+      // ---- Chat Preview ----
+      function testChat() {
+        const input = document.getElementById('preview-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        input.value = '';
 
-        // ---- Platform Setup ----
-        function showPlatformSetup(platform) {
-            const setup = document.getElementById('platform-setup');
-            const title = document.getElementById('platform-setup-title');
-            const body = document.getElementById('platform-setup-body');
-            setup.classList.remove('hidden');
-            
-            const configs = {
-                telegram: {
-                    icon: '<i class="fab fa-telegram text-[#229ED9]"></i>',
-                    title: 'ربط تيليجرام',
-                    body: `
+        const container = document.getElementById('chat-preview');
+
+        // User bubble
+        container.innerHTML += `<div class="flex justify-start"><div class="chat-bubble-user p-3"><p class="text-sm text-white">${escapeHtml(msg)}</p></div></div>`;
+
+        // Simulate Bot response
+        setTimeout(() => {
+          // Check Q&A first
+          const match = qaList.find(
+            (q) => msg.includes(q.question) || q.question.includes(msg),
+          );
+          let reply;
+          if (match) {
+            reply = match.answer;
+          } else {
+            const prompts = [
+              'شكرًا لتواصلك! كيف يمكنني مساعدتك؟',
+              'هذا سؤال رائع! دعني أساعدك.',
+              'أفهم ما تحتاجه. إليك ما يمكنني تقديمه...',
+              'مرحبًا! أنا هنا لمساعدتك في أي وقت.',
+            ];
+            reply = prompts[Math.floor(Math.random() * prompts.length)];
+          }
+          container.innerHTML += `<div class="flex justify-end"><div class="chat-bubble-bot p-3"><p class="text-sm text-gray-200">${escapeHtml(reply)}</p></div></div>`;
+          container.scrollTop = container.scrollHeight;
+        }, 600);
+
+        container.scrollTop = container.scrollHeight;
+      }
+
+      // ---- Platform Setup ----
+      function showPlatformSetup(platform) {
+        const setup = document.getElementById('platform-setup');
+        const title = document.getElementById('platform-setup-title');
+        const body = document.getElementById('platform-setup-body');
+        setup.classList.remove('hidden');
+
+        const configs = {
+          telegram: {
+            icon: '<i class="fab fa-telegram text-[#229ED9]"></i>',
+            title: 'ربط تيليجرام',
+            body: `
                         <div class="space-y-3">
                             <p class="text-sm text-gray-400">1. افتح <a href="https://t.me/BotFather" target="_blank" class="text-primary hover:underline">@BotFather</a> على تيليجرام</p>
                             <p class="text-sm text-gray-400">2. أنشئ بوت جديد بالأمر <code class="bg-dark px-1 rounded">/newbot</code></p>
@@ -1029,12 +1788,12 @@
                                 <i class="fab fa-telegram ml-2"></i> ربط البوت
                             </button>
                         </div>
-                    `
-                },
-                web: {
-                    icon: '<i class="fas fa-globe text-primary"></i>',
-                    title: 'ويدجت الموقع',
-                    body: `
+                    `,
+          },
+          web: {
+            icon: '<i class="fas fa-globe text-primary"></i>',
+            title: 'ويدجت الموقع',
+            body: `
                         <div class="space-y-3">
                             <p class="text-sm text-gray-400">انسخ الكود التالي وألصقه في موقعك قبل وسم <code class="bg-dark px-1 rounded">&lt;/body&gt;</code>:</p>
                             <div class="bg-dark rounded-xl p-4 border border-surface-light/20">
@@ -1047,12 +1806,12 @@
                                 <i class="fas fa-check ml-2"></i> تأكيد التفعيل
                             </button>
                         </div>
-                    `
-                },
-                whatsapp: {
-                    icon: '<i class="fab fa-whatsapp text-green-500"></i>',
-                    title: 'ربط واتساب',
-                    body: `
+                    `,
+          },
+          whatsapp: {
+            icon: '<i class="fab fa-whatsapp text-green-500"></i>',
+            title: 'ربط واتساب',
+            body: `
                         <div class="space-y-3">
                             <p class="text-sm text-gray-400">أدخل بيانات WhatsApp Business API:</p>
                             <input id="whatsapp-token" type="text" placeholder="Access Token" dir="ltr" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition font-mono">
@@ -1061,12 +1820,12 @@
                                 <i class="fab fa-whatsapp ml-2"></i> ربط واتساب
                             </button>
                         </div>
-                    `
-                },
-                facebook: {
-                    icon: '<i class="fab fa-facebook-messenger text-[#1877F2]"></i>',
-                    title: 'ربط فيسبوك ماسنجر',
-                    body: `
+                    `,
+          },
+          facebook: {
+            icon: '<i class="fab fa-facebook-messenger text-[#1877F2]"></i>',
+            title: 'ربط فيسبوك ماسنجر',
+            body: `
                         <div class="space-y-3">
                             <p class="text-sm text-gray-400">أدخل Page Access Token من Facebook Developer Console:</p>
                             <input id="facebook-token" type="text" placeholder="Page Access Token" dir="ltr" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition font-mono">
@@ -1074,12 +1833,12 @@
                                 <i class="fab fa-facebook-messenger ml-2"></i> ربط ماسنجر
                             </button>
                         </div>
-                    `
-                },
-                instagram: {
-                    icon: '<i class="fab fa-instagram text-pink-400"></i>',
-                    title: 'ربط إنستاجرام',
-                    body: `
+                    `,
+          },
+          instagram: {
+            icon: '<i class="fab fa-instagram text-pink-400"></i>',
+            title: 'ربط إنستاجرام',
+            body: `
                         <div class="space-y-3">
                             <p class="text-sm text-gray-400">أدخل Instagram Business Account Token:</p>
                             <input id="instagram-token" type="text" placeholder="Instagram Access Token" dir="ltr" class="w-full bg-dark border border-surface-light rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:border-primary outline-none transition font-mono">
@@ -1087,12 +1846,12 @@
                                 <i class="fab fa-instagram ml-2"></i> ربط إنستاجرام
                             </button>
                         </div>
-                    `
-                },
-                api: {
-                    icon: '<i class="fas fa-code text-accent"></i>',
-                    title: 'API مخصص',
-                    body: `
+                    `,
+          },
+          api: {
+            icon: '<i class="fas fa-code text-accent"></i>',
+            title: 'API مخصص',
+            body: `
                         <div class="space-y-3">
                             <p class="text-sm text-gray-400">استخدم Webhook URL التالي لإرسال الرسائل برمجياً:</p>
                             <div class="bg-dark rounded-xl p-3">
@@ -1110,113 +1869,157 @@
                                 <i class="fas fa-check ml-2"></i> تفعيل API
                             </button>
                         </div>
-                    `
-                }
+                    `,
+          },
+        };
+
+        const config = configs[platform];
+        title.innerHTML = `${config.icon} ${config.title}`;
+        body.innerHTML = config.body;
+
+        // Scroll to setup
+        setup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function closePlatformSetup() {
+        document.getElementById('platform-setup').classList.add('hidden');
+      }
+
+      async function connectPlatform(platform) {
+        if (!currentBotId) {
+          showToast('يرجى اختيار بوت أولاً', 'error');
+          return;
+        }
+
+        let accessToken = '';
+        let webhookUrl = '';
+
+        if (platform === 'telegram') {
+          accessToken = document
+            .getElementById('telegram-token')
+            ?.value?.trim();
+          if (!accessToken) {
+            showToast('يرجى إدخال التوكن', 'error');
+            return;
+          }
+          webhookUrl = `${window.location.origin}/webhook/${currentBotId}/telegram`;
+        } else if (platform === 'web') {
+          accessToken = 'web-widget';
+          webhookUrl = `${window.location.origin}/webhook/${currentBotId}/web`;
+        } else if (platform === 'whatsapp') {
+          accessToken = document
+            .getElementById('whatsapp-token')
+            ?.value?.trim();
+          if (!accessToken) {
+            showToast('يرجى إدخال التوكن', 'error');
+            return;
+          }
+          webhookUrl = `${window.location.origin}/webhook/${currentBotId}/whatsapp`;
+        } else if (platform === 'facebook') {
+          accessToken = document
+            .getElementById('facebook-token')
+            ?.value?.trim();
+          if (!accessToken) {
+            showToast('يرجى إدخال التوكن', 'error');
+            return;
+          }
+          webhookUrl = `${window.location.origin}/webhook/${currentBotId}/facebook`;
+        } else if (platform === 'instagram') {
+          accessToken = document
+            .getElementById('instagram-token')
+            ?.value?.trim();
+          if (!accessToken) {
+            showToast('يرجى إدخال التوكن', 'error');
+            return;
+          }
+          webhookUrl = `${window.location.origin}/webhook/${currentBotId}/instagram`;
+        } else if (platform === 'api') {
+          accessToken = 'api-integration';
+          webhookUrl = `${window.location.origin}/webhook/${currentBotId}/web`;
+        }
+
+        try {
+          const res = await fetch(`${API_URL}/${currentBotId}/integrations`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({
+              platform,
+              access_token: accessToken,
+              webhook_url: webhookUrl,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            showToast(`تم ربط ${getPlatformName(platform)} بنجاح! 🎉`);
+            const card = document.getElementById(`platform-${platform}`);
+            if (card) card.classList.add('connected');
+            connectedPlatforms[platform] = {
+              platform,
+              access_token: accessToken,
             };
+            closePlatformSetup();
 
-            const config = configs[platform];
-            title.innerHTML = `${config.icon} ${config.title}`;
-            body.innerHTML = config.body;
-            
-            // Scroll to setup
-            setup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Update stats
+            const count = Object.keys(connectedPlatforms).length;
+            document.getElementById('stat-platforms').textContent = count;
+            document.getElementById('analytics-platforms').textContent = count;
+          } else {
+            showToast(data.detail || 'فشل في الربط', 'error');
+          }
+        } catch (e) {
+          showToast('خطأ في الاتصال', 'error');
         }
+      }
 
-        function closePlatformSetup() {
-            document.getElementById('platform-setup').classList.add('hidden');
-        }
+      function getPlatformName(p) {
+        const names = {
+          telegram: 'تيليجرام',
+          web: 'ويدجت الموقع',
+          whatsapp: 'واتساب',
+          facebook: 'فيسبوك',
+          instagram: 'إنستاجرام',
+          api: 'API',
+        };
+        return names[p] || p;
+      }
 
-        async function connectPlatform(platform) {
-            if (!currentBotId) { showToast('يرجى اختيار بوت أولاً', 'error'); return; }
-            
-            let accessToken = '';
-            let webhookUrl = '';
-            
-            if (platform === 'telegram') {
-                accessToken = document.getElementById('telegram-token')?.value?.trim();
-                if (!accessToken) { showToast('يرجى إدخال التوكن', 'error'); return; }
-                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/telegram`;
-            } else if (platform === 'web') {
-                accessToken = 'web-widget';
-                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/web`;
-            } else if (platform === 'whatsapp') {
-                accessToken = document.getElementById('whatsapp-token')?.value?.trim();
-                if (!accessToken) { showToast('يرجى إدخال التوكن', 'error'); return; }
-                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/whatsapp`;
-            } else if (platform === 'facebook') {
-                accessToken = document.getElementById('facebook-token')?.value?.trim();
-                if (!accessToken) { showToast('يرجى إدخال التوكن', 'error'); return; }
-                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/facebook`;
-            } else if (platform === 'instagram') {
-                accessToken = document.getElementById('instagram-token')?.value?.trim();
-                if (!accessToken) { showToast('يرجى إدخال التوكن', 'error'); return; }
-                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/instagram`;
-            } else if (platform === 'api') {
-                accessToken = 'api-integration';
-                webhookUrl = `${window.location.origin}/webhook/${currentBotId}/web`;
-            }
-            
-            try {
-                const res = await fetch(`${API_URL}/${currentBotId}/integrations`, {
-                    method: 'POST',
-                    headers: authHeaders(),
-                    body: JSON.stringify({ platform, access_token: accessToken, webhook_url: webhookUrl })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(`تم ربط ${getPlatformName(platform)} بنجاح! 🎉`);
-                    const card = document.getElementById(`platform-${platform}`);
-                    if (card) card.classList.add('connected');
-                    connectedPlatforms[platform] = { platform, access_token: accessToken };
-                    closePlatformSetup();
-                    
-                    // Update stats
-                    const count = Object.keys(connectedPlatforms).length;
-                    document.getElementById('stat-platforms').textContent = count;
-                    document.getElementById('analytics-platforms').textContent = count;
-                } else {
-                    showToast(data.detail || 'فشل في الربط', 'error');
-                }
-            } catch(e) {
-                showToast('خطأ في الاتصال', 'error');
-            }
-        }
+      // ---- Copy Functions ----
+      function copyWebhook() {
+        const text = document.getElementById('webhook-url').textContent;
+        navigator.clipboard.writeText(text);
+        showToast('تم نسخ الرابط');
+      }
 
-        function getPlatformName(p) {
-            const names = { telegram: 'تيليجرام', web: 'ويدجت الموقع', whatsapp: 'واتساب', facebook: 'فيسبوك', instagram: 'إنستاجرام', api: 'API' };
-            return names[p] || p;
+      function copyWidgetCode() {
+        const code = document.getElementById('widget-code')?.textContent;
+        if (code) {
+          navigator.clipboard.writeText(code);
+          showToast('تم نسخ الكود');
         }
+      }
 
-        // ---- Copy Functions ----
-        function copyWebhook() {
-            const text = document.getElementById('webhook-url').textContent;
-            navigator.clipboard.writeText(text);
-            showToast('تم نسخ الرابط');
-        }
-        
-        function copyWidgetCode() {
-            const code = document.getElementById('widget-code')?.textContent;
-            if (code) { navigator.clipboard.writeText(code); showToast('تم نسخ الكود'); }
-        }
+      // ---- CRM ----
+      async function loadCRM() {
+        if (!currentBotId) return;
+        try {
+          const res = await fetch(`${API_URL}/${currentBotId}/crm`, {
+            headers: authHeaders(),
+          });
+          const contacts = await res.json();
+          const tbody = document.getElementById('crm-table');
 
-        // ---- CRM ----
-        async function loadCRM() {
-            if (!currentBotId) return;
-            try {
-                const res = await fetch(`${API_URL}/${currentBotId}/crm`, { headers: authHeaders() });
-                const contacts = await res.json();
-                const tbody = document.getElementById('crm-table');
-                
-                if (!contacts || contacts.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">لا توجد جهات اتصال بعد</td></tr>';
-                    document.getElementById('analytics-interactions').textContent = '0';
-                    return;
-                }
-                
-                let totalInteractions = 0;
-                tbody.innerHTML = contacts.map(c => {
-                    totalInteractions += (c.interactions_count || 0);
-                    return `
+          if (!contacts || contacts.length === 0) {
+            tbody.innerHTML =
+              '<tr><td colspan="5" class="text-center py-8 text-gray-500">لا توجد جهات اتصال بعد</td></tr>';
+            document.getElementById('analytics-interactions').textContent = '0';
+            return;
+          }
+
+          let totalInteractions = 0;
+          tbody.innerHTML = contacts
+            .map((c) => {
+              totalInteractions += c.interactions_count || 0;
+              return `
                         <tr class="border-b border-surface-light/10 hover:bg-dark/50">
                             <td class="py-2 px-3 text-gray-200">${escapeHtml(c.name || '—')}</td>
                             <td class="py-2 px-3 text-gray-400" dir="ltr">${escapeHtml(c.phone || '—')}</td>
@@ -1225,22 +2028,32 @@
                             <td class="py-2 px-3 text-gray-500 text-xs">${c.last_interaction ? new Date(c.last_interaction).toLocaleDateString('ar') : '—'}</td>
                         </tr>
                     `;
-                }).join('');
-                
-                document.getElementById('analytics-interactions').textContent = totalInteractions;
-                document.getElementById('analytics-contacts').textContent = contacts.length;
-            } catch(e) {
-                console.error('CRM load error:', e);
-            }
-        }
+            })
+            .join('');
 
-        // ---- Bot Summary ----
-        function renderSummary(bot) {
-            const summary = document.getElementById('bot-summary');
-            const integrations = bot.integrations || [];
-            const platformBadges = integrations.map(i => `<span class="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs">${getPlatformName(i.platform)}</span>`).join(' ') || '<span class="text-gray-500 text-sm">لم يتم ربط أي منصة</span>';
-            
-            summary.innerHTML = `
+          document.getElementById('analytics-interactions').textContent =
+            totalInteractions;
+          document.getElementById('analytics-contacts').textContent =
+            contacts.length;
+        } catch (e) {
+          console.error('CRM load error:', e);
+        }
+      }
+
+      // ---- Bot Summary ----
+      function renderSummary(bot) {
+        const summary = document.getElementById('bot-summary');
+        const integrations = bot.integrations || [];
+        const platformBadges =
+          integrations
+            .map(
+              (i) =>
+                `<span class="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs">${getPlatformName(i.platform)}</span>`,
+            )
+            .join(' ') ||
+          '<span class="text-gray-500 text-sm">لم يتم ربط أي منصة</span>';
+
+        summary.innerHTML = `
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="bg-dark rounded-xl p-3">
                         <span class="text-xs text-gray-400">الاسم</span>
@@ -1264,64 +2077,362 @@
                     <p class="text-sm text-gray-200 mt-1">${escapeHtml((bot.system_prompt || '').substring(0, 200))}${(bot.system_prompt || '').length > 200 ? '...' : ''}</p>
                 </div>
             `;
-        }
+      }
 
-        // ---- Stepper Navigation ----
-        function goToStep(step) {
-            currentStep = step;
-            
-            // Update stepper
-            document.querySelectorAll('.step-item').forEach((el, i) => {
-                el.classList.remove('active', 'completed');
-                if (i + 1 < step) el.classList.add('completed');
-                if (i + 1 === step) el.classList.add('active');
-            });
-            
-            // Show/hide steps
-            document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
-            document.getElementById(`step-${step}`).classList.add('active');
-            
-            // Update nav buttons
-            document.getElementById('prev-btn').classList.toggle('hidden', step === 1);
-            document.getElementById('next-btn').textContent = step === 5 ? '' : '';
-            document.getElementById('next-btn').innerHTML = step === 5 
-                ? '<i class="fas fa-save ml-2"></i> حفظ' 
-                : 'التالي <i class="fas fa-arrow-left"></i>';
-            
-            // Update preview name
-            const nameVal = document.getElementById('bot-name').value;
-            if (nameVal) document.getElementById('preview-name').textContent = nameVal;
-            
-            // Update welcome preview
-            const welcomeVal = document.getElementById('welcome-msg').value;
-            if (welcomeVal) document.getElementById('preview-welcome').textContent = welcomeVal;
+      // ---- Stepper Navigation ----
+      function goToStep(step) {
+        currentStep = step;
 
-            // Update widget code when on platforms step
-            if (step === 4 && currentBotId) {
-                const widgetCode = document.getElementById('widget-code');
-                if (widgetCode) {
-                    widgetCode.textContent = `<script src="${window.location.origin}/public/widget.js" data-bot-id="${currentBotId}"><\/script>`;
-                }
-            }
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function nextStep() {
-            if (currentStep === 5) { saveBotSettings(); return; }
-            if (currentStep < 5) goToStep(currentStep + 1);
-        }
-        function prevStep() {
-            if (currentStep > 1) goToStep(currentStep - 1);
-        }
-
-        // ---- Init ----
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!getAuthToken()) { window.location.href = '/login'; return; }
-            loadBots();
-            renderQAList();
+        // Update stepper
+        document.querySelectorAll('.step-item').forEach((el, i) => {
+          el.classList.remove('active', 'completed');
+          if (i + 1 < step) el.classList.add('completed');
+          if (i + 1 === step) el.classList.add('active');
         });
+
+        // Show/hide steps
+        document
+          .querySelectorAll('.wizard-step')
+          .forEach((el) => el.classList.remove('active'));
+        document.getElementById(`step-${step}`).classList.add('active');
+
+        // Update nav buttons
+        document
+          .getElementById('prev-btn')
+          .classList.toggle('hidden', step === 1);
+        document.getElementById('next-btn').textContent = step === 5 ? '' : '';
+        document.getElementById('next-btn').innerHTML =
+          step === 5
+            ? '<i class="fas fa-save ml-2"></i> حفظ'
+            : 'التالي <i class="fas fa-arrow-left"></i>';
+
+        // Update preview name
+        const nameVal = document.getElementById('bot-name').value;
+        if (nameVal)
+          document.getElementById('preview-name').textContent = nameVal;
+
+        // Update welcome preview
+        const welcomeVal = document.getElementById('welcome-msg').value;
+        if (welcomeVal)
+          document.getElementById('preview-welcome').textContent = welcomeVal;
+
+        // Update widget code when on platforms step
+        if (step === 4 && currentBotId) {
+          const widgetCode = document.getElementById('widget-code');
+          if (widgetCode) {
+            widgetCode.textContent = `<script src="${window.location.origin}/public/widget.js" data-bot-id="${currentBotId}"><\/script>`;
+          }
+        }
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function nextStep() {
+        if (currentStep === 5) {
+          saveBotSettings();
+          return;
+        }
+        if (currentStep < 5) goToStep(currentStep + 1);
+      }
+      function prevStep() {
+        if (currentStep > 1) goToStep(currentStep - 1);
+      }
+
+      // ---- Init ----
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!getAuthToken()) {
+          window.location.href = '/login';
+          return;
+        }
+        loadBots();
+        renderQAList();
+      });
     </script>
-</body>
+
+    <!-- ===== 3D Particle Network & Animations ===== -->
+    <script>
+    (function() {
+      'use strict';
+
+      // ---------- Three.js 3D Particle Network ----------
+      function initParticleNetwork() {
+        const canvas = document.getElementById('particleCanvas');
+        if (!canvas || typeof THREE === 'undefined') return;
+
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 50;
+
+        // Colors matching chatbot builder theme
+        const EMERALD = new THREE.Color(0x10B981);
+        const BLUE = new THREE.Color(0x3B82F6);
+        const PURPLE = new THREE.Color(0x8B5CF6);
+        const themeColors = [EMERALD, BLUE, PURPLE];
+
+        // Create particles
+        const PARTICLE_COUNT = 70;
+        const particleGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(PARTICLE_COUNT * 3);
+        const colors = new Float32Array(PARTICLE_COUNT * 3);
+        const velocities = [];
+        const SPREAD = 80;
+
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+          positions[i * 3]     = (Math.random() - 0.5) * SPREAD;
+          positions[i * 3 + 1] = (Math.random() - 0.5) * SPREAD;
+          positions[i * 3 + 2] = (Math.random() - 0.5) * SPREAD * 0.5;
+
+          const col = themeColors[Math.floor(Math.random() * themeColors.length)];
+          colors[i * 3]     = col.r;
+          colors[i * 3 + 1] = col.g;
+          colors[i * 3 + 2] = col.b;
+
+          velocities.push({
+            x: (Math.random() - 0.5) * 0.02,
+            y: (Math.random() - 0.5) * 0.02,
+            z: (Math.random() - 0.5) * 0.01
+          });
+        }
+
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        // Glow sprite texture
+        const spriteCanvas = document.createElement('canvas');
+        spriteCanvas.width = 64;
+        spriteCanvas.height = 64;
+        const ctx = spriteCanvas.getContext('2d');
+        const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        gradient.addColorStop(0, 'rgba(255,255,255,1)');
+        gradient.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 64, 64);
+        const spriteTexture = new THREE.CanvasTexture(spriteCanvas);
+
+        const particleMaterial = new THREE.PointsMaterial({
+          size: 1.2,
+          map: spriteTexture,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+
+        const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(particleSystem);
+
+        // Connection lines
+        const MAX_CONNECTIONS = 100;
+        const CONNECTION_DIST = 12;
+        const linePositions = new Float32Array(MAX_CONNECTIONS * 6);
+        const lineColors = new Float32Array(MAX_CONNECTIONS * 6);
+        const lineGeometry = new THREE.BufferGeometry();
+        lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        lineGeometry.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
+        lineGeometry.setDrawRange(0, 0);
+
+        const lineMaterial = new THREE.LineBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.25,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false
+        });
+        const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+        scene.add(lines);
+
+        // Central glowing ring
+        const ringGeometry = new THREE.TorusGeometry(8, 0.08, 16, 100);
+        const ringMaterial = new THREE.MeshBasicMaterial({ color: EMERALD, transparent: true, opacity: 0.2 });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        scene.add(ring);
+
+        // Second ring (tilted)
+        const ring2Geometry = new THREE.TorusGeometry(12, 0.05, 16, 100);
+        const ring2Material = new THREE.MeshBasicMaterial({ color: BLUE, transparent: true, opacity: 0.12 });
+        const ring2 = new THREE.Mesh(ring2Geometry, ring2Material);
+        ring2.rotation.x = Math.PI / 3;
+        ring2.rotation.y = Math.PI / 6;
+        scene.add(ring2);
+
+        // Central icosahedron wireframe
+        const coreGeometry = new THREE.IcosahedronGeometry(3, 1);
+        const coreMaterial = new THREE.MeshBasicMaterial({ color: PURPLE, wireframe: true, transparent: true, opacity: 0.15 });
+        const core = new THREE.Mesh(coreGeometry, coreMaterial);
+        scene.add(core);
+
+        // Mouse tracking for parallax
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+          mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+          mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        // Animation loop
+        function animate() {
+          requestAnimationFrame(animate);
+
+          const time = Date.now() * 0.001;
+
+          // Update particle positions
+          const pos = particleGeometry.attributes.position.array;
+          for (let i = 0; i < PARTICLE_COUNT; i++) {
+            pos[i * 3]     += velocities[i].x;
+            pos[i * 3 + 1] += velocities[i].y;
+            pos[i * 3 + 2] += velocities[i].z;
+
+            // Bounce within bounds
+            const halfSpread = SPREAD / 2;
+            if (Math.abs(pos[i * 3]) > halfSpread) velocities[i].x *= -1;
+            if (Math.abs(pos[i * 3 + 1]) > halfSpread) velocities[i].y *= -1;
+            if (Math.abs(pos[i * 3 + 2]) > halfSpread * 0.5) velocities[i].z *= -1;
+          }
+          particleGeometry.attributes.position.needsUpdate = true;
+
+          // Update connections
+          let lineIdx = 0;
+          for (let i = 0; i < PARTICLE_COUNT && lineIdx < MAX_CONNECTIONS; i++) {
+            for (let j = i + 1; j < PARTICLE_COUNT && lineIdx < MAX_CONNECTIONS; j++) {
+              const dx = pos[i * 3] - pos[j * 3];
+              const dy = pos[i * 3 + 1] - pos[j * 3 + 1];
+              const dz = pos[i * 3 + 2] - pos[j * 3 + 2];
+              const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+              if (dist < CONNECTION_DIST) {
+                const alpha = 1 - dist / CONNECTION_DIST;
+                const ci = lineIdx * 6;
+                linePositions[ci]     = pos[i * 3];
+                linePositions[ci + 1] = pos[i * 3 + 1];
+                linePositions[ci + 2] = pos[i * 3 + 2];
+                linePositions[ci + 3] = pos[j * 3];
+                linePositions[ci + 4] = pos[j * 3 + 1];
+                linePositions[ci + 5] = pos[j * 3 + 2];
+
+                lineColors[ci]     = EMERALD.r * alpha;
+                lineColors[ci + 1] = EMERALD.g * alpha;
+                lineColors[ci + 2] = EMERALD.b * alpha;
+                lineColors[ci + 3] = BLUE.r * alpha;
+                lineColors[ci + 4] = BLUE.g * alpha;
+                lineColors[ci + 5] = BLUE.b * alpha;
+                lineIdx++;
+              }
+            }
+          }
+          lineGeometry.attributes.position.needsUpdate = true;
+          lineGeometry.attributes.color.needsUpdate = true;
+          lineGeometry.setDrawRange(0, lineIdx * 2);
+
+          // Animate rings
+          ring.rotation.z = time * 0.15;
+          ring.rotation.x = Math.sin(time * 0.1) * 0.3;
+          ring2.rotation.z = -time * 0.1;
+          ring2.rotation.y = Math.PI / 6 + Math.sin(time * 0.15) * 0.2;
+
+          // Animate core
+          core.rotation.x = time * 0.2;
+          core.rotation.y = time * 0.15;
+          core.scale.setScalar(1 + Math.sin(time * 0.8) * 0.08);
+
+          // Camera parallax
+          camera.position.x += (mouseX * 3 - camera.position.x) * 0.02;
+          camera.position.y += (-mouseY * 3 - camera.position.y) * 0.02;
+          camera.lookAt(scene.position);
+
+          renderer.render(scene, camera);
+        }
+        animate();
+
+        // Resize handler
+        window.addEventListener('resize', () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+      }
+
+      // ---------- 3D Card Tilt Effect ----------
+      function initTiltEffect() {
+        document.querySelectorAll('.glow-card, .platform-card, .tilt-3d').forEach(card => {
+          card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -6;
+            const rotateY = ((x - centerX) / centerX) * 6;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+          });
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+          });
+        });
+      }
+
+      // ---------- Scroll Reveal Animations ----------
+      function initScrollReveal() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('revealed');
+              // Don't unobserve to allow re-reveal if desired
+            }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right, .reveal-scale, .stagger-children').forEach(el => {
+          observer.observe(el);
+        });
+
+        // Auto-add reveal classes to key sections
+        document.querySelectorAll('.glow-card').forEach((el, i) => {
+          el.classList.add('reveal-up');
+          el.style.transitionDelay = `${i * 0.08}s`;
+          observer.observe(el);
+        });
+        document.querySelectorAll('.platform-card').forEach((el, i) => {
+          el.classList.add('reveal-scale');
+          el.style.transitionDelay = `${i * 0.06}s`;
+          observer.observe(el);
+        });
+      }
+
+      // ---------- Magnetic Button Effect ----------
+      function initMagneticButtons() {
+        document.querySelectorAll('button.bg-primary, button.bg-secondary').forEach(btn => {
+          btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+          });
+          btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'translate(0, 0)';
+          });
+        });
+      }
+
+      // ---------- Init All Effects ----------
+      window.addEventListener('DOMContentLoaded', () => {
+        // Wait for Three.js to load
+        const checkThree = setInterval(() => {
+          if (typeof THREE !== 'undefined') {
+            clearInterval(checkThree);
+            initParticleNetwork();
+          }
+        }, 100);
+
+        initTiltEffect();
+        initScrollReveal();
+        initMagneticButtons();
+      });
+    })();
+    </script>
+  </body>
 </html>

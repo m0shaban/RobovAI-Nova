@@ -1,4 +1,5 @@
 .env
+.env.cloudrun.yaml
 .jwt_secret
 users.db
 users.db-wal

@@ -36,7 +36,7 @@ git push -u origin main
 
 في صفحة الإعدادات، أضف المتغيرات التالية:
 
-```
+```dotenv
 GROQ_API_KEY=gsk_your_key_here
 NVIDIA_API_KEY=nvapi-your_key_here
 IMGBB_API_KEY=your_imgbb_key_here
@@ -51,7 +51,7 @@ TELEGRAM_BOT_TOKEN=your_bot_token
 
 ### 6️⃣ الرابط النهائي
 
-```
+```text
 https://robovai-nova.onrender.com
 ```
 
@@ -125,3 +125,81 @@ https://robovai-nova.onrender.com/chat
 ```
 
 🎉 **البوت الآن أونلاين 24/7!**
+
+---
+
+## 🚀 Fly.io (جاهز الآن)
+
+### متطلبات Fly.io
+
+- تثبيت `flyctl`
+- تسجيل الدخول: `fly auth login`
+
+### الإعداد مرة واحدة
+
+```bash
+# من جذر المشروع
+fly apps create robovai-nova --machines
+
+# أضف الأسرار (مثال)
+fly secrets set GROQ_API_KEY=xxx JWT_SECRET_KEY=replace_with_min_32_char_secret TELEGRAM_BOT_TOKEN=xxx
+```
+
+### نشر Fly.io
+
+```bash
+# PowerShell
+./scripts/deploy_fly.ps1 -AppName robovai-nova -Region fra
+
+# أو مباشرة
+fly deploy --config fly.toml --app robovai-nova --region fra --remote-only
+```
+
+### التحقق على Fly.io
+
+```bash
+fly status --app robovai-nova
+fly logs --app robovai-nova
+```
+
+---
+
+## ☁️ Google Cloud Run (جاهز الآن)
+
+### متطلبات Cloud Run
+
+- تثبيت Google Cloud SDK
+- تسجيل الدخول: `gcloud auth login`
+
+### إعداد متغيرات البيئة
+
+```bash
+# انسخ القالب
+cp .env.cloudrun.example.yaml .env.cloudrun.yaml
+
+# ثم عدّل القيم الحقيقية داخل .env.cloudrun.yaml
+```
+
+### نشر Cloud Run
+
+```bash
+# PowerShell
+./scripts/deploy_gcp_cloudrun.ps1 -ProjectId YOUR_GCP_PROJECT_ID -Region us-central1 -ServiceName robovai-nova
+```
+
+إعدادات السكربت الافتراضية الحالية لتقليل التكلفة:
+
+- `MinInstances=0` (بدون تكلفة في الخمول)
+- `MaxInstances=1` (حد أقصى منخفض)
+- `Memory=512Mi`
+- `CPU=1`
+
+### التحقق على Cloud Run
+
+```bash
+gcloud run services describe robovai-nova --region us-central1 --format="value(status.url)"
+```
+
+> ملاحظة: هذا المشروع يستخدم Dockerfile الحالي ويعمل على المنفذ 8000 مع health check على `/health`.
+>
+> ملاحظة مهمة: لا يوجد "مجاني مدى الحياة" بشكل مضمون؛ توجد حصة مجانية شهرية (Free Tier) وقد تتغير سياسات Google مستقبلاً.

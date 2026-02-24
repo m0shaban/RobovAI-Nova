@@ -4,15 +4,31 @@
 Standalone users/sessions/OTP database.
 """
 
-import sqlite3
 import logging
-from typing import Optional, Dict, Any, List
+import os
+import sqlite3
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
-from .security import get_password_hash, verify_password_and_update
 from .config import auth_settings
+from .security import get_password_hash, verify_password_and_update
 
-DB_PATH = auth_settings.DATABASE_PATH
+
+def _resolve_db_path() -> str:
+    configured = (auth_settings.DATABASE_PATH or "").strip()
+    if configured:
+        return configured
+
+    is_production = (
+        bool(os.getenv("RENDER"))
+        or (os.getenv("ENVIRONMENT", "").strip().lower() == "production")
+    )
+    if is_production:
+        return "/app/data/users.db"
+    return "users.db"
+
+
+DB_PATH = _resolve_db_path()
 logger = logging.getLogger("auth_module.database")
 
 
@@ -23,6 +39,9 @@ def _normalize_email(email: str) -> str:
 class AuthDatabase:
     def __init__(self, db_path: str = None):
         self.db_path = db_path or DB_PATH
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
         self._init_db()
 
     def _get_conn(self):

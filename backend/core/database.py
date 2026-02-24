@@ -8,15 +8,30 @@
 • Usage tracking per day
 """
 
-import sqlite3
-import json
-import os
 import logging
-from typing import Optional, Dict, Any, List
+import os
+import sqlite3
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from .security import get_password_hash, verify_password_and_update
 
-DB_PATH = os.getenv("DATABASE_PATH", "users.db")
+
+def _resolve_db_path() -> str:
+    configured = (os.getenv("DATABASE_PATH", "").strip())
+    if configured:
+        return configured
+
+    is_production = (
+        bool(os.getenv("RENDER"))
+        or os.getenv("ENVIRONMENT", "").strip().lower() == "production"
+    )
+    if is_production:
+        return "/app/data/users.db"
+    return "users.db"
+
+
+DB_PATH = _resolve_db_path()
 logger = logging.getLogger("robovai.database")
 
 
@@ -26,6 +41,9 @@ def _normalize_email(email: str) -> str:
 
 class Database:
     def __init__(self):
+        db_dir = os.path.dirname(DB_PATH)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
         self._init_db()
 
     def _get_conn(self):

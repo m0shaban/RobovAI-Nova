@@ -58,6 +58,11 @@ def _is_valid_email(email: str) -> bool:
     return bool(EMAIL_PATTERN.match(email.strip()))
 
 
+def _normalize_email_input(email: str) -> str:
+    cleaned = (email or "").replace("\u200b", "").replace("\u200f", "")
+    return cleaned.strip().lower()
+
+
 def _resolve_welcome_image_path() -> Optional[str]:
     """Resolve the preferred welcome image path for Telegram welcome message."""
     candidates = [
@@ -1166,6 +1171,7 @@ async def handle_verify_flow(
 
 async def _start_email_verification_with_email(message, chat_id: str, email: str) -> None:
     """Resolve account by email and continue verification flow."""
+    email = _normalize_email_input(email)
     state = VERIFY_STATE.get(chat_id, {"step": "awaiting_email", "method": "email"})
 
     try:

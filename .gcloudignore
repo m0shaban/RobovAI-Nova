@@ -1,47 +1,35 @@
-# Git
-.git/
+# Keep gcloud source uploads small for Cloud Run source deploy
+.gcloudignore
+.git
 .gitignore
 
-# Python
+# Python cache/venv
 __pycache__/
 *.pyc
 *.pyo
 .venv/
 venv/
-*.egg-info/
 
-# Environment & secrets
+# Env and local secrets
 .env
 .env.*
 .jwt_secret
 
-# Database files
+# Local databases and runtime files
 *.db
 *.db-shm
 *.db-wal
-
-# Test files
-test_*.py
-test_*.html
-verify_*.py
-
-# Logs & data
 logs/
 data/
 uploads/
-push_log.txt
 
-# Documentation
-*.md
-docs/
-
-# IDE & OS
+# Local/editor artifacts
 .vscode/
 .idea/
 *.swp
 Thumbs.db
 
-# Misc
+# Non-runtime directories
 node_modules/
 public-apis-master/
 python-client/
@@ -55,3 +43,11 @@ authkit-main Github/
 mixpost-main/
 wordpress-backup/
 __MACOSX/
+
+# Tests/docs not needed in production image build
+tests/
+test_*.py
+test_*.html
+verify_*.py
+*.md
+docs/

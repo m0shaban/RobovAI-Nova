@@ -1,8 +1,10 @@
 import os
+import secrets
 import sys
 from collections import defaultdict, deque
 from pathlib import Path
 from time import perf_counter, time
+from urllib.parse import urlencode
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -15,6 +17,8 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
+import httpx
+import jwt
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -504,6 +508,272 @@ def _rl(limit_str: str):
     return _noop
 
 
+def _normalize_email_input(email: str) -> str:
+    return (email or "").strip().lower()
+
+
+def _safe_next_path(next_path: str) -> str:
+    candidate = (next_path or "/chat").strip()
+    if not candidate.startswith("/"):
+        return "/chat"
+    if candidate.startswith("//"):
+        return "/chat"
+    return candidate
+
+
+def _public_base_url(request: Request) -> str:
+    configured = (
+        os.getenv("EXTERNAL_URL")
+        or os.getenv("RENDER_EXTERNAL_URL")
+        or str(request.base_url)
+    )
+    return configured.rstrip("/")
+
+
+def _oauth_redirect_uri(request: Request, provider: str) -> str:
+    return f"{_public_base_url(request)}/auth/{provider}/callback"
+
+
+def _facebook_oauth_enabled() -> bool:
+    return os.getenv("FACEBOOK_OAUTH_ENABLED", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _encode_oauth_state(provider: str, next_path: str) -> str:
+    from backend.core.security import ALGORITHM, SECRET_KEY
+
+    payload = {
+        "provider": provider,
+        "next": _safe_next_path(next_path),
+        "exp": datetime.utcnow() + timedelta(minutes=15),
+        "nonce": secrets.token_urlsafe(12),
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def _decode_oauth_state(expected_provider: str, state: str) -> str:
+    from backend.core.security import ALGORITHM, SECRET_KEY
+
+    payload = jwt.decode(state, SECRET_KEY, algorithms=[ALGORITHM])
+    provider = payload.get("provider")
+    if provider != expected_provider:
+        raise HTTPException(status_code=400, detail="Invalid OAuth provider state")
+    return _safe_next_path(payload.get("next", "/chat"))
+
+
+async def _get_or_create_social_user(email: str, full_name: str) -> Dict[str, Any]:
+    normalized_email = _normalize_email_input(email)
+    user = await db_client.get_user_by_email_unverified(normalized_email)
+
+    if not user:
+        synthetic_password = f"{secrets.token_urlsafe(24)}Aa1!"
+        created = await db_client.create_user(
+            normalized_email,
+            synthetic_password,
+            full_name or normalized_email.split("@")[0],
+        )
+        if not created:
+            user = await db_client.get_user_by_email_unverified(normalized_email)
+        else:
+            user = created
+
+    if not user:
+        raise HTTPException(status_code=500, detail="Could not create social user")
+
+    if not user.get("is_verified"):
+        await db_client.set_user_verified(user["id"])
+
+    resolved_user = await db_client.get_user_by_email(normalized_email)
+    return resolved_user or user
+
+
+async def _build_social_login_response(email: str, next_path: str) -> RedirectResponse:
+    normalized_email = _normalize_email_input(email)
+    access_token = create_access_token(data={"sub": normalized_email})
+    user = await db_client.get_user_by_email_unverified(normalized_email)
+    if not user:
+        raise HTTPException(status_code=500, detail="User not found after social login")
+
+    expires_at = (datetime.now() + timedelta(days=1)).isoformat()
+    await db_client.create_session(user["id"], access_token, expires_at)
+
+    response = RedirectResponse(url=next_path, status_code=302)
+    _is_production = os.getenv("RENDER") or os.getenv("ENVIRONMENT") == "production"
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,
+        secure=bool(_is_production),
+        max_age=86400,
+        samesite="lax",
+    )
+    return response
+
+
+@app.get("/auth/google/start", tags=["Auth"])
+async def auth_google_start(request: Request, next: str = "/chat"):
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+    if not client_id or not client_secret:
+        raise HTTPException(status_code=503, detail="Google OAuth is not configured")
+
+    redirect_uri = _oauth_redirect_uri(request, "google")
+    state = _encode_oauth_state("google", next)
+    params = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "online",
+        "prompt": "select_account",
+    }
+    oauth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
+    return RedirectResponse(url=oauth_url, status_code=302)
+
+
+@app.get("/auth/google/callback", tags=["Auth"])
+async def auth_google_callback(
+    request: Request,
+    code: str = "",
+    state: str = "",
+    error: Optional[str] = None,
+):
+    if error:
+        raise HTTPException(status_code=400, detail=f"Google OAuth error: {error}")
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing Google OAuth code/state")
+
+    next_path = _decode_oauth_state("google", state)
+    redirect_uri = _oauth_redirect_uri(request, "google")
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+
+    async with httpx.AsyncClient(timeout=20) as client:
+        token_resp = await client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        if token_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to exchange Google OAuth token")
+
+        token_data = token_resp.json()
+        access_token = token_data.get("access_token", "")
+        if not access_token:
+            raise HTTPException(status_code=400, detail="Google access token not returned")
+
+        profile_resp = await client.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        if profile_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to fetch Google profile")
+
+        profile = profile_resp.json()
+        email = _normalize_email_input(profile.get("email", ""))
+        if not email:
+            raise HTTPException(status_code=400, detail="Google account has no email")
+
+        full_name = (profile.get("name") or "").strip() or email.split("@")[0]
+        await _get_or_create_social_user(email, full_name)
+        return await _build_social_login_response(email, next_path)
+
+
+@app.get("/auth/facebook/start", tags=["Auth"])
+async def auth_facebook_start(request: Request, next: str = "/chat"):
+    if not _facebook_oauth_enabled():
+        raise HTTPException(status_code=503, detail="Facebook OAuth is disabled")
+
+    app_id = os.getenv("FACEBOOK_APP_ID", "").strip()
+    app_secret = os.getenv("FACEBOOK_APP_SECRET", "").strip()
+    if not app_id or not app_secret:
+        raise HTTPException(status_code=503, detail="Facebook OAuth is not configured")
+
+    redirect_uri = _oauth_redirect_uri(request, "facebook")
+    state = _encode_oauth_state("facebook", next)
+    params = {
+        "client_id": app_id,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "email,public_profile",
+        "state": state,
+    }
+    oauth_url = f"https://www.facebook.com/v19.0/dialog/oauth?{urlencode(params)}"
+    return RedirectResponse(url=oauth_url, status_code=302)
+
+
+@app.get("/auth/facebook/callback", tags=["Auth"])
+async def auth_facebook_callback(
+    request: Request,
+    code: str = "",
+    state: str = "",
+    error: Optional[str] = None,
+):
+    if not _facebook_oauth_enabled():
+        raise HTTPException(status_code=503, detail="Facebook OAuth is disabled")
+
+    if error:
+        raise HTTPException(status_code=400, detail=f"Facebook OAuth error: {error}")
+    if not code or not state:
+        raise HTTPException(status_code=400, detail="Missing Facebook OAuth code/state")
+
+    next_path = _decode_oauth_state("facebook", state)
+    redirect_uri = _oauth_redirect_uri(request, "facebook")
+    app_id = os.getenv("FACEBOOK_APP_ID", "").strip()
+    app_secret = os.getenv("FACEBOOK_APP_SECRET", "").strip()
+
+    async with httpx.AsyncClient(timeout=20) as client:
+        token_resp = await client.get(
+            "https://graph.facebook.com/v19.0/oauth/access_token",
+            params={
+                "client_id": app_id,
+                "client_secret": app_secret,
+                "redirect_uri": redirect_uri,
+                "code": code,
+            },
+        )
+        if token_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to exchange Facebook OAuth token")
+
+        token_data = token_resp.json()
+        access_token = token_data.get("access_token", "")
+        if not access_token:
+            raise HTTPException(status_code=400, detail="Facebook access token not returned")
+
+        profile_resp = await client.get(
+            "https://graph.facebook.com/me",
+            params={
+                "fields": "id,name,email",
+                "access_token": access_token,
+            },
+        )
+        if profile_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to fetch Facebook profile")
+
+        profile = profile_resp.json()
+        email = _normalize_email_input(profile.get("email", ""))
+        if not email:
+            raise HTTPException(
+                status_code=400,
+                detail="Facebook account has no public email. Use Google or regular signup.",
+            )
+
+        full_name = (profile.get("name") or "").strip() or email.split("@")[0]
+        await _get_or_create_social_user(email, full_name)
+        return await _build_social_login_response(email, next_path)
+
+
 @app.post("/auth/register", tags=["Auth"])
 @_rl("20/minute")
 async def register(request: Request, user: UserCreate, response: Response):
@@ -531,6 +801,15 @@ async def register(request: Request, user: UserCreate, response: Response):
 
         otp = str(_rnd.randint(100000, 999999))
         await db_client.store_otp(res["id"], otp, "telegram_verify", minutes=10)
+        try:
+            await db_client.store_external_otp(
+                res["email"],
+                otp,
+                os.getenv("APP_ID", "robovai-nova"),
+                10,
+            )
+        except Exception as ext_err:
+            logger.warning(f"External OTP bridge failed (register): {ext_err}")
         logger.info(f"OTP generated for user_id={res['id']}")
 
         # Return pending — user must verify via Telegram
@@ -2872,6 +3151,15 @@ async def request_telegram_otp(request: Request, req: OTPRequest):
     # Generate and store OTP
     otp = str(_random.randint(100000, 999999))
     await db_client.store_otp(user["id"], otp, "telegram_verify", minutes=10)
+    try:
+        await db_client.store_external_otp(
+            email,
+            otp,
+            os.getenv("APP_ID", "robovai-nova"),
+            10,
+        )
+    except Exception as ext_err:
+        logger.warning(f"External OTP bridge failed (request-otp): {ext_err}")
 
     return {
         "status": "success",
